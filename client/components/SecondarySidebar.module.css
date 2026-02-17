@@ -1,0 +1,19 @@
+.secondarySidebar {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    width: var(--secondary-sidebar-width);
+    height: 100vh;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    padding: 24px 16px;
+    z-index: 90;
+    overflow-y: auto;
+}
+
+[dir="rtl"] .secondarySidebar {
+    left: auto;
+    right: var(--sidebar-width);
+    border-right: none;
+    border-left: 1px solid var(--color-border);
+}
