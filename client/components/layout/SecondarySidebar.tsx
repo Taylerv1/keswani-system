@@ -29,36 +29,36 @@ interface SubNavItem {
 }
 
 const rentSubNav: SubNavItem[] = [
-  { key: "rentOverview", href: "/dashboard/rent", icon: <LayoutDashboard size={16} /> },
-  { key: "rentProperties", href: "/dashboard/rent/properties", icon: <Building2 size={16} /> },
-  { key: "rentTenants", href: "/dashboard/rent/tenants", icon: <Users size={16} /> },
-  { key: "rentContracts", href: "/dashboard/rent/contracts", icon: <FileText size={16} /> },
-  { key: "rentPayments", href: "/dashboard/rent/payments", icon: <CreditCard size={16} /> },
-  { key: "rentMaintenance", href: "/dashboard/rent/maintenance", icon: <Wrench size={16} /> },
-  { key: "rentNotifications", href: "/dashboard/rent/notifications", icon: <Bell size={16} /> },
+  { key: "rentOverview", href: "/admin-dashboard/rent", icon: <LayoutDashboard size={16} /> },
+  { key: "rentProperties", href: "/admin-dashboard/rent/properties", icon: <Building2 size={16} /> },
+  { key: "rentTenants", href: "/admin-dashboard/rent/tenants", icon: <Users size={16} /> },
+  { key: "rentContracts", href: "/admin-dashboard/rent/contracts", icon: <FileText size={16} /> },
+  { key: "rentPayments", href: "/admin-dashboard/rent/payments", icon: <CreditCard size={16} /> },
+  { key: "rentMaintenance", href: "/admin-dashboard/rent/maintenance", icon: <Wrench size={16} /> },
+  { key: "rentNotifications", href: "/admin-dashboard/rent/notifications", icon: <Bell size={16} /> },
 ];
 
 const electricitySubNav: SubNavItem[] = [
-  { key: "elecDashboard", href: "/dashboard/electricity", icon: <LayoutDashboard size={16} /> },
-  { key: "elecAlerts", href: "/dashboard/electricity/alerts", icon: <AlertTriangle size={16} /> },
-  { key: "elecSubscribers", href: "/dashboard/electricity/subscribers", icon: <Users size={16} /> },
-  { key: "elecBuildings", href: "/dashboard/electricity/buildings", icon: <Building2 size={16} /> },
-  { key: "elecMeters", href: "/dashboard/electricity/meters", icon: <Gauge size={16} /> },
-  { key: "elecReadings", href: "/dashboard/electricity/readings", icon: <BookOpen size={16} /> },
-  { key: "elecBills", href: "/dashboard/electricity/bills", icon: <Receipt size={16} /> },
-  { key: "elecPayments", href: "/dashboard/electricity/payments", icon: <CreditCard size={16} /> },
-  { key: "elecDebts", href: "/dashboard/electricity/debts", icon: <DollarSign size={16} /> },
-  { key: "elecPricing", href: "/dashboard/electricity/pricing", icon: <Zap size={16} /> },
-  { key: "elecEmployees", href: "/dashboard/electricity/employees", icon: <UserCog size={16} /> },
-  { key: "elecReports", href: "/dashboard/electricity/reports", icon: <BarChart3 size={16} /> },
-  { key: "elecSettings", href: "/dashboard/electricity/settings", icon: <Settings size={16} /> },
+  { key: "elecDashboard", href: "/admin-dashboard/electricity", icon: <LayoutDashboard size={16} /> },
+  { key: "elecAlerts", href: "/admin-dashboard/electricity/alerts", icon: <AlertTriangle size={16} /> },
+  { key: "elecSubscribers", href: "/admin-dashboard/electricity/subscribers", icon: <Users size={16} /> },
+  { key: "elecBuildings", href: "/admin-dashboard/electricity/buildings", icon: <Building2 size={16} /> },
+  { key: "elecMeters", href: "/admin-dashboard/electricity/meters", icon: <Gauge size={16} /> },
+  { key: "elecReadings", href: "/admin-dashboard/electricity/readings", icon: <BookOpen size={16} /> },
+  { key: "elecBills", href: "/admin-dashboard/electricity/bills", icon: <Receipt size={16} /> },
+  { key: "elecPayments", href: "/admin-dashboard/electricity/payments", icon: <CreditCard size={16} /> },
+  { key: "elecDebts", href: "/admin-dashboard/electricity/debts", icon: <DollarSign size={16} /> },
+  { key: "elecPricing", href: "/admin-dashboard/electricity/pricing", icon: <Zap size={16} /> },
+  { key: "elecEmployees", href: "/admin-dashboard/electricity/employees", icon: <UserCog size={16} /> },
+  { key: "elecReports", href: "/admin-dashboard/electricity/reports", icon: <BarChart3 size={16} /> },
+  { key: "elecSettings", href: "/admin-dashboard/electricity/settings", icon: <Settings size={16} /> },
 ];
 
 function getSubNav(pathname: string): { title: string; items: SubNavItem[] } | null {
-  if (pathname.startsWith("/dashboard/rent")) {
+  if (pathname.startsWith("/admin-dashboard/rent")) {
     return { title: "rent", items: rentSubNav };
   }
-  if (pathname.startsWith("/dashboard/electricity")) {
+  if (pathname.startsWith("/admin-dashboard/electricity")) {
     return { title: "electricity", items: electricitySubNav };
   }
   return null;
@@ -85,7 +85,7 @@ export default function SecondarySidebar() {
         {nav.items.map((item) => {
           const isExact = pathname === item.href;
           const isActive =
-            item.href === "/dashboard/rent" || item.href === "/dashboard/electricity"
+            item.href === "/admin-dashboard/rent" || item.href === "/admin-dashboard/electricity"
               ? pathname === item.href
               : pathname.startsWith(item.href);
           const active = isExact || isActive;
@@ -97,10 +97,9 @@ export default function SecondarySidebar() {
               className={`
                 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm no-underline
                 transition-all duration-150
-                ${
-                  active
-                    ? "bg-primary/10 text-primary font-semibold"
-                    : "text-text-secondary hover:bg-background hover:text-text-primary"
+                ${active
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-text-secondary hover:bg-background hover:text-text-primary"
                 }
               `}
             >

@@ -19,7 +19,7 @@ export default function LoginPage() {
     // Placeholder – no backend logic
     setTimeout(() => {
       setLoading(false);
-      window.location.href = "/dashboard/rent";
+      window.location.href = "/admin-dashboard/rent";
     }, 800);
   };
 

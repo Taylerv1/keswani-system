@@ -19,9 +19,9 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { key: "rent", href: "/dashboard/rent", icon: <Home size={20} /> },
-  { key: "electricity", href: "/dashboard/electricity", icon: <Zap size={20} /> },
-  { key: "profile", href: "/dashboard/profile", icon: <User size={20} /> },
+  { key: "rent", href: "/admin-dashboard/rent", icon: <Home size={20} /> },
+  { key: "electricity", href: "/admin-dashboard/electricity", icon: <Zap size={20} /> },
+  { key: "profile", href: "/admin-dashboard/profile", icon: <User size={20} /> },
 ];
 
 interface PrimarySidebarProps {
@@ -78,10 +78,9 @@ export default function PrimarySidebar({
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg
                 transition-all duration-200 no-underline
-                ${
-                  isActive
-                    ? "bg-primary text-sidebar-text-active shadow-lg"
-                    : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
+                ${isActive
+                  ? "bg-primary text-sidebar-text-active shadow-lg"
+                  : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
                 }
                 ${collapsed ? "justify-center" : ""}
               `}
