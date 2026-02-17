@@ -8,13 +8,9 @@ import { useTranslation } from "@/lib/translation-context";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  showSecondarySidebar?: boolean;
 }
 
-export default function AdminLayout({
-  children,
-  showSecondarySidebar = false,
-}: AdminLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { t, dir, toggleLocale } = useTranslation();
 
@@ -91,8 +87,8 @@ export default function AdminLayout({
 
         {/* Body */}
         <div className="flex h-[calc(100vh-64px)]">
-          {/* Secondary sidebar */}
-          <SecondarySidebar open={showSecondarySidebar} />
+          {/* Secondary sidebar – self-determines visibility by pathname */}
+          <SecondarySidebar />
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto p-6">{children}</main>
