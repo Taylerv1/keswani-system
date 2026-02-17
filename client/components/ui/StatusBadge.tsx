@@ -29,6 +29,13 @@ const variantMap: Record<string, "success" | "warning" | "danger" | "info"> = {
   closed: "info",
   unread: "warning",
   underMaintenance: "warning",
+  // Electricity-specific statuses
+  unpaid: "danger",
+  partial: "warning",
+  suspended: "danger",
+  digital: "info",
+  analog: "info",
+  faulty: "danger",
 };
 
 const variantClasses: Record<string, string> = {

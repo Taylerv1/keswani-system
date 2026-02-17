@@ -10,6 +10,15 @@ import {
   CreditCard,
   Wrench,
   Bell,
+  Gauge,
+  BookOpen,
+  Receipt,
+  AlertTriangle,
+  DollarSign,
+  UserCog,
+  BarChart3,
+  Settings,
+  Zap,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 
@@ -30,7 +39,19 @@ const rentSubNav: SubNavItem[] = [
 ];
 
 const electricitySubNav: SubNavItem[] = [
-  { key: "rentOverview", href: "/dashboard/electricity", icon: <LayoutDashboard size={16} /> },
+  { key: "elecDashboard", href: "/dashboard/electricity", icon: <LayoutDashboard size={16} /> },
+  { key: "elecAlerts", href: "/dashboard/electricity/alerts", icon: <AlertTriangle size={16} /> },
+  { key: "elecSubscribers", href: "/dashboard/electricity/subscribers", icon: <Users size={16} /> },
+  { key: "elecBuildings", href: "/dashboard/electricity/buildings", icon: <Building2 size={16} /> },
+  { key: "elecMeters", href: "/dashboard/electricity/meters", icon: <Gauge size={16} /> },
+  { key: "elecReadings", href: "/dashboard/electricity/readings", icon: <BookOpen size={16} /> },
+  { key: "elecBills", href: "/dashboard/electricity/bills", icon: <Receipt size={16} /> },
+  { key: "elecPayments", href: "/dashboard/electricity/payments", icon: <CreditCard size={16} /> },
+  { key: "elecDebts", href: "/dashboard/electricity/debts", icon: <DollarSign size={16} /> },
+  { key: "elecPricing", href: "/dashboard/electricity/pricing", icon: <Zap size={16} /> },
+  { key: "elecEmployees", href: "/dashboard/electricity/employees", icon: <UserCog size={16} /> },
+  { key: "elecReports", href: "/dashboard/electricity/reports", icon: <BarChart3 size={16} /> },
+  { key: "elecSettings", href: "/dashboard/electricity/settings", icon: <Settings size={16} /> },
 ];
 
 function getSubNav(pathname: string): { title: string; items: SubNavItem[] } | null {
@@ -64,8 +85,8 @@ export default function SecondarySidebar() {
         {nav.items.map((item) => {
           const isExact = pathname === item.href;
           const isActive =
-            item.href === "/dashboard/rent"
-              ? pathname === "/dashboard/rent"
+            item.href === "/dashboard/rent" || item.href === "/dashboard/electricity"
+              ? pathname === item.href
               : pathname.startsWith(item.href);
           const active = isExact || isActive;
 
