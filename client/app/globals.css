@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary palette – inspired by the dashboard design */
+  --primary: #f5a623;
+  --primary-hover: #e6951a;
+  --primary-light: #fef3e0;
+
+  /* Sidebar */
+  --sidebar-bg: #1e293b;
+  --sidebar-bg-dark: #0f172a;
+  --sidebar-active: #f5a623;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-active: #ffffff;
+
+  /* Surface / Background */
+  --background: #f4f6f9;
+  --foreground: #1e293b;
+  --surface: #ffffff;
+  --surface-border: #e2e8f0;
+
+  /* Accent cards */
+  --card-green: #43a047;
+  --card-green-light: #e8f5e9;
+  --card-blue: #1e88e5;
+  --card-blue-light: #e3f2fd;
+  --card-orange: #f5a623;
+  --card-orange-light: #fff8e1;
+  --card-red: #e53935;
+  --card-red-light: #ffebee;
+
+  /* Text */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Login gradient */
+  --login-gradient-start: #7b2ff7;
+  --login-gradient-mid: #e91e8c;
+  --login-gradient-end: #ff6f61;
+
+  /* Misc */
+  --radius: 0.5rem;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-bg-dark: var(--sidebar-bg-dark);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-text-active: var(--sidebar-text-active);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-border: var(--surface-border);
+  --color-card-green: var(--card-green);
+  --color-card-green-light: var(--card-green-light);
+  --color-card-blue: var(--card-blue);
+  --color-card-blue-light: var(--card-blue-light);
+  --color-card-orange: var(--card-orange);
+  --color-card-orange-light: var(--card-orange-light);
+  --color-card-red: var(--card-red);
+  --color-card-red-light: var(--card-red-light);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-login-gradient-start: var(--login-gradient-start);
+  --color-login-gradient-mid: var(--login-gradient-mid);
+  --color-login-gradient-end: var(--login-gradient-end);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* RTL support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
 }
