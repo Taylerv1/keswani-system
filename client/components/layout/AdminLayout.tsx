@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Globe, Search, Bell } from "lucide-react";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
@@ -79,9 +80,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </button>
 
             {/* Avatar */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
-              A
-            </div>
+            <Link href="/admin-dashboard/profile">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
+                A
+              </div>
+            </Link>
           </div>
         </header>
 

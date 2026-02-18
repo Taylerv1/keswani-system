@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Globe, Bell } from "lucide-react";
 import CustomerSidebar from "@/components/layout/CustomerSidebar";
 import { useTranslation } from "@/lib/translation-context";
@@ -63,9 +64,11 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                         </button>
 
                         {/* Avatar */}
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
-                            {displayName.charAt(0)}
-                        </div>
+                        <Link href="/dashboard/profile">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
+                                {displayName.charAt(0)}
+                            </div>
+                        </Link>
                     </div>
                 </header>
 

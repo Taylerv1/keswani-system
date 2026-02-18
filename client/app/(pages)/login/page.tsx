@@ -205,14 +205,6 @@ export default function LoginPage() {
               {loading ? t("loading") : t("signInButton")}
             </button>
           </form>
-
-          {/* Sign up link */}
-          <p className="text-center mt-6 text-sm text-text-secondary">
-            {t("noAccount")}{" "}
-            <span className="text-primary font-semibold cursor-pointer hover:underline">
-              {t("signUp")}
-            </span>
-          </p>
         </div>
       </div>
     </div>

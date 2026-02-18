@@ -9,6 +9,15 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
     const token = request.cookies.get("auth_token")?.value;
     const userData = request.cookies.get("user_data")?.value;
+    
+    let user = null;
+    if (userData) {
+        try {
+            user = JSON.parse(decodeURIComponent(userData));
+        } catch (e) {
+            // Invalid data - treat as unauthenticated
+        }
+    }
 
     // Routes that require authentication
     const protectedRoutes = ["/admin-dashboard", "/dashboard"];
@@ -16,29 +25,41 @@ export function middleware(request: NextRequest) {
         request.nextUrl.pathname.startsWith(route)
     );
 
-    // If accessing protected route without auth, redirect to login
-    if (isProtectedRoute && (!token || !userData)) {
+    // 1. Unauthenticated users trying to access protected routes
+    if (isProtectedRoute && (!token || !user)) {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
     }
 
-    // If accessing login page while authenticated, redirect to appropriate dashboard
-    if (request.nextUrl.pathname === "/login" && token && userData) {
-        try {
-            const user = JSON.parse(decodeURIComponent(userData));
-            const dashboardUrl =
-                user.user_type === "employee"
-                    ? "/admin-dashboard/rent"
-                    : "/dashboard";
-            return NextResponse.redirect(new URL(dashboardUrl, request.url));
-        } catch {
-            // Invalid user data, clear cookies and continue to login
-            const response = NextResponse.next();
-            response.cookies.delete("auth_token");
-            response.cookies.delete("refresh_token");
-            response.cookies.delete("user_data");
-            return response;
+    // 2. Authenticated users trying to access login page
+    if (request.nextUrl.pathname === "/login" && token && user) {
+        const dashboardUrl =
+            user.user_type === "employee"
+                ? "/admin-dashboard/rent"
+                : "/dashboard";
+        return NextResponse.redirect(new URL(dashboardUrl, request.url));
+    }
+    
+    // 3. Role-Based Access Control
+    if (token && user) {
+        // Case A: Non-employees trying to access Admin Dashboard
+        if (request.nextUrl.pathname.startsWith("/admin-dashboard")) {
+            if (user.user_type !== "employee") {
+                // Requirement: Show custom 404 page (not 403)
+                // Use rewrite to keep the URL but show 404 content
+                return NextResponse.rewrite(new URL("/404", request.url));
+            }
+        }
+
+        // Case B: Employees trying to access Customer Dashboard
+        // (Assuming employees should only use admin dashboard)
+        if (request.nextUrl.pathname.startsWith("/dashboard") && 
+            !request.nextUrl.pathname.startsWith("/dashboard/profile") // Allow profile access?
+        ) {
+             if (user.user_type === "employee") {
+                 return NextResponse.redirect(new URL("/admin-dashboard/rent", request.url));
+             }
         }
     }
 
@@ -47,8 +68,14 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        "/admin-dashboard/:path*",
-        "/dashboard/:path*",
-        "/login",
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - public files (images, etc)
+         */
+        "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
     ],
 };
