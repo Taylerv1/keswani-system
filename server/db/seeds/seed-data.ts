@@ -131,6 +131,7 @@ export const PRICING_IDS = {
 // ===========================
 // EMPLOYEES (5)
 // ===========================
+// employee - users DEFULT password for all: "password123" (hashed in actual DB)
 export const employees = [
     {
         id: EMPLOYEE_IDS.owner,
