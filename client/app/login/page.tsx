@@ -12,15 +12,44 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Placeholder – no backend logic
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        setError(result.error || "Login failed. Please check your credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // Login successful - cookies are set automatically
+      const userData = result.data.user;
+
+      // Redirect based on user type
+      if (userData.user_type === "employee") {
+        window.location.href = "/admin-dashboard/rent";
+      } else {
+        window.location.href = "/dashboard";
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An error occurred. Please try again.");
       setLoading(false);
-      window.location.href = "/admin-dashboard/rent";
-    }, 800);
+    }
   };
 
   return (
@@ -89,6 +118,13 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Error message */}
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Email */}
             <div className="relative">
               <Mail
