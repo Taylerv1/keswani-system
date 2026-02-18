@@ -3,7 +3,6 @@
 // Run: npm run seed
 // ============================================================
 
-import { PrismaClient } from "@prisma/client";
 import {
     employees,
     clients,
@@ -22,7 +21,63 @@ import {
     notifications,
 } from "./seed-data";
 
-const prisma = new PrismaClient();
+// Use the project's Prisma singleton (avoids duplicate clients in dev)
+import prisma from "../../src/config/prisma";
+import { supabaseAdmin } from "../../src/config/supabase";
+
+const DEFAULT_PASSWORD = process.env.DEFAULT_SEED_PASSWORD || "Password123!";
+
+async function createAuthUsersForSeededProfiles() {
+    const profiles: Array<{ email: string; table: "employees" | "clients"; id: string }> = [];
+
+    for (const e of employees) profiles.push({ email: e.email, table: "employees", id: e.id });
+    for (const c of clients) profiles.push({ email: c.email, table: "clients", id: c.id });
+
+    for (const p of profiles) {
+        try {
+            // Skip if already linked
+            const existing: any = await (prisma as any)[p.table].findUnique({ where: { id: p.id } });
+            if (existing && existing.auth_user_id) {
+                console.log(`    → Skipping ${p.email} (already linked)`);
+                continue;
+            }
+
+            // Try to create the Supabase auth user
+            const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email: p.email,
+                password: DEFAULT_PASSWORD,
+                email_confirm: true,
+            } as any);
+
+            let userId: string | null = createData?.user?.id || null;
+
+            if (createError || !userId) {
+                // If user already exists or create failed, try to find by listing users
+                console.error(`    ⚠ createUser error for ${p.email}: ${createError?.message || "unknown"}`);
+                const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+                if (listError) {
+                    console.error("    ⚠ listUsers error:", listError.message);
+                } else if (listData && Array.isArray(listData.users)) {
+                    const found = listData.users.find((u: any) => u.email && u.email.toLowerCase() === p.email.toLowerCase());
+                    if (found) userId = found.id;
+                }
+            }
+
+            if (!userId) {
+                console.error(`    ❌ Could not create/find auth user for ${p.email}`);
+                continue;
+            }
+
+            // Link to profile
+            await (prisma as any)[p.table].update({ where: { id: p.id }, data: { auth_user_id: userId } });
+            console.log(`    ✅ Linked ${p.email} -> ${userId}`);
+        } catch (err: any) {
+            console.error(`    ❌ Error processing ${p.email}:`, err?.message || err);
+        }
+    }
+
+    console.log(`    ✅ Auth users created/linked (default password: ${DEFAULT_PASSWORD})`);
+}
 
 async function main() {
     console.log("🌱 Starting seed...\n");
@@ -63,6 +118,10 @@ async function main() {
         });
     }
     console.log(`    ✅ ${clients.length} clients`);
+
+    // ---- Create/link Supabase auth users for employees & clients ----
+    console.log("  → Creating Supabase auth users for seeded employees and clients...");
+    await createAuthUsersForSeededProfiles();
 
     // ---- 3. Properties ----
     console.log("  → Seeding properties...");
