@@ -10,6 +10,8 @@ export const EMPLOYEE_IDS = {
     emp1: "a0000000-0000-0000-0000-000000000003",
     emp2: "a0000000-0000-0000-0000-000000000004",
     emp3: "a0000000-0000-0000-0000-000000000005",
+    owner2: "a0000000-0000-0000-0000-000000000006",
+    owner3: "a0000000-0000-0000-0000-000000000007"
 };
 
 export const CLIENT_IDS = {
@@ -177,6 +179,24 @@ export const employees = [
         role: "employee" as const,
         access: { rent: true, electricity: true, expenses: true },
         is_active: false, // soft deactivated
+    },
+    {
+        id: EMPLOYEE_IDS.owner2,
+        full_name: "Mahmoud Shade",
+        email: "mhmodshhade230@gmail.com",
+        phone: "+961 78 833 857",
+        role: "owner" as const,
+        access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        is_active: true,
+    },
+    {
+        id: EMPLOYEE_IDS.owner3,
+        full_name: "Hadi Diab",
+        email: "hadidiab33@gmail.com",
+        phone: "+961 78 810 622",
+        role: "owner" as const,
+        access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        is_active: true,
     },
 ];
 
