@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const sidebarWidth = sidebarCollapsed ? 68 : 240;
 
   return (
-    <div className="min-h-screen bg-background" dir={dir}>
+    <div className={`min-h-screen bg-background ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`} dir={dir}>
       {/* Primary Sidebar */}
       <PrimarySidebar
         collapsed={sidebarCollapsed}

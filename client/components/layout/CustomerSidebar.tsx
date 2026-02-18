@@ -102,7 +102,7 @@ export default function CustomerSidebar({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+            <nav dir={dir === "rtl" ? "rtl" : "ltr"} className={`flex-1 py-4 px-2 space-y-1 overflow-y-auto ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
                 {navItems.map((item) => {
                     const isActive =
                         item.href === "/dashboard"
@@ -112,21 +112,21 @@ export default function CustomerSidebar({
                         <Link
                             key={item.key}
                             href={item.href}
-                            className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg
-                transition-all duration-200 no-underline
-                ${isActive
-                                    ? "bg-primary text-sidebar-text-active shadow-lg"
-                                    : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
-                                }
-                ${collapsed ? "justify-center" : ""}
-              `}
+                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 no-underline
+                                ${isActive
+                                                                        ? "bg-primary text-sidebar-text-active shadow-lg"
+                                                                        : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
+                                                                }
+                                ${collapsed ? "justify-center px-0" : ""}
+                            `}
                             title={collapsed ? t(item.key) : undefined}
                         >
-                            <span className="shrink-0">{item.icon}</span>
-                            {!collapsed && (
-                                <span className="text-sm font-medium">{t(item.key)}</span>
-                            )}
+                            <div dir={dir === "rtl" ? "ltr" : undefined} className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
+                                <span className="shrink-0">{item.icon}</span>
+                                {!collapsed && (
+                                    <span className="text-sm font-medium">{t(item.key)}</span>
+                                )}
+                            </div>
                         </Link>
                     );
                 })}

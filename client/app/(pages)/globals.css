@@ -98,3 +98,39 @@ body {
   direction: ltr;
   text-align: left;
 }
+
+/* Place scrollbar on left for RTL containers while keeping content LTR */
+.scrollbar-left {
+  direction: rtl;
+}
+.scrollbar-left * {
+  direction: ltr;
+}
+
+/* Custom scrollbar styles for better UX */
+.scrollbar-left::-webkit-scrollbar,
+.scrollbar-right::-webkit-scrollbar {
+  width: 12px;
+}
+.scrollbar-left::-webkit-scrollbar-track,
+.scrollbar-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-left::-webkit-scrollbar-thumb,
+.scrollbar-right::-webkit-scrollbar-thumb {
+  background-color: rgba(30,41,59,0.12);
+  border-radius: 999px;
+  border: 3px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+.scrollbar-left::-webkit-scrollbar-thumb:hover,
+.scrollbar-right::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(30,41,59,0.18);
+}
+
+/* Firefox */
+.scrollbar-left,
+.scrollbar-right {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30,41,59,0.12) transparent;
+}

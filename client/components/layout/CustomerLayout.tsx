@@ -21,7 +21,7 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
     const displayName = locale === "ar" ? data.user.nameAr : data.user.name;
 
     return (
-        <div className="min-h-screen bg-background" dir={dir}>
+        <div className={`min-h-screen bg-background ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`} dir={dir}>
             {/* Customer Sidebar */}
             <CustomerSidebar
                 collapsed={sidebarCollapsed}
@@ -72,8 +72,13 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                     </div>
                 </header>
 
-                {/* Body */}
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                {/* Body: make fixed-height flex so sidebar and main scroll independently */}
+                <div className="flex h-[calc(100vh-64px)]">
+                    {/* Spacer for left/right when sidebar is fixed */}
+                    <main className={`flex-1 overflow-y-auto p-6 ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
+                        {children}
+                    </main>
+                </div>
             </div>
         </div>
     );
