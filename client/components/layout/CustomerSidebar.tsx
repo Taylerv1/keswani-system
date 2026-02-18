@@ -1,0 +1,172 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+    Home,
+    FileText,
+    Zap,
+    User,
+    LogOut,
+    ChevronLeft,
+    ChevronRight,
+    LayoutDashboard,
+} from "lucide-react";
+import { useTranslation } from "@/lib/translation-context";
+import { useCustomer } from "@/modules/customer/customer-context";
+
+interface NavItem {
+    key: string;
+    href: string;
+    icon: React.ReactNode;
+}
+
+interface CustomerSidebarProps {
+    collapsed: boolean;
+    onToggle: () => void;
+}
+
+export default function CustomerSidebar({
+    collapsed,
+    onToggle,
+}: CustomerSidebarProps) {
+    const pathname = usePathname();
+    const { t, dir } = useTranslation();
+    const { hasRentData, hasElectricityData } = useCustomer();
+
+    const navItems: NavItem[] = [
+        {
+            key: "custOverview",
+            href: "/dashboard",
+            icon: <LayoutDashboard size={20} />,
+        },
+        ...(hasRentData
+            ? [
+                {
+                    key: "custRentHistory",
+                    href: "/dashboard/rent-history",
+                    icon: <Home size={20} />,
+                },
+            ]
+            : []),
+        ...(hasElectricityData
+            ? [
+                {
+                    key: "custElecHistory",
+                    href: "/dashboard/electricity-history",
+                    icon: <Zap size={20} />,
+                },
+            ]
+            : []),
+        {
+            key: "custReports",
+            href: "/dashboard/reports",
+            icon: <FileText size={20} />,
+        },
+        {
+            key: "custProfile",
+            href: "/dashboard/profile",
+            icon: <User size={20} />,
+        },
+    ];
+
+    const CollapseIcon =
+        dir === "rtl"
+            ? collapsed
+                ? ChevronLeft
+                : ChevronRight
+            : collapsed
+                ? ChevronRight
+                : ChevronLeft;
+
+    return (
+        <aside
+            className={`
+        fixed top-0 h-screen z-40 flex flex-col
+        bg-gradient-to-b from-sidebar-bg to-sidebar-bg-dark
+        text-sidebar-text transition-all duration-300 ease-in-out
+        ${collapsed ? "w-[68px]" : "w-[240px]"}
+        ${dir === "rtl" ? "right-0" : "left-0"}
+      `}
+        >
+            {/* Logo / Brand */}
+            <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+                <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-sm">K</span>
+                </div>
+                {!collapsed && (
+                    <span className="text-sidebar-text-active font-semibold text-base truncate">
+                        {t("appName")}
+                    </span>
+                )}
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+                {navItems.map((item) => {
+                    const isActive =
+                        item.href === "/dashboard"
+                            ? pathname === "/dashboard"
+                            : pathname.startsWith(item.href);
+                    return (
+                        <Link
+                            key={item.key}
+                            href={item.href}
+                            className={`
+                flex items-center gap-3 px-3 py-2.5 rounded-lg
+                transition-all duration-200 no-underline
+                ${isActive
+                                    ? "bg-primary text-sidebar-text-active shadow-lg"
+                                    : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
+                                }
+                ${collapsed ? "justify-center" : ""}
+              `}
+                            title={collapsed ? t(item.key) : undefined}
+                        >
+                            <span className="shrink-0">{item.icon}</span>
+                            {!collapsed && (
+                                <span className="text-sm font-medium">{t(item.key)}</span>
+                            )}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Bottom actions */}
+            <div className="py-4 px-2 border-t border-white/10 space-y-1">
+                <button
+                    onClick={() => {
+                        window.location.href = "/login";
+                    }}
+                    className={`
+            flex items-center gap-3 px-3 py-2.5 rounded-lg w-full cursor-pointer
+            text-sidebar-text hover:bg-card-red/20 hover:text-card-red
+            transition-all duration-200
+            ${collapsed ? "justify-center" : ""}
+          `}
+                    title={collapsed ? t("logout") : undefined}
+                >
+                    <LogOut size={20} className="shrink-0" />
+                    {!collapsed && (
+                        <span className="text-sm font-medium">{t("logout")}</span>
+                    )}
+                </button>
+            </div>
+
+            {/* Collapse toggle */}
+            <button
+                onClick={onToggle}
+                className={`
+          absolute top-1/2 -translate-y-1/2
+          w-6 h-6 rounded-full bg-primary text-white cursor-pointer
+          flex items-center justify-center shadow-lg
+          transition-all duration-200 hover:scale-110 border-0
+          ${dir === "rtl" ? "-left-3" : "-right-3"}
+        `}
+                aria-label="Toggle sidebar"
+            >
+                <CollapseIcon size={14} />
+            </button>
+        </aside>
+    );
+}
