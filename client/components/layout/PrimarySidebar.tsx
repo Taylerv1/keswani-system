@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
+import { logout } from "@/lib/auth-client";
 
 interface NavItem {
   key: string;
@@ -98,9 +99,7 @@ export default function PrimarySidebar({
       {/* Bottom actions */}
       <div className="py-4 px-2 border-t border-white/10 space-y-1">
         <button
-          onClick={() => {
-            /* logout logic placeholder */
-          }}
+          onClick={() => logout()}
           className={`
             flex items-center gap-3 px-3 py-2.5 rounded-lg w-full cursor-pointer
             text-sidebar-text hover:bg-card-red/20 hover:text-card-red
