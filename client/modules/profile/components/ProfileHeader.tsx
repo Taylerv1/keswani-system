@@ -5,31 +5,23 @@ import { useTranslation } from "@/lib/translation-context";
 import { StatusBadge } from "@/components/ui";
 
 interface ProfileHeaderProps {
-  firstName: string;
-  firstNameAr: string;
-  lastName: string;
-  lastNameAr: string;
+  fullName: string;
   role: string;
   status: string;
   email: string;
   onEdit: () => void;
 }
 
-export default function ProfileHeader({
-  firstName,
-  firstNameAr,
-  lastName,
-  lastNameAr,
-  role,
-  status,
-  email,
-  onEdit,
-}: ProfileHeaderProps) {
-  const { t, locale } = useTranslation();
+export default function ProfileHeader({ fullName, role, status, email, onEdit }: ProfileHeaderProps) {
+  const { t } = useTranslation();
 
-  const displayFirst = locale === "ar" ? firstNameAr : firstName;
-  const displayLast = locale === "ar" ? lastNameAr : lastName;
-  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
   const roleLabel = role === "admin" ? t("roleAdmin") : t("roleOwner");
 
   return (
@@ -63,9 +55,7 @@ export default function ProfileHeader({
           </div>
 
           <div className="flex-1 min-w-0 pb-1">
-            <h1 className="text-2xl font-bold text-text-primary truncate">
-              {displayFirst} {displayLast}
-            </h1>
+            <h1 className="text-2xl font-bold text-text-primary truncate">{fullName}</h1>
             <p className="text-sm text-text-secondary mt-0.5">{email}</p>
           </div>
 

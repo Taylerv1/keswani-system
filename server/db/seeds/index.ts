@@ -87,12 +87,21 @@ async function main() {
     for (const emp of employees) {
         await prisma.employees.upsert({
             where: { id: emp.id },
-            update: {},
+            update: {
+                full_name: emp.full_name,
+                email: emp.email,
+                phone: emp.phone,
+                address: emp.address,
+                role: emp.role,
+                access: emp.access,
+                is_active: emp.is_active,
+            },
             create: {
                 id: emp.id,
                 full_name: emp.full_name,
                 email: emp.email,
                 phone: emp.phone,
+                address: emp.address,
                 role: emp.role,
                 access: emp.access,
                 is_active: emp.is_active,

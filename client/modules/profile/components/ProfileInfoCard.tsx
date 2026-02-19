@@ -1,43 +1,24 @@
 "use client";
 
-import { User, Phone, Mail, MapPin, Globe, Calendar } from "lucide-react";
+import { User, Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 
 interface ProfileInfoCardProps {
-  firstName: string;
-  firstNameAr: string;
-  lastName: string;
-  lastNameAr: string;
+  fullName: string;
   email: string;
   phone: string;
   address: string;
-  addressAr: string;
-  language: string;
   createdAt: string;
 }
 
-export default function ProfileInfoCard({
-  firstName,
-  firstNameAr,
-  lastName,
-  lastNameAr,
-  email,
-  phone,
-  address,
-  addressAr,
-  language,
-  createdAt,
-}: ProfileInfoCardProps) {
-  const { t, locale } = useTranslation();
-
-  const displayName = locale === "ar" ? `${firstNameAr} ${lastNameAr}` : `${firstName} ${lastName}`;
-  const displayAddress = locale === "ar" ? addressAr : address;
+export default function ProfileInfoCard({ fullName, email, phone, address, createdAt }: ProfileInfoCardProps) {
+  const { t } = useTranslation();
 
   const fields = [
-    { icon: <User size={16} />, label: t("fullName"), value: displayName, color: "text-card-blue", bg: "bg-card-blue-light" },
+    { icon: <User size={16} />, label: t("fullName"), value: fullName, color: "text-card-blue", bg: "bg-card-blue-light" },
     { icon: <Phone size={16} />, label: t("phoneNumber"), value: phone, color: "text-card-green", bg: "bg-card-green-light" },
     { icon: <Mail size={16} />, label: t("emailAddress"), value: email, color: "text-card-orange", bg: "bg-card-orange-light" },
-    { icon: <MapPin size={16} />, label: t("addressLabel"), value: displayAddress, color: "text-card-red", bg: "bg-card-red-light" },
+    { icon: <MapPin size={16} />, label: t("addressLabel"), value: address, color: "text-card-red", bg: "bg-card-red-light" },
     { icon: <Calendar size={16} />, label: t("accountCreated"), value: createdAt, color: "text-card-green", bg: "bg-card-green-light" },
   ];
 
