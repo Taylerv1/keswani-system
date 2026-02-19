@@ -39,12 +39,13 @@ export default function ProfilePage() {
     setUser((prev) => ({ ...prev, twoFactorEnabled: val }));
   };
 
-  const handleToggleNotification = (key: "email" | "sms" | "push", val: boolean) => {
-    setPreferences((prev) => {
-      if (key === "email") return { ...prev, notificationsEmail: val };
-      if (key === "sms") return { ...prev, notificationsSms: val };
-      return { ...prev, notificationsPush: val };
-    });
+  const handleToggleNotifications = (val: boolean) => {
+    setPreferences((prev) => ({
+      ...prev,
+      notificationsEmail: val,
+      notificationsSms: val,
+      notificationsPush: val,
+    }));
   };
 
   return (
@@ -76,31 +77,6 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-        <KpiCard
-          label={t("propertiesManaged")}
-          value={mockData.activity.propertiesManaged}
-          icon={<Building2 size={22} />}
-          color="text-card-blue"
-          bgColor="bg-card-blue-light"
-        />
-        <KpiCard
-          label={t("totalTenants")}
-          value={mockData.activity.totalTenants}
-          icon={<Users size={22} />}
-          color="text-card-green"
-          bgColor="bg-card-green-light"
-        />
-        <KpiCard
-          label={t("profileElecSubscribers")}
-          value={mockData.activity.totalElecSubscribers}
-          icon={<Zap size={22} />}
-          color="text-card-orange"
-          bgColor="bg-card-orange-light"
-        />
-      </div>
-
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Left column */}
@@ -118,10 +94,8 @@ export default function ProfilePage() {
             createdAt={user.createdAt}
           />
           <PreferencesPanel
-            notificationsEmail={preferences.notificationsEmail}
-            notificationsSms={preferences.notificationsSms}
-            notificationsPush={preferences.notificationsPush}
-            onToggleNotification={handleToggleNotification}
+            notificationsEnabled={preferences.notificationsPush}
+            onToggleNotifications={handleToggleNotifications}
           />
         </div>
 

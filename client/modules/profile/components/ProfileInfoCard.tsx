@@ -38,7 +38,6 @@ export default function ProfileInfoCard({
     { icon: <Phone size={16} />, label: t("phoneNumber"), value: phone, color: "text-card-green", bg: "bg-card-green-light" },
     { icon: <Mail size={16} />, label: t("emailAddress"), value: email, color: "text-card-orange", bg: "bg-card-orange-light" },
     { icon: <MapPin size={16} />, label: t("addressLabel"), value: displayAddress, color: "text-card-red", bg: "bg-card-red-light" },
-    { icon: <Globe size={16} />, label: t("languagePreference"), value: language === "ar" ? "العربية" : "English", color: "text-card-blue", bg: "bg-card-blue-light" },
     { icon: <Calendar size={16} />, label: t("accountCreated"), value: createdAt, color: "text-card-green", bg: "bg-card-green-light" },
   ];
 

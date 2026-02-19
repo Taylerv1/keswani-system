@@ -70,16 +70,6 @@ export default function ProfileHeader({
           </div>
 
           <div className="flex items-center gap-3 pb-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-text-secondary bg-background rounded-lg px-3 py-1.5">
-                {roleLabel}
-              </span>
-              <StatusBadge status={status} />
-              <span className="flex items-center gap-1.5 text-xs font-medium text-card-green bg-card-green-light rounded-lg px-3 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-card-green animate-pulse" />
-                {t("online")}
-              </span>
-            </div>
             <button
               onClick={onEdit}
               className="h-10 px-5 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 active:scale-[0.97]"

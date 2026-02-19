@@ -50,39 +50,40 @@ export default function ActivityTimeline({ items }: ActivityTimelineProps) {
   };
 
   return (
-    <div className="bg-surface rounded-2xl border border-surface-border p-6">
-      <h2 className="text-base font-semibold text-text-primary mb-5">{t("recentActivity")}</h2>
-      <div className="relative">
-        {/* Vertical line */}
-        <div className="absolute start-[18px] top-3 bottom-3 w-px bg-surface-border" />
+    <></>
+    // <div className="bg-surface rounded-2xl border border-surface-border p-6">
+    //   <h2 className="text-base font-semibold text-text-primary mb-5">{t("recentActivity")}</h2>
+    //   <div className="relative">
+    //     {/* Vertical line */}
+    //     <div className="absolute start-[18px] top-3 bottom-3 w-px bg-surface-border" />
 
-        <div className="space-y-1">
-          {items.map((item, i) => {
-            const colors = colorMap[item.action] ?? { text: "text-card-blue", bg: "bg-card-blue-light" };
-            return (
-              <div
-                key={item.id}
-                className="relative flex items-start gap-4 p-3 rounded-xl hover:bg-background transition-colors duration-200 group"
-              >
-                <div className={`relative z-10 w-9 h-9 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}>
-                  {iconMap[item.icon] ?? <Receipt size={16} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">
-                    {t(item.action)}
-                  </p>
-                  <p className="text-xs text-text-muted mt-0.5 truncate">
-                    {locale === "ar" ? item.detailAr : item.detail}
-                  </p>
-                </div>
-                <span className="text-[11px] text-text-muted whitespace-nowrap pt-0.5">
-                  {formatRelative(item.timestamp)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    //     <div className="space-y-1">
+    //       {items.map((item, i) => {
+    //         const colors = colorMap[item.action] ?? { text: "text-card-blue", bg: "bg-card-blue-light" };
+    //         return (
+    //           <div
+    //             key={item.id}
+    //             className="relative flex items-start gap-4 p-3 rounded-xl hover:bg-background transition-colors duration-200 group"
+    //           >
+    //             <div className={`relative z-10 w-9 h-9 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}>
+    //               {iconMap[item.icon] ?? <Receipt size={16} />}
+    //             </div>
+    //             <div className="flex-1 min-w-0">
+    //               <p className="text-sm font-medium text-text-primary">
+    //                 {t(item.action)}
+    //               </p>
+    //               <p className="text-xs text-text-muted mt-0.5 truncate">
+    //                 {locale === "ar" ? item.detailAr : item.detail}
+    //               </p>
+    //             </div>
+    //             <span className="text-[11px] text-text-muted whitespace-nowrap pt-0.5">
+    //               {formatRelative(item.timestamp)}
+    //             </span>
+    //           </div>
+    //         );
+    //       })}
+    //     </div>
+    //   </div>
+    // </div>
   );
 }
