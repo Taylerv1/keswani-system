@@ -526,6 +526,13 @@ const ar: Record<string, string> = {
   custSubElec: "كهرباء فقط",
   custProfileReadonly: "معلومات الملف الشخصي للقراءة فقط. اتصل بالمسؤول للتحديث.",
   in_review: "قيد المراجعة",
+
+  // 404 Not Found
+  notFoundCode: "٤٠٤",
+  notFoundTitle: "الصفحة غير موجودة",
+  notFoundDescription: "عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+  notFoundBackDashboard: "الذهاب إلى لوحة التحكم",
+  notFoundBackHome: "العودة إلى الرئيسية",
 };
 
 export default ar;

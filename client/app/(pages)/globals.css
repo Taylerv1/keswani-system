@@ -134,3 +134,67 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(30,41,59,0.12) transparent;
 }
+
+/* ============================================================
+   404 / Not-Found Page Animations
+   ============================================================ */
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
+
+@keyframes float-med {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-12px) rotate(6deg); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(24px, -20px) scale(1.06); }
+  66%       { transform: translate(-16px, 14px) scale(0.96); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.92); opacity: 0.7; }
+  70%  { transform: scale(1.06); opacity: 0; }
+  100% { transform: scale(0.92); opacity: 0; }
+}
+
+/* Utility classes */
+.animate-float-slow  { animation: float-slow 6s ease-in-out infinite; }
+.animate-float-med   { animation: float-med  4.5s ease-in-out infinite; }
+.animate-fade-in-up  { animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-fade-in     { animation: fade-in    0.5s ease both; }
+.animate-blob        { animation: blob-drift 9s ease-in-out infinite; }
+.animate-blob-delay  { animation: blob-drift 11s ease-in-out infinite 2s; }
+.animate-spin-slow   { animation: spin-slow 20s linear infinite; }
+.animate-pulse-ring  { animation: pulse-ring 2.5s ease-out infinite; }
+
+/* staggered fade-in delays */
+.delay-100 { animation-delay: 0.10s; }
+.delay-200 { animation-delay: 0.20s; }
+.delay-300 { animation-delay: 0.30s; }
+.delay-400 { animation-delay: 0.40s; }
+.delay-500 { animation-delay: 0.50s; }

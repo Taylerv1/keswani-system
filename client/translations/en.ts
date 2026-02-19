@@ -526,6 +526,13 @@ const en = {
   custSubElec: "Electricity Only",
   custProfileReadonly: "Profile information is read-only. Contact admin to update.",
   in_review: "In Review",
+
+  // 404 Not Found
+  notFoundCode: "404",
+  notFoundTitle: "Page Not Found",
+  notFoundDescription: "Sorry, the page you are looking for doesn't exist or has been moved.",
+  notFoundBackDashboard: "Go to Dashboard",
+  notFoundBackHome: "Back to Home",
 } as const;
 
 export type TranslationKeys = keyof typeof en;
