@@ -1,5 +1,6 @@
 "use client";
 
+import { CSSProperties, ReactNode } from "react";
 import { User, Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 
@@ -12,11 +13,29 @@ interface ProfileInfoCardProps {
 }
 
 export default function ProfileInfoCard({ fullName, email, phone, address, createdAt }: ProfileInfoCardProps) {
-  const { t } = useTranslation();
+  const { t, dir: currentDir } = useTranslation();
 
-  const fields = [
+  const fields: {
+    icon: ReactNode;
+    label: string;
+    value: string;
+    color: string;
+    bg: string;
+    className?: string;
+    dir?: string;
+    style?: CSSProperties;
+  }[] = [
     { icon: <User size={16} />, label: t("fullName"), value: fullName, color: "text-card-blue", bg: "bg-card-blue-light" },
-    { icon: <Phone size={16} />, label: t("phoneNumber"), value: phone, color: "text-card-green", bg: "bg-card-green-light" },
+    {
+      icon: <Phone size={16} />,
+      label: t("phoneNumber"),
+      value: phone,
+      color: "text-card-green",
+      bg: "bg-card-green-light",
+      className: undefined,
+      dir: "ltr",
+      style: { textAlign: currentDir === "rtl" ? "right" : "left"  },
+    },
     { icon: <Mail size={16} />, label: t("emailAddress"), value: email, color: "text-card-orange", bg: "bg-card-orange-light" },
     { icon: <MapPin size={16} />, label: t("addressLabel"), value: address, color: "text-card-red", bg: "bg-card-red-light" },
     { icon: <Calendar size={16} />, label: t("accountCreated"), value: createdAt, color: "text-card-green", bg: "bg-card-green-light" },
@@ -34,9 +53,15 @@ export default function ProfileInfoCard({ fullName, email, phone, address, creat
             <div className={`w-9 h-9 rounded-xl ${f.bg} ${f.color} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}>
               {f.icon}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-text-muted">{f.label}</p>
-              <p className="text-sm font-medium text-text-primary mt-0.5 truncate">{f.value}</p>
+              <p
+                className={`text-sm font-medium text-text-primary mt-0.5 truncate ${f.className || ""}`}
+                dir={f.dir}
+                style={f.style}
+              >
+                {f.value}
+              </p>
             </div>
           </div>
         ))}

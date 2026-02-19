@@ -22,7 +22,7 @@ interface EditProfileModalProps {
 }
 
 export default function EditProfileModal({ open, onClose, data, onSave }: EditProfileModalProps) {
-  const { t } = useTranslation();
+  const { t, dir: currentDir } = useTranslation();
   const [form, setForm] = useState(data);
 
   useEffect(() => {
@@ -64,6 +64,8 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            dir="ltr"
+            style={{ textAlign: currentDir === 'rtl' ? 'right' : 'left' }}
           />
         </div>
         <div>
