@@ -75,13 +75,44 @@ export default function ProfilePage() {
     };
   }, []);
 
-  const handleSaveProfile = (data: Partial<ProfileData>) => {
-    setProfile((prev) => {
-      if (!prev) return null;
-      return { ...prev, ...data };
-    });
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2500);
+  const handleSaveProfile = async (data: Partial<ProfileData>) => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: data.fullName,
+          phone: data.phone,
+          address: data.address,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.success && json.data?.profile) {
+        const p = json.data.profile;
+        setProfile((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            fullName: p.full_name || prev.fullName,
+            phone: p.phone || prev.phone,
+            address: p.address || prev.address,
+          };
+        });
+        setToastVisible(true);
+        setTimeout(() => setToastVisible(false), 2500);
+      } else {
+        console.error("Failed to update profile", json.error);
+      }
+    } catch (err) {
+      console.error("Error updating profile", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggle2FA = (val: boolean) => {
