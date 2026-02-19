@@ -1,5 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
+import propertyRoutes from "./property.routes";
+import clientRoutes from "./client.routes";
 
 const router = Router();
 
@@ -11,10 +13,12 @@ router.get("/health", (_req, res) => {
 // Auth routes
 router.use("/auth", authRoutes);
 
-// Future route modules will be added here:
+// Resource routes
+router.use("/properties", propertyRoutes);
+router.use("/clients", clientRoutes);
+
+// Future route modules:
 // router.use("/employees", employeeRoutes);
-// router.use("/clients", clientRoutes);
-// router.use("/properties", propertyRoutes);
 // router.use("/contracts", contractRoutes);
 // router.use("/payments", paymentRoutes);
 // router.use("/electricity", electricityRoutes);
