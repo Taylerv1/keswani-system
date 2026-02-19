@@ -18,12 +18,13 @@ interface EditProfileModalProps {
     email: string;
     phone: string;
     address: string;
-  }) => void;
+  }) => Promise<void> | void;
 }
 
 export default function EditProfileModal({ open, onClose, data, onSave }: EditProfileModalProps) {
   const { t, dir: currentDir } = useTranslation();
   const [form, setForm] = useState(data);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -31,9 +32,16 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
     }
   }, [open, data]);
 
-  const handleSave = () => {
-    onSave(form);
-    onClose();
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      await onSave(form);
+      onClose();
+    } catch (error) {
+      console.error("Save failed:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -80,16 +88,17 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+            disabled={isSaving}
+            className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("cancel")}
           </button>
           <button
             onClick={handleSave}
-            disabled={!form.fullName || !form.email}
-            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!form.fullName || !form.email || isSaving}
+            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
           >
-            {t("save")}
+            {isSaving ? "..." : t("save")}
           </button>
         </div>
       </div>
