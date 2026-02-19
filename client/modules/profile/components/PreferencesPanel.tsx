@@ -1,20 +1,16 @@
 "use client";
 
-import { Globe, Palette, Bell, Mail, MessageSquare, Smartphone } from "lucide-react";
+import { Globe, Palette, Bell } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 
 interface PreferencesPanelProps {
-  notificationsEmail: boolean;
-  notificationsSms: boolean;
-  notificationsPush: boolean;
-  onToggleNotification: (key: "email" | "sms" | "push", val: boolean) => void;
+  notificationsEnabled: boolean;
+  onToggleNotifications: (enabled: boolean) => void;
 }
 
 export default function PreferencesPanel({
-  notificationsEmail,
-  notificationsSms,
-  notificationsPush,
-  onToggleNotification,
+  notificationsEnabled,
+  onToggleNotifications,
 }: PreferencesPanelProps) {
   const { t, locale, toggleLocale } = useTranslation();
 
@@ -68,37 +64,16 @@ export default function PreferencesPanel({
         </div>
 
         {/* Notifications */}
-        <div className="p-4 rounded-xl bg-background space-y-4">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-card-green-light text-card-green flex items-center justify-center">
+        <div className="flex items-center justify-between p-4 rounded-xl bg-background hover:bg-primary-light/30 transition-colors duration-200 group">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-card-green-light text-card-green flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
               <Bell size={18} />
             </div>
-            <p className="text-sm font-medium text-text-primary">{t("notifications")}</p>
-          </div>
-
-          <div className="space-y-3 ms-[52px]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail size={14} className="text-text-muted" />
-                <span className="text-sm text-text-secondary">{t("emailNotifications")}</span>
-              </div>
-              <Toggle checked={notificationsEmail} onChange={() => onToggleNotification("email", !notificationsEmail)} />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare size={14} className="text-text-muted" />
-                <span className="text-sm text-text-secondary">{t("smsNotifications")}</span>
-              </div>
-              <Toggle checked={notificationsSms} onChange={() => onToggleNotification("sms", !notificationsSms)} />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Smartphone size={14} className="text-text-muted" />
-                <span className="text-sm text-text-secondary">{t("pushNotifications")}</span>
-              </div>
-              <Toggle checked={notificationsPush} onChange={() => onToggleNotification("push", !notificationsPush)} />
+            <div>
+              <p className="text-sm font-medium text-text-primary">{t("notifications")}</p>
             </div>
           </div>
+          <Toggle checked={notificationsEnabled} onChange={() => onToggleNotifications(!notificationsEnabled)} />
         </div>
       </div>
     </div>

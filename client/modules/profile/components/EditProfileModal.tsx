@@ -46,88 +46,41 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
   return (
     <Modal open={open} onClose={onClose} title={t("editProfile")} maxWidth="max-w-md">
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("firstName")} (EN)</label>
-            <input
-              type="text"
-              value={form.firstName}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("firstName")} (AR)</label>
-            <input
-              type="text"
-              value={form.firstNameAr}
-              onChange={(e) => setForm({ ...form, firstNameAr: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              dir="rtl"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("fullName")}</label>
+          <input
+            type="text"
+            value={form.firstName}
+            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("lastName")} (EN)</label>
-            <input
-              type="text"
-              value={form.lastName}
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("lastName")} (AR)</label>
-            <input
-              type="text"
-              value={form.lastNameAr}
-              onChange={(e) => setForm({ ...form, lastNameAr: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              dir="rtl"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("emailAddress")}</label>
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("emailAddress")}</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("phoneNumber")}</label>
-            <input
-              type="text"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("phoneNumber")}</label>
+          <input
+            type="text"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("addressLabel")} (EN)</label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("addressLabel")} (AR)</label>
-            <input
-              type="text"
-              value={form.addressAr}
-              onChange={(e) => setForm({ ...form, addressAr: e.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              dir="rtl"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("addressLabel")}</label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button
