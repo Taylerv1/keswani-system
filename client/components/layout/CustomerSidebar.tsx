@@ -91,15 +91,13 @@ export default function CustomerSidebar({
       `}
         >
             {/* Logo / Brand */}
-            <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
-                <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                    <span className="text-white font-bold text-sm">K</span>
-                </div>
-                {!collapsed && (
-                    <span className="text-sidebar-text-active font-semibold text-base truncate">
-                        {t("appName")}
-                    </span>
-                )}
+            <div className="flex items-center justify-center px-3 py-2 border-b border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                    src="/logoV2.png"
+                    alt="Keswani Logo"
+                    className="w-full h-auto object-contain"
+                />
             </div>
 
             {/* Navigation */}
