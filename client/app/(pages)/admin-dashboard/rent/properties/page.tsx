@@ -270,6 +270,13 @@ export default function PropertiesPage() {
                           <Eye size={15} />
                         </button>
                         <button
+                          onClick={() => openEdit(p)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0"
+                          title={t("edit")}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
                           onClick={() => setDeleteId(p.id)}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0"
                           title={t("delete")}
