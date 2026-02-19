@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lock, Clock, ShieldCheck, KeyRound } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 import { StatusBadge, Modal } from "@/components/ui";
@@ -21,9 +21,16 @@ export default function SecuritySettings({
   const { t } = useTranslation();
   const [passwordModal, setPasswordModal] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formatDate = (iso: string) => {
+    if (!mounted || !iso) return "-";
     const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "-";
     return d.toLocaleString();
   };
 

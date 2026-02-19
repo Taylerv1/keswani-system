@@ -1,42 +1,91 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Users, Zap } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
-import { KpiCard } from "@/components/ui";
 import ProfileHeader from "@/modules/profile/components/ProfileHeader";
 import ProfileInfoCard from "@/modules/profile/components/ProfileInfoCard";
 import SecuritySettings from "@/modules/profile/components/SecuritySettings";
 import ActivityTimeline from "@/modules/profile/components/ActivityTimeline";
 import PreferencesPanel from "@/modules/profile/components/PreferencesPanel";
 import EditProfileModal from "@/modules/profile/components/EditProfileModal";
-import mockData from "@/mocks/profile.mock.json";
+
+interface ProfileData {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  createdAt: string;
+  lastLogin: string;
+  status: string;
+  role: string;
+  twoFactorEnabled: boolean;
+}
 
 export default function ProfilePage() {
   const { t } = useTranslation();
 
-  const [user, setUser] = useState(mockData.user);
-  const [preferences, setPreferences] = useState(mockData.preferences);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [preferences, setPreferences] = useState({
+    notificationsEmail: false,
+    notificationsSms: false,
+    notificationsPush: false,
+  });
   const [editOpen, setEditOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveProfile = (data: {
-    firstName: string;
-    firstNameAr: string;
-    lastName: string;
-    lastNameAr: string;
-    email: string;
-    phone: string;
-    address: string;
-    addressAr: string;
-  }) => {
-    setUser((prev) => ({ ...prev, ...data }));
+  useEffect(() => {
+    let active = true;
+
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/auth/me", { method: "GET", cache: "no-store" });
+        const json = await res.json();
+
+        if (!json?.success || !json?.data?.profile) {
+          throw new Error(json?.error || "Failed to load profile");
+        }
+
+        const p = json.data.profile as any;
+        const mapped: ProfileData = {
+          fullName: p.full_name ?? "",
+          email: p.email ?? "",
+          phone: p.phone ?? "",
+          address: p.address ?? "",
+          createdAt: p.created_at ? new Date(p.created_at as string).toLocaleDateString() : "",
+          lastLogin: p.last_login ?? "",
+          status: p.is_active ? "active" : "inactive",
+          role: json.data.user?.role ?? json.data.user?.user_type ?? "",
+          twoFactorEnabled: false,
+        };
+
+        if (active) setProfile(mapped);
+      } catch (error) {
+        console.error("Profile load error", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSaveProfile = (data: Partial<ProfileData>) => {
+    setProfile((prev) => {
+      if (!prev) return null;
+      return { ...prev, ...data };
+    });
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2500);
   };
 
   const handleToggle2FA = (val: boolean) => {
-    setUser((prev) => ({ ...prev, twoFactorEnabled: val }));
+    setProfile((prev) => (prev ? { ...prev, twoFactorEnabled: val } : prev));
   };
 
   const handleToggleNotifications = (val: boolean) => {
@@ -63,70 +112,64 @@ export default function ProfilePage() {
         <p className="text-text-secondary text-sm mt-1">{t("profileSubtitle")}</p>
       </div>
 
-      {/* Header */}
-      <div className="mb-6">
-        <ProfileHeader
-          firstName={user.firstName}
-          firstNameAr={user.firstNameAr}
-          lastName={user.lastName}
-          lastNameAr={user.lastNameAr}
-          role={user.role}
-          status={user.status}
-          email={user.email}
-          onEdit={() => setEditOpen(true)}
-        />
-      </div>
+      {loading && <div className="text-sm text-text-secondary">{t("loading")}</div>}
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Left column */}
-        <div className="space-y-6">
-          <ProfileInfoCard
-            firstName={user.firstName}
-            firstNameAr={user.firstNameAr}
-            lastName={user.lastName}
-            lastNameAr={user.lastNameAr}
-            email={user.email}
-            phone={user.phone}
-            address={user.address}
-            addressAr={user.addressAr}
-            language={user.language}
-            createdAt={user.createdAt}
-          />
-          <PreferencesPanel
-            notificationsEnabled={preferences.notificationsPush}
-            onToggleNotifications={handleToggleNotifications}
-          />
-        </div>
+      {profile && (
+        <>
+          {/* Header */}
+          <div className="mb-6">
+            <ProfileHeader
+              fullName={profile.fullName}
+              role={profile.role}
+              status={profile.status}
+              email={profile.email}
+              onEdit={() => setEditOpen(true)}
+            />
+          </div>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          <SecuritySettings
-            lastLogin={user.lastLogin}
-            accountStatus={user.status}
-            twoFactorEnabled={user.twoFactorEnabled}
-            onToggle2FA={handleToggle2FA}
-          />
-          <ActivityTimeline items={mockData.activity.timeline} />
-        </div>
-      </div>
+          {/* Two-column layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Left column */}
+            <div className="space-y-6">
+              <ProfileInfoCard
+                fullName={profile.fullName}
+                email={profile.email}
+                phone={profile.phone}
+                address={profile.address}
+                createdAt={profile.createdAt}
+              />
+              <PreferencesPanel
+                notificationsEnabled={preferences.notificationsPush}
+                onToggleNotifications={handleToggleNotifications}
+              />
+            </div>
 
-      {/* Edit Modal */}
-      <EditProfileModal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        data={{
-          firstName: user.firstName,
-          firstNameAr: user.firstNameAr,
-          lastName: user.lastName,
-          lastNameAr: user.lastNameAr,
-          email: user.email,
-          phone: user.phone,
-          address: user.address,
-          addressAr: user.addressAr,
-        }}
-        onSave={handleSaveProfile}
-      />
+            {/* Right column */}
+            <div className="space-y-6">
+              <SecuritySettings
+                lastLogin={profile.lastLogin}
+                accountStatus={profile.status}
+                twoFactorEnabled={profile.twoFactorEnabled}
+                onToggle2FA={handleToggle2FA}
+              />
+              <ActivityTimeline items={[]} />
+            </div>
+          </div>
+
+          {/* Edit Modal */}
+          <EditProfileModal
+            open={editOpen}
+            onClose={() => setEditOpen(false)}
+            data={{
+              fullName: profile.fullName,
+              email: profile.email,
+              phone: profile.phone,
+              address: profile.address,
+            }}
+            onSave={(data) => handleSaveProfile({ ...profile, ...data })}
+          />
+        </>
+      )}
     </div>
   );
 }

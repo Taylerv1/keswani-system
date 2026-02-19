@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/translation-context";
 import { Modal } from "@/components/ui";
 
@@ -8,24 +8,16 @@ interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
   data: {
-    firstName: string;
-    firstNameAr: string;
-    lastName: string;
-    lastNameAr: string;
+    fullName: string;
     email: string;
     phone: string;
     address: string;
-    addressAr: string;
   };
   onSave: (data: {
-    firstName: string;
-    firstNameAr: string;
-    lastName: string;
-    lastNameAr: string;
+    fullName: string;
     email: string;
     phone: string;
     address: string;
-    addressAr: string;
   }) => void;
 }
 
@@ -33,15 +25,16 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
   const { t } = useTranslation();
   const [form, setForm] = useState(data);
 
+  useEffect(() => {
+    if (open) {
+      setForm(data);
+    }
+  }, [open, data]);
+
   const handleSave = () => {
     onSave(form);
     onClose();
   };
-
-  // Sync form when data changes
-  if (open && form.firstName !== data.firstName && form.lastName !== data.lastName) {
-    setForm(data);
-  }
 
   return (
     <Modal open={open} onClose={onClose} title={t("editProfile")} maxWidth="max-w-md">
@@ -50,8 +43,8 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
           <label className="block text-sm font-medium text-text-secondary mb-1">{t("fullName")}</label>
           <input
             type="text"
-            value={form.firstName}
-            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            value={form.fullName}
+            onChange={(e) => setForm({ ...form, fullName: e.target.value })}
             className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -91,7 +84,7 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
           </button>
           <button
             onClick={handleSave}
-            disabled={!form.firstName || !form.lastName || !form.email}
+            disabled={!form.fullName || !form.email}
             className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("save")}
