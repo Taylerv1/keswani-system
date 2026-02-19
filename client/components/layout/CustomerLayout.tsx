@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Globe, Bell } from "lucide-react";
+import { Globe, Bell, Menu } from "lucide-react";
 import CustomerSidebar from "@/components/layout/CustomerSidebar";
 import { useTranslation } from "@/lib/translation-context";
 import { useCustomer } from "@/modules/customer/customer-context";
@@ -13,36 +13,51 @@ interface CustomerLayoutProps {
 
 export default function CustomerLayout({ children }: CustomerLayoutProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const { t, dir, toggleLocale, locale } = useTranslation();
     const { data } = useCustomer();
-
-    const sidebarWidth = sidebarCollapsed ? 68 : 240;
 
     const displayName = locale === "ar" ? data.user.nameAr : data.user.name;
 
     return (
         <div className={`min-h-screen bg-background ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`} dir={dir}>
+            {/* Mobile backdrop */}
+            {mobileSidebarOpen && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/50 md:hidden"
+                    onClick={() => setMobileSidebarOpen(false)}
+                />
+            )}
+
             {/* Customer Sidebar */}
             <CustomerSidebar
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed((prev) => !prev)}
+                mobileOpen={mobileSidebarOpen}
+                onMobileClose={() => setMobileSidebarOpen(false)}
             />
 
             {/* Main content area */}
             <div
-                className="transition-all duration-300 min-h-screen"
-                style={{
-                    [dir === "rtl" ? "marginRight" : "marginLeft"]: `${sidebarWidth}px`,
-                }}
+                className={`transition-all duration-300 min-h-screen ${sidebarCollapsed ? "md:ms-[68px]" : "md:ms-[240px]"}`}
             >
                 {/* Top Bar */}
-                <header className="h-16 bg-surface border-b border-surface-border flex items-center justify-between px-6 sticky top-0 z-30">
-                    {/* Left: greeting */}
-                    <div className="flex items-center gap-2 text-sm text-text-secondary">
-                        <span>{t("custWelcome")},</span>
-                        <span className="font-semibold text-text-primary">
-                            {displayName}
-                        </span>
+                <header className="h-16 bg-surface border-b border-surface-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+                    {/* Left: hamburger (mobile) + greeting */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setMobileSidebarOpen(true)}
+                            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-surface-border bg-background text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer"
+                            aria-label="Open menu"
+                        >
+                            <Menu size={18} />
+                        </button>
+                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                            <span className="hidden sm:inline">{t("custWelcome")},</span>
+                            <span className="font-semibold text-text-primary">
+                                {displayName}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Right: actions */}
@@ -61,6 +76,9 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                         {/* Notifications placeholder */}
                         <button className="relative w-9 h-9 rounded-lg border border-surface-border bg-background flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
                             <Bell size={16} />
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-card-red text-white text-[10px] flex items-center justify-center font-bold">
+                                3
+                            </span>
                         </button>
 
                         {/* Avatar */}

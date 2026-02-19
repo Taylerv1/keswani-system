@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Globe, Search, Bell } from "lucide-react";
+import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
+import { usePathname } from "next/navigation";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTranslation } from "@/lib/translation-context";
@@ -13,30 +14,61 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobilePrimaryOpen, setMobilePrimaryOpen] = useState(false);
+  const [mobileSecondaryOpen, setMobileSecondaryOpen] = useState(false);
   const { t, dir, toggleLocale } = useTranslation();
+  const pathname = usePathname();
 
-  const sidebarWidth = sidebarCollapsed ? 68 : 240;
+  const hasSecondaryNav =
+    pathname.startsWith("/admin-dashboard/rent") ||
+    pathname.startsWith("/admin-dashboard/electricity");
 
   return (
-    <div className={`min-h-screen bg-background ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`} dir={dir}>
+    <div className="min-h-screen bg-background" dir={dir}>
+      {/* Mobile backdrop for primary sidebar */}
+      {mobilePrimaryOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setMobilePrimaryOpen(false)}
+        />
+      )}
+
       {/* Primary Sidebar */}
       <PrimarySidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((prev) => !prev)}
+        mobileOpen={mobilePrimaryOpen}
+        onMobileClose={() => setMobilePrimaryOpen(false)}
       />
 
       {/* Main content area */}
       <div
-        className="transition-all duration-300 min-h-screen"
-        style={{
-          [dir === "rtl" ? "marginRight" : "marginLeft"]: `${sidebarWidth}px`,
-        }}
+        className={`transition-all duration-300 min-h-screen ${sidebarCollapsed ? "md:ms-[68px]" : "md:ms-[240px]"}`}
       >
         {/* Top Bar */}
-        <header className="h-16 bg-surface border-b border-surface-border flex items-center justify-between px-6 sticky top-0 z-30">
-          {/* Left: breadcrumb placeholder */}
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <span>{t("dashboard")}</span>
+        <header className="h-16 bg-surface border-b border-surface-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+          {/* Left: hamburger (mobile) + sections button (mobile) + breadcrumb */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMobilePrimaryOpen(true)}
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-surface-border bg-background text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer"
+              aria-label="Open menu"
+            >
+              <Menu size={18} />
+            </button>
+            {hasSecondaryNav && (
+              <button
+                onClick={() => setMobileSecondaryOpen(true)}
+                className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-surface-border bg-background text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer"
+                aria-label="Open sections"
+              >
+                <LayoutList size={18} />
+              </button>
+            )}
+            {/* Breadcrumb placeholder */}
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <span>{t("dashboard")}</span>
+            </div>
           </div>
 
           {/* Right: actions */}
@@ -91,7 +123,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Body */}
         <div className="flex h-[calc(100vh-64px)]">
           {/* Secondary sidebar – self-determines visibility by pathname */}
-          <SecondarySidebar />
+          <SecondarySidebar
+            mobileOpen={mobileSecondaryOpen}
+            onClose={() => setMobileSecondaryOpen(false)}
+          />
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto p-6">{children}</main>

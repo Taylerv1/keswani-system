@@ -19,6 +19,7 @@ import {
   BarChart3,
   Settings,
   Zap,
+  X,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 
@@ -64,20 +65,34 @@ function getSubNav(pathname: string): { title: string; items: SubNavItem[] } | n
   return null;
 }
 
-export default function SecondarySidebar() {
+export default function SecondarySidebar({
+  mobileOpen = false,
+  onClose,
+}: {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
-  const { t } = useTranslation();
+  const { t, dir } = useTranslation();
 
   const nav = getSubNav(pathname);
   if (!nav) return null;
 
-  return (
-    <aside className="w-[220px] h-full bg-surface border-e border-surface-border shrink-0 flex flex-col">
-      {/* Title */}
-      <div className="px-4 pt-5 pb-3">
+  const navContent = (
+    <>
+      {/* Title row */}
+      <div className="flex items-center justify-between px-4 pt-5 pb-3">
         <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">
           {t(nav.title)}
         </p>
+        {/* Close button – mobile only */}
+        <button
+          onClick={onClose}
+          className="md:hidden flex items-center justify-center w-7 h-7 rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-all cursor-pointer"
+          aria-label="Close menu"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {/* Nav items */}
@@ -94,6 +109,7 @@ export default function SecondarySidebar() {
             <Link
               key={item.key}
               href={item.href}
+              onClick={onClose}
               className={`
                 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm no-underline
                 transition-all duration-150
@@ -109,6 +125,39 @@ export default function SecondarySidebar() {
           );
         })}
       </nav>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop: inline sidebar */}
+      <aside className="hidden md:flex w-[220px] h-full bg-surface border-e border-surface-border shrink-0 flex-col">
+        {navContent}
+      </aside>
+
+      {/* Mobile: overlay drawer */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`
+          md:hidden fixed top-0 h-screen z-40 flex flex-col w-[260px]
+          bg-surface
+          transition-transform duration-300 ease-in-out
+          ${dir === "rtl" ? "right-0" : "left-0"}
+          ${mobileOpen
+            ? "translate-x-0"
+            : dir === "rtl"
+              ? "translate-x-full"
+              : "-translate-x-full"
+          }
+        `}
+      >
+        {navContent}
+      </aside>
+    </>
   );
 }

@@ -25,11 +25,15 @@ interface NavItem {
 interface CustomerSidebarProps {
     collapsed: boolean;
     onToggle: () => void;
+    mobileOpen?: boolean;
+    onMobileClose?: () => void;
 }
 
 export default function CustomerSidebar({
     collapsed,
     onToggle,
+    mobileOpen = false,
+    onMobileClose,
 }: CustomerSidebarProps) {
     const pathname = usePathname();
     const { t, dir } = useTranslation();
@@ -86,18 +90,32 @@ export default function CustomerSidebar({
         fixed top-0 h-screen z-40 flex flex-col
         bg-gradient-to-b from-sidebar-bg to-sidebar-bg-dark
         text-sidebar-text transition-all duration-300 ease-in-out
-        ${collapsed ? "w-[68px]" : "w-[240px]"}
+        w-[240px] ${collapsed ? "md:w-[68px]" : "md:w-[240px]"}
         ${dir === "rtl" ? "right-0" : "left-0"}
+        ${mobileOpen
+            ? "translate-x-0"
+            : dir === "rtl"
+                ? "translate-x-full md:translate-x-0"
+                : "-translate-x-full md:translate-x-0"
+        }
       `}
         >
             {/* Logo / Brand */}
             <div className="flex items-center justify-center px-3 py-2 border-b border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={collapsed ? "/CloseSidebarLogo.png" : "/logoV2.png"}
+                    src="/logoV2.png"
                     alt="Keswani Logo"
-                    className={collapsed ? "w-10 h-10 object-contain" : "w-full h-auto object-contain"}
+                    className={`w-full h-auto object-contain ${collapsed ? "md:hidden" : ""}`}
                 />
+                {collapsed && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src="/CloseSidebarLogo.png"
+                        alt="Keswani Logo"
+                        className="hidden md:block w-10 h-10 object-contain"
+                    />
+                )}
             </div>
 
             {/* Navigation */}
@@ -116,16 +134,15 @@ export default function CustomerSidebar({
                                     ? "bg-primary text-sidebar-text-active shadow-lg"
                                     : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
                                 }
-                                ${collapsed ? "justify-center px-0" : ""}
+                                ${collapsed ? "md:justify-center md:px-0" : ""}
                             `}
                             title={collapsed ? t(item.key) : undefined}
+                            onClick={onMobileClose}
                         >
                             <span className="shrink-0">{item.icon}</span>
-                            {!collapsed && (
-                                <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"}`}>
-                                    {t(item.key)}
-                                </span>
-                            )}
+                            <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"} ${collapsed ? "md:hidden" : ""}`}>
+                                {t(item.key)}
+                            </span>
                         </Link>
                     );
                 })}
@@ -139,24 +156,23 @@ export default function CustomerSidebar({
             flex items-center gap-3 px-3 py-2.5 rounded-lg w-full cursor-pointer
             text-sidebar-text hover:bg-card-red/20 hover:text-card-red
             transition-all duration-200
-            ${collapsed ? "justify-center" : ""}
+            ${collapsed ? "md:justify-center" : ""}
           `}
                     title={collapsed ? t("logout") : undefined}
                 >
                     <LogOut size={20} className="shrink-0" />
-                    {!collapsed && (
-                        <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"}`}>{t("logout")}</span>
-                    )}
+                    <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"} ${collapsed ? "md:hidden" : ""}`}>{t("logout")}</span>
                 </button>
             </div>
 
-            {/* Collapse toggle */}
+            {/* Collapse toggle – desktop only */}
             <button
                 onClick={onToggle}
                 className={`
+          hidden md:flex
           absolute top-1/2 -translate-y-1/2
           w-6 h-6 rounded-full bg-primary text-white cursor-pointer
-          flex items-center justify-center shadow-lg
+          items-center justify-center shadow-lg
           transition-all duration-200 hover:scale-110 border-0
           ${dir === "rtl" ? "-left-3" : "-right-3"}
         `}
