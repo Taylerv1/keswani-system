@@ -186,7 +186,7 @@ export default function EmployeesPage() {
         </div>
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onConfirm={handleDelete} onClose={() => setDeleteId(null)} title={t("deleteConfirm")} message={t("deleteEmployeeConfirm")} />
+      <ConfirmDialog open={!!deleteId} onConfirm={handleDelete} onClose={() => setDeleteId(null)} title={t("deleteConfirm")} message={t("deleteEmployeeConfirm")} confirmWord="DELETE" />
     </div>
   );
 }

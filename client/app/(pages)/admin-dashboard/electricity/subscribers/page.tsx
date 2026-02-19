@@ -349,7 +349,7 @@ export default function SubscribersPage() {
         )}
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeSubscriber(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeSubscriber(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }

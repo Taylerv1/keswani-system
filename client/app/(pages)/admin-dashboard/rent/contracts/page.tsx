@@ -319,7 +319,7 @@ export default function ContractsPage() {
         )}
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeContract(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeContract(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }

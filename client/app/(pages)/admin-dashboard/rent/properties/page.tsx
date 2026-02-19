@@ -520,6 +520,7 @@ export default function PropertiesPage() {
           if (deleteId) removeProperty(deleteId);
           setDeleteId(null);
         }}
+        confirmWord="DELETE"
       />
     </div>
   );
