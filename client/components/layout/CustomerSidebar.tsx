@@ -94,9 +94,9 @@ export default function CustomerSidebar({
             <div className="flex items-center justify-center px-3 py-2 border-b border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src="/logoV2.png"
+                    src={collapsed ? "/CloseSidebarLogo.png" : "/logoV2.png"}
                     alt="Keswani Logo"
-                    className="w-full h-auto object-contain"
+                    className={collapsed ? "w-10 h-10 object-contain" : "w-full h-auto object-contain"}
                 />
             </div>
 
