@@ -99,12 +99,12 @@ body {
   text-align: left;
 }
 
-/* Place scrollbar on left for RTL containers while keeping content LTR */
+/* Use native RTL behavior for scrollbar placement */
 .scrollbar-left {
-  direction: rtl;
+  /* Removed direction: rtl as the container already has dir="rtl" */
 }
 .scrollbar-left * {
-  direction: ltr;
+  /* Removed direction: ltr override */
 }
 
 /* Custom scrollbar styles for better UX */
