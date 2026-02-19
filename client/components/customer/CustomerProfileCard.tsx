@@ -64,11 +64,6 @@ export default function CustomerProfileCard({ user }: CustomerProfileCardProps) 
                         </span>
                     </div>
                 </div>
-                <div className="absolute right-4 sm:right-6 top-4 sm:top-6">
-                    <button className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white/20 text-white text-sm rounded-lg backdrop-blur-sm border border-white/10 hover:bg-white/30">
-                        {t("edit")}
-                    </button>
-                </div>
             </div>
 
             {/* Info */}
