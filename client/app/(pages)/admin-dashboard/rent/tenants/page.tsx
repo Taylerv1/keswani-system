@@ -357,7 +357,7 @@ export default function TenantsPage() {
         })()}
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeTenant(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeTenant(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }

@@ -284,7 +284,7 @@ export default function MaintenancePage() {
         </div>
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeMaintenance(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeMaintenance(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }

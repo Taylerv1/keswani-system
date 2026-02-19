@@ -188,7 +188,7 @@ export default function MetersPage() {
         </div>
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeMeter(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeMeter(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }

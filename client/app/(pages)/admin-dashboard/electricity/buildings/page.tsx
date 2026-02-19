@@ -199,7 +199,7 @@ export default function BuildingsPage() {
         })()}
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeBuilding(deleteId); setDeleteId(null); }} />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeBuilding(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
     </div>
   );
 }
