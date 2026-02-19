@@ -102,7 +102,7 @@ export default function CustomerSidebar({
             </div>
 
             {/* Navigation */}
-            <nav dir={dir === "rtl" ? "rtl" : "ltr"} className={`flex-1 py-4 px-2 space-y-1 overflow-y-auto ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
+            <nav dir={dir} className={`flex-1 py-4 px-2 space-y-1 overflow-y-auto ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
                 {navItems.map((item) => {
                     const isActive =
                         item.href === "/dashboard"
@@ -112,28 +112,28 @@ export default function CustomerSidebar({
                         <Link
                             key={item.key}
                             href={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 no-underline
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 no-underline
                                 ${isActive
-                                                                        ? "bg-primary text-sidebar-text-active shadow-lg"
-                                                                        : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
-                                                                }
+                                    ? "bg-primary text-sidebar-text-active shadow-lg"
+                                    : "text-sidebar-text hover:bg-white/8 hover:text-sidebar-text-active"
+                                }
                                 ${collapsed ? "justify-center px-0" : ""}
                             `}
                             title={collapsed ? t(item.key) : undefined}
                         >
-                            <div dir={dir === "rtl" ? "ltr" : undefined} className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-                                <span className="shrink-0">{item.icon}</span>
-                                {!collapsed && (
-                                    <span className="text-sm font-medium">{t(item.key)}</span>
-                                )}
-                            </div>
+                            <span className="shrink-0">{item.icon}</span>
+                            {!collapsed && (
+                                <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"}`}>
+                                    {t(item.key)}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}
             </nav>
 
             {/* Bottom actions */}
-            <div className="py-4 px-2 border-t border-white/10 space-y-1">
+            <div dir={dir} className="py-4 px-2 border-t border-white/10 space-y-1">
                 <button
                     onClick={() => {
                         window.location.href = "/login";
@@ -148,7 +148,7 @@ export default function CustomerSidebar({
                 >
                     <LogOut size={20} className="shrink-0" />
                     {!collapsed && (
-                        <span className="text-sm font-medium">{t("logout")}</span>
+                        <span className={`text-sm font-medium ${dir === "rtl" ? "mr-1" : "ml-1"}`}>{t("logout")}</span>
                     )}
                 </button>
             </div>
