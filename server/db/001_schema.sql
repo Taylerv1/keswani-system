@@ -48,6 +48,7 @@ CREATE TABLE employees (
   full_name     TEXT NOT NULL,
   email         TEXT UNIQUE,
   phone         TEXT,
+  address       TEXT,
   role          employee_role NOT NULL DEFAULT 'employee',
   access        JSONB NOT NULL DEFAULT '{}'::jsonb,          -- fine-grained permissions
   is_active     BOOLEAN NOT NULL DEFAULT true,

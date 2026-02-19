@@ -6,6 +6,7 @@ import {
     getMe,
     logout,
     refreshToken,
+    updateProfile,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 
@@ -19,6 +20,7 @@ router.post("/refresh", refreshToken);
 
 // Protected routes (auth required)
 router.get("/me", authenticate, getMe);
+router.patch("/profile", authenticate, updateProfile);
 router.post("/logout", authenticate, logout);
 
 export default router;

@@ -104,6 +104,7 @@ model employees {
   full_name    String
   email        String?       @unique
   phone        String?
+  address      String?
   role         employee_role @default(employee)
   access       Json          @default("{}")
   is_active    Boolean       @default(true)

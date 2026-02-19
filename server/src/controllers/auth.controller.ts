@@ -5,6 +5,7 @@ import {
     loginSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
+    updateProfileSchema,
 } from "../validators/auth.validator";
 import { AuthenticatedRequest, ApiResponse, LoginResponse } from "../types";
 
@@ -242,6 +243,18 @@ export const getMe = async (
             return;
         }
 
+        // Fetch Supabase user details (admin) to get last sign-in
+        let lastLogin: string | null = null;
+        try {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(req.user.id);
+            if (userData && (userData.user as any)?.last_sign_in_at) {
+                lastLogin = (userData.user as any).last_sign_in_at as string;
+            }
+        } catch (e) {
+            // ignore errors — lastLogin will remain null
+            console.error("Failed to fetch supabase user for last login:", e);
+        }
+
         let profile: Record<string, unknown> = {};
 
         if (req.user.user_type === "employee") {
@@ -256,6 +269,8 @@ export const getMe = async (
                     phone: emp.phone,
                     role: emp.role,
                     access: emp.access,
+                    address: (emp as any).address || null,
+                    last_login: lastLogin,
                     is_active: emp.is_active,
                     created_at: emp.created_at,
                 };
@@ -270,7 +285,8 @@ export const getMe = async (
                     full_name: cli.full_name,
                     email: cli.email,
                     phone: cli.phone,
-                    address: cli.address,
+                    address: cli.address || null,
+                    last_login: lastLogin,
                     created_at: cli.created_at,
                 };
             }
@@ -283,6 +299,64 @@ export const getMe = async (
                 profile,
             },
         } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * PATCH /api/auth/profile
+ * Update current user's profile (name, phone, address)
+ */
+export const updateProfile = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, error: "Not authenticated" });
+            return;
+        }
+
+        const parsed = updateProfileSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors } as ApiResponse);
+            return;
+        }
+
+        const { full_name, phone, address } = parsed.data;
+
+        if (req.user.user_type === "employee") {
+            const data: any = {};
+            if (full_name !== undefined) data.full_name = full_name;
+            if (phone !== undefined) data.phone = phone;
+            // address may not exist on employees table — only update if column exists
+            const cols: any = await prisma.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name='employees' AND column_name='address'`;
+            if (Array.isArray(cols) && cols.length > 0) {
+                if (address !== undefined) data.address = address;
+            }
+
+            const updated = await prisma.employees.update({ where: { id: req.user.profile_id }, data });
+
+            res.json({ success: true, data: { profile: { id: updated.id, full_name: updated.full_name, email: updated.email, phone: updated.phone, address: (updated as any).address || null } } } as ApiResponse);
+            return;
+        }
+
+        // client
+        if (req.user.user_type === "client") {
+            const data: any = {};
+            if (full_name !== undefined) data.full_name = full_name;
+            if (phone !== undefined) data.phone = phone;
+            if (address !== undefined) data.address = address;
+
+            const updated = await prisma.clients.update({ where: { id: req.user.profile_id }, data });
+
+            res.json({ success: true, data: { profile: { id: updated.id, full_name: updated.full_name, email: updated.email, phone: updated.phone, address: updated.address } } } as ApiResponse);
+            return;
+        }
+
+        res.status(400).json({ success: false, error: "Unsupported user type" });
     } catch (err) {
         next(err);
     }
