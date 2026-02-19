@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Eye, FileDown, FileText, Download } from "lucide-react";
+import { Plus, Trash2, FileDown, FileText, Download } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 import { useRent } from "@/modules/rent/rent-context";
 import { SearchBar, StatusBadge, Pagination, Modal, ConfirmDialog } from "@/components/ui";
@@ -181,11 +181,8 @@ export default function ContractsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setDetailModal(c)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0" title={t("view")}>
-                            <Eye size={15} />
-                          </button>
-                          <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0" title={t("edit")}>
-                            <Pencil size={15} />
+                          <button onClick={() => alert("PDF download mock")} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0" title={t("downloadPdf")}>
+                            <Download size={15} />
                           </button>
                           <button onClick={() => setDeleteId(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0" title={t("delete")}>
                             <Trash2 size={15} />
