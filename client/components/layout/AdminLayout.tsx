@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [mobilePrimaryOpen, setMobilePrimaryOpen] = useState(false);
   const [mobileSecondaryOpen, setMobileSecondaryOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
-  const { t, dir, toggleLocale } = useTranslation();
+  const { t, dir, locale, toggleLocale } = useTranslation();
   const pathname = usePathname();
 
   const hasSecondaryNav =
@@ -30,9 +30,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const loadMe = async () => {
       try {
-        const res = await fetch("/api/auth/me", { method: "GET" });
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+        });
 
-        if (!res.ok) return;
+        if (!res.ok) {
+          const user = getUserData();
+          if (isMounted && user?.email) {
+            setDisplayName(user.email);
+          }
+          return;
+        }
 
         const result = await res.json();
         const fullName = result?.data?.profile?.full_name;
@@ -56,8 +65,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     loadMe();
 
+    const handleProfileNameUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ fullName?: string }>;
+      const fullName = customEvent.detail?.fullName;
+
+      if (typeof fullName === "string" && fullName.trim()) {
+        setDisplayName(fullName.trim());
+      }
+    };
+
+    window.addEventListener("profile:name-updated", handleProfileNameUpdated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("profile:name-updated", handleProfileNameUpdated);
     };
   }, []);
 
@@ -65,6 +86,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const firstChar = displayName.trim().charAt(0);
     return firstChar ? firstChar.toUpperCase() : "A";
   }, [displayName]);
+
+  const welcomeBackText = locale === "ar" ? "أهلًا بعودتك" : "Welcome back";
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>
@@ -109,8 +132,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </button>
             )}
             {/* Breadcrumb placeholder */}
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <span>{displayName}</span>
+            <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+              <span className="text-text-muted">{welcomeBackText},</span>
+              <span>{displayName || t("dashboard")}</span>
             </div>
           </div>
 

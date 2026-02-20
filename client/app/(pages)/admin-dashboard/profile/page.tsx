@@ -94,15 +94,26 @@ export default function ProfilePage() {
 
       if (json.success && json.data?.profile) {
         const p = json.data.profile;
+        const updatedFullName = typeof p.full_name === "string" ? p.full_name.trim() : "";
+
         setProfile((prev) => {
           if (!prev) return null;
           return {
             ...prev,
-            fullName: p.full_name || prev.fullName,
+            fullName: updatedFullName || prev.fullName,
             phone: p.phone || prev.phone,
             address: p.address || prev.address,
           };
         });
+
+        if (updatedFullName && typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("profile:name-updated", {
+              detail: { fullName: updatedFullName },
+            })
+          );
+        }
+
         setToastVisible(true);
         setTimeout(() => setToastVisible(false), 2500);
       } else {
