@@ -11,6 +11,8 @@ const ar: Record<string, string> = {
   signInButton: "تسجيل الدخول",
   noAccount: "ليس لديك حساب؟",
   signUp: "إنشاء حساب",
+  orDivider: "أو",
+  continueWithGoogle: "المتابعة مع جوجل",
 
   // Sidebar
   rent: "الإيجار",

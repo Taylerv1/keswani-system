@@ -11,6 +11,8 @@ const en = {
   signInButton: "SIGN IN",
   noAccount: "Don't have an account?",
   signUp: "Sign Up",
+  orDivider: "OR",
+  continueWithGoogle: "Continue with Google",
 
   // Sidebar
   rent: "Rent",
