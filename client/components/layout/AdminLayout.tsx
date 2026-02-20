@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Breadcrumb placeholder */}
             <div className="flex items-center gap-1.5 text-sm text-text-secondary">
               <span className="text-text-muted">{welcomeBackText},</span>
-              <span>{displayName || t("dashboard")}</span>
+              <span>{displayName}</span>
             </div>
           </div>
 
