@@ -233,16 +233,16 @@ export const clients = [
 // PROPERTIES (10)
 // ===========================
 export const properties = [
-    { id: PROPERTY_IDS.p1, name: "Keswani Tower", address: "Hamra Street 45", city: "Beirut", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1 },
-    { id: PROPERTY_IDS.p2, name: "Al-Nour Building", address: "Mina Road 12", city: "Tripoli", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1 },
-    { id: PROPERTY_IDS.p3, name: "Sea View Residence", address: "Corniche Blvd 78", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1 },
-    { id: PROPERTY_IDS.p4, name: "Sunrise Apartments", address: "Saida Main Rd 33", city: "Sidon", type: "building" as const, managed_by: EMPLOYEE_IDS.emp2 },
-    { id: PROPERTY_IDS.p5, name: "Cedar House", address: "Mountain View 5", city: "Byblos", type: "house" as const, managed_by: EMPLOYEE_IDS.owner },
-    { id: PROPERTY_IDS.p6, name: "Downtown Plaza", address: "Achrafieh Center 90", city: "Beirut", type: "commercial" as const, managed_by: EMPLOYEE_IDS.admin1 },
-    { id: PROPERTY_IDS.p7, name: "Valley Residence", address: "Boulevard Principale 20", city: "Zahle", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1 },
-    { id: PROPERTY_IDS.p8, name: "Olive Garden Villa", address: "Coastal Road 15", city: "Batroun", type: "house" as const, managed_by: EMPLOYEE_IDS.owner },
-    { id: PROPERTY_IDS.p9, name: "Harissa Heights", address: "Harissa Hill 8", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1 },
-    { id: PROPERTY_IDS.p10, name: "Koura Land Parcel", address: "Koura District", city: "Tripoli", type: "land" as const, managed_by: EMPLOYEE_IDS.owner },
+    { id: PROPERTY_IDS.p1, name: "Keswani Tower", address: "Hamra Street 45", city: "Beirut", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Main office building" },
+    { id: PROPERTY_IDS.p2, name: "Al-Nour Building", address: "Mina Road 12", city: "Tripoli", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Managed by Hassan" },
+    { id: PROPERTY_IDS.p3, name: "Sea View Residence", address: "Corniche Blvd 78", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Sea-facing units" },
+    { id: PROPERTY_IDS.p4, name: "Sunrise Apartments", address: "Saida Main Rd 33", city: "Sidon", type: "building" as const, managed_by: EMPLOYEE_IDS.emp2, owner_notes: "Recently renovated" },
+    { id: PROPERTY_IDS.p5, name: "Cedar House", address: "Mountain View 5", city: "Byblos", type: "house" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Owner occupied" },
+    { id: PROPERTY_IDS.p6, name: "Downtown Plaza", address: "Achrafieh Center 90", city: "Beirut", type: "commercial" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Commercial retail units" },
+    { id: PROPERTY_IDS.p7, name: "Valley Residence", address: "Boulevard Principale 20", city: "Zahle", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Small complex" },
+    { id: PROPERTY_IDS.p8, name: "Olive Garden Villa", address: "Coastal Road 15", city: "Batroun", type: "house" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Vacation rental" },
+    { id: PROPERTY_IDS.p9, name: "Harissa Heights", address: "Harissa Hill 8", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Premium building" },
+    { id: PROPERTY_IDS.p10, name: "Koura Land Parcel", address: "Koura District", city: "Tripoli", type: "land" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Land parcel" },
 ];
 
 // ===========================
