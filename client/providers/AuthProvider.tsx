@@ -29,6 +29,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
+    const isLoginPage = typeof window !== "undefined" && window.location.pathname === "/login";
+    const hasUserData = !!getUserData();
+
+    if (isLoginPage && !hasUserData) {
+      if (mounted) setUser(null);
+      return () => {
+        mounted = false;
+      };
+    }
+
     const doRefresh = async () => {
       try {
         await refreshApi();
