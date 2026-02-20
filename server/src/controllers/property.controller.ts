@@ -219,8 +219,12 @@ export const createProperty = async (
             owner_notes: rest.owner_notes,
         };
 
+        // If caller provided managed_by use it; otherwise set manager from authenticated user (if employee)
         if (managed_by) {
             createData.manager = { connect: { id: managed_by } };
+        } else if (req.user && req.user.user_type === "employee") {
+            // req.user.profile_id is the employee id
+            createData.manager = { connect: { id: req.user.profile_id } };
         }
 
         if (units && units.length > 0) {
