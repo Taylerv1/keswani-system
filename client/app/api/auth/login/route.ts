@@ -9,7 +9,7 @@ import { login as backendLogin } from "@/api/auth";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, password } = body;
+        const { email, password, remember_me } = body;
 
         if (!email || !password) {
             return NextResponse.json(
@@ -47,21 +47,33 @@ export async function POST(req: NextRequest) {
 
         // Set httpOnly cookies (secure in production)
         const isProduction = process.env.NODE_ENV === "production";
+        
+        // Determine cookie expiry based on "remember me"
+        const accessTokenMaxAge = remember_me 
+            ? 60 * 60 * 24 * 30  // 30 days if remembered
+            : 60 * 60 * 24 * 7;  // 7 days default
+        
+        const refreshTokenMaxAge = remember_me
+            ? 60 * 60 * 24 * 90   // 90 days if remembered
+            : 60 * 60 * 24 * 30;  // 30 days default
+        
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction, // Only send over HTTPS in production
             sameSite: "lax" as const,
             path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 days
         };
 
-        // Access token cookie
-        response.cookies.set("auth_token", token, cookieOptions);
+        // Access token cookie (duration depends on remember_me)
+        response.cookies.set("auth_token", token, {
+            ...cookieOptions,
+            maxAge: accessTokenMaxAge,
+        });
 
-        // Refresh token cookie (longer expiry)
+        // Refresh token cookie (longer expiry, extended if remembered)
         response.cookies.set("refresh_token", refresh_token, {
             ...cookieOptions,
-            maxAge: 60 * 60 * 24 * 30, // 30 days
+            maxAge: refreshTokenMaxAge,
         });
 
         // Store user metadata (not sensitive, can be accessed client-side)
@@ -83,6 +95,15 @@ export async function POST(req: NextRequest) {
                 maxAge: 60 * 60 * 24 * 7,
             }
         );
+
+            // Persist remember_me preference client-side (non-httpOnly)
+            response.cookies.set("remember_me", remember_me ? "1" : "0", {
+                httpOnly: false,
+                secure: isProduction,
+                sameSite: "lax",
+                path: "/",
+                maxAge: refreshTokenMaxAge,
+            });
 
         return response;
     } catch (error) {

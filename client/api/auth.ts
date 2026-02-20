@@ -74,14 +74,16 @@ function authHeaders(token: string): HeadersInit {
 /**
  * Login with email + password.
  * Returns token + user profile.
+ * @param rememberMe - if true, tokens are stored longer (7-30 days)
  */
 export async function login(
     email: string,
-    password: string
+    password: string,
+    rememberMe: boolean = false
 ): Promise<ApiResponse<LoginResponse>> {
     return fetchApi<LoginResponse>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember_me: rememberMe }),
     });
 }
 

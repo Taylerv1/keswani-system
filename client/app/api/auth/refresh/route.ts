@@ -35,20 +35,30 @@ export async function POST(req: NextRequest) {
             message: "Token refreshed successfully",
         });
 
-        // Update cookies
+        // Determine remember preference from cookie and set cookie expiries accordingly
         const isProduction = process.env.NODE_ENV === "production";
+        const remembered = req.cookies.get("remember_me")?.value === "1";
+
+        const accessTokenMaxAge = remembered ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7;
+        const refreshTokenMaxAge = remembered ? 60 * 60 * 24 * 90 : 60 * 60 * 24 * 30;
+
         const cookieOptions = {
             httpOnly: true,
             secure: isProduction,
             sameSite: "lax" as const,
             path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 days
         };
 
-        response.cookies.set("auth_token", token, cookieOptions);
-        response.cookies.set("refresh_token", refresh_token, {
-            ...cookieOptions,
-            maxAge: 60 * 60 * 24 * 30, // 30 days
+        response.cookies.set("auth_token", token, { ...cookieOptions, maxAge: accessTokenMaxAge });
+        response.cookies.set("refresh_token", refresh_token, { ...cookieOptions, maxAge: refreshTokenMaxAge });
+
+        // Ensure remember_me cookie persists with same lifetime as refresh token
+        response.cookies.set("remember_me", remembered ? "1" : "0", {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "lax",
+            path: "/",
+            maxAge: refreshTokenMaxAge,
         });
 
         return response;

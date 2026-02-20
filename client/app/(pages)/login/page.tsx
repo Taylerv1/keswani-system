@@ -25,7 +25,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember_me: remember }),
       });
 
       const result = await response.json();
@@ -38,6 +38,13 @@ export default function LoginPage() {
 
       // Login successful - cookies are set automatically
       const userData = result.data.user;
+      
+      // Log reminder status for debugging
+      if (remember) {
+        console.log("✓ Session saved for 30-90 days (remember me enabled)");
+      } else {
+        console.log("✓ Session saved for 7-30 days (standard expiry)");
+      }
 
       // Redirect based on user type
       if (userData.user_type === "employee") {
@@ -188,7 +195,7 @@ export default function LoginPage() {
                 className="w-4 h-4 rounded border-surface-border accent-primary cursor-pointer"
               />
               <span className="text-sm text-text-secondary">
-                {t("rememberMe")}
+                {t("rememberMe")} {remember && "(30-90 days)"}
               </span>
             </label>
 

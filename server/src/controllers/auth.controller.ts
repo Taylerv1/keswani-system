@@ -30,7 +30,7 @@ export const login = async (
             return;
         }
 
-        const { email, password } = parsed.data;
+        const { email, password, remember_me } = parsed.data;
 
         // Sign in with Supabase Auth
         const { data: authData, error: authError } =
