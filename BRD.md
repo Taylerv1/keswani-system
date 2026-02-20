@@ -1,157 +1,308 @@
 # Business Requirements Document (BRD)
 ## Keswani System — Real Estate & Electricity Management Platform
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Date:** February 2026  
-**Client Location:** Lebanon
+**Client Location:** Lebanon  
+**Prepared For:** Management Review
 
 ---
 
-## 1. Project Overview
+## 1. Executive Summary
 
-A web-based platform for a Lebanese business managing **real estate rentals** (عقارات) and **private electricity generator subscriptions** (موتير كهرباء). The system tracks rent contracts, electricity consumption, payments, expenses, and provides profit/loss reports.
+Keswani System is a web platform to manage two business lines in one system:
 
-### Two Dashboards
-| Dashboard | Users | Purpose |
-|-----------|-------|---------|
-| **Admin Dashboard** | Owner, Admins, Employees | Full management of properties, tenants, electricity, payments, expenses |
-| **Client Portal** | Tenants, Electricity Subscribers | View their invoices, payment history, contracts, meter readings |
+1. **Real estate rentals** (عقارات)
+2. **Private electricity generator subscriptions** (موتير كهرباء)
 
----
-
-## 2. User Roles & Access
-
-### 2.1 Employee Table (Unified)
-All internal users share one table with role-based access:
-
-| Role | Capabilities |
-|------|-------------|
-| **Owner** | Full access. Can manage admins and employees. Can configure system settings. |
-| **Admin** | Near-full access. Can manage employees, properties, clients, billing. Cannot delete Owner. |
-| **Employee** | Limited access. Permissions controlled via `access` JSONB field per employee. |
-
-### 2.2 Clients
-Tenants and/or electricity subscribers. They do NOT sign up themselves — they are created by admin/employee and receive login credentials.
+The platform centralizes contracts, meter readings, bills, payments, debts, expenses, and reporting, with separate experiences for internal staff and end clients.
 
 ---
 
-## 3. Feature List
+## 2. Business Goals
 
-### 3.1 Authentication & Access Control
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| F01 | Employee login (email + password) | P0 | 🔨 Building |
-| F02 | Client login (email + password) | P0 | 🔨 Building |
-| F03 | Forgot password (email reset link) | P0 | 🔨 Building |
-| F04 | Reset password | P0 | 🔨 Building |
-| F05 | Role-based route protection | P0 | 🔨 Building |
-| F06 | Fine-grained access control (JSONB `access` field) | P1 | 📋 Planned |
-| F07 | Session management / token refresh | P1 | 📋 Planned |
-
-> [!NOTE]
-> **No public signup.** Users are created by admin only.
+- Unify rent and electricity operations in one source of truth.
+- Reduce manual tracking errors and delayed collections.
+- Improve cash visibility (income, expense, profit/loss).
+- Provide transparent self-service portal for clients.
+- Enable role-based security and controlled staff access.
 
 ---
 
-### 3.2 Rent Management Module
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| F10 | Property CRUD (buildings, houses, land) | P1 | 📋 Planned |
-| F11 | Unit CRUD (apartments/shops within properties) | P1 | 📋 Planned |
-| F12 | Client/Tenant CRUD | P1 | 📋 Planned |
-| F13 | Contract management (create, activate, expire, terminate) | P1 | 📋 Planned |
-| F14 | Rent payment recording (cash) | P1 | 📋 Planned |
-| F15 | Rent payment history & filtering | P1 | 📋 Planned |
+## 3. Product Scope
+
+### 3.1 Internal Platform (Admin Dashboard)
+Used by: **Owner, Admin, Employee**
+
+- Property and unit management
+- Tenant/client management
+- Rent contracts and payments
+- Electricity subscribers, meters, readings, pricing, billing, debts
+- Financial reports and operating settings
+- Staff management and permissions
+
+### 3.2 Client Platform (Client Portal)
+Used by: **Tenants / Electricity Subscribers**
+
+- View personal rent and electricity history
+- View profile and account data
+- Submit reports/requests
+- Track invoices and payment status
+
+---
+
+## 4. User Roles & Access Control
+
+### 4.1 Internal Users (employees table)
+
+| Role | Access Level |
+|------|--------------|
+| **Owner** | Full access to all modules, users, and settings |
+| **Admin** | Operational full access except owner-restricted actions |
+| **Employee** | Controlled access via JSON `access` permissions |
+
+### 4.2 Client Users
+
+- Created by internal staff (no public signup)
+- Can only access own records (rent/electricity/profile/history)
+
+### 4.3 Security Rules
+
+- No open registration
+- Protected routes by authentication + role/access control
+- Session token + refresh flow
+- Soft delete strategy for business records
+
+---
+
+## 5. Full Website Sections (Information Architecture)
+
+### 5.1 Public/Auth
+
+- Login
+- Forgot password
+- Reset password
+
+### 5.2 Admin Dashboard Sections
+
+### A) Main
+- Dashboard home
+- Profile
+
+### B) Rent Module
+- Rent overview
+- Properties
+- Tenants
+- Contracts
+- Payments
+- Maintenance
+- Rent notifications
+
+### C) Electricity Module
+- Electricity overview
+- Employees
+- Buildings
+- Subscribers
+- Meters
+- Readings
+- Pricing
+- Bills
+- Payments
+- Debts
+- Alerts
+- Reports
+- Settings
+
+### 5.3 Client Portal Sections
+
+- Dashboard home
+- Profile
+- Rent history
+- Electricity history
+- Reports/requests
+
+---
+
+## 6. Functional Requirements Matrix
+
+### 6.1 Authentication & Identity
+
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| F01 | Login for employees and clients (email/password) | P0 | 🔨 In Progress |
+| F02 | Forgot password flow | P0 | 🔨 In Progress |
+| F03 | Reset password flow | P0 | 🔨 In Progress |
+| F04 | Get current user profile/session (`me`) | P0 | ✅ Implemented |
+| F05 | Logout | P0 | ✅ Implemented |
+| F06 | Refresh token/session | P1 | ✅ Implemented |
+| F07 | Role-based route/API protection | P0 | 🔨 In Progress |
+| F08 | Fine-grained access control via JSON access map | P1 | 🔨 In Progress |
+
+### 6.2 Rent Management
+
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| F10 | Property CRUD | P1 | 🔨 In Progress |
+| F11 | Unit management inside properties | P1 | 🔨 In Progress |
+| F12 | Tenant/Client CRUD | P1 | 🔨 In Progress |
+| F13 | Contract lifecycle (create/activate/expire/terminate) | P1 | 📋 Planned |
+| F14 | Rent payment recording (cash first) | P1 | 📋 Planned |
+| F15 | Rent payment history & filters | P1 | 📋 Planned |
 | F16 | Maintenance request management | P2 | 📋 Planned |
-| F17 | Rent reminder notifications (email/WhatsApp) | P2 | 📋 Planned |
-| F18 | Outstanding rent / debt view | P1 | 📋 Planned |
+| F17 | Outstanding rent/debt tracking | P1 | 📋 Planned |
+| F18 | Rent reminder notifications | P2 | 📋 Planned |
 
----
+### 6.3 Electricity Management
 
-### 3.3 Electricity Module
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
 | F20 | Subscriber management | P1 | 📋 Planned |
-| F21 | Meter registration & tracking | P1 | 📋 Planned |
-| F22 | Meter reading entry (manual) | P1 | 📋 Planned |
-| F23 | KWh pricing management (variable rates) | P1 | 📋 Planned |
-| F24 | Bill generation (consumption × price) | P0 | 📋 Planned |
+| F21 | Meter registration & lifecycle | P1 | 📋 Planned |
+| F22 | Reading entry (manual/automatic source tracking) | P1 | 📋 Planned |
+| F23 | KWh pricing management (history-based) | P1 | 📋 Planned |
+| F24 | Bill generation per billing period | P0 | 📋 Planned |
 | F25 | Bill payment recording | P1 | 📋 Planned |
-| F26 | Outstanding electricity debts view | P1 | 📋 Planned |
-| F27 | Payment reminder notifications | P2 | 📋 Planned |
+| F26 | Debt/outstanding balance tracking | P1 | 📋 Planned |
+| F27 | Alerts/reminders for unpaid bills | P2 | 📋 Planned |
+| F28 | Electricity reports | P2 | 📋 Planned |
 
-**Billing formula:**
-```
-consumption = current_reading - previous_reading
-total = consumption × price_per_kwh (from pricing_history at billing time)
-```
+### 6.4 Financial Management
 
----
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| F30 | Expense recording by category | P1 | 📋 Planned |
+| F31 | Income summary (rent + electricity) | P1 | 📋 Planned |
+| F32 | Expense summary by category/date | P1 | 📋 Planned |
+| F33 | Profit/Loss calculation | P1 | 📋 Planned |
+| F34 | Monthly/Yearly reports export view | P2 | 📋 Planned |
 
-### 3.4 Financial Tracking
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| F30 | Expense recording (maintenance, purchases, utilities, salaries) | P1 | 📋 Planned |
-| F31 | Income summary (rent + electricity payments) | P1 | 📋 Planned |
-| F32 | Expense summary by category | P1 | 📋 Planned |
-| F33 | Profit/Loss calculation (income − expenses) | P1 | 📋 Planned |
-| F34 | Monthly/Yearly financial reports | P2 | 📋 Planned |
+### 6.5 Notifications
 
----
-
-### 3.5 Notifications
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
 | F40 | In-app notifications | P2 | 📋 Planned |
-| F41 | Email notifications (payment reminders) | P2 | 📋 Planned |
-| F42 | WhatsApp notifications (payment reminders) | P3 | 📋 Planned |
+| F41 | Email reminders | P2 | 📋 Planned |
+| F42 | WhatsApp reminders | P3 | 📋 Planned |
+
+### 6.6 Client Portal
+
+| ID | Requirement | Priority | Status |
+|----|-------------|----------|--------|
+| F50 | View own profile and account details | P1 | 🔨 In Progress |
+| F51 | View own rent history/status | P1 | 🔨 In Progress |
+| F52 | View own electricity history/bills | P1 | 🔨 In Progress |
+| F53 | Submit reports/requests | P2 | 🔨 In Progress |
+| F54 | View own payment and notification history | P2 | 📋 Planned |
 
 ---
 
-### 3.6 Client Portal
-| # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| F50 | View own contracts & rent status | P1 | 📋 Planned |
-| F51 | View own electricity bills & payment history | P1 | 📋 Planned |
-| F52 | View own meter readings | P1 | 📋 Planned |
-| F53 | Submit maintenance requests | P2 | 📋 Planned |
-| F54 | View notification history | P2 | 📋 Planned |
+## 7. Core Business Rules
+
+### 7.1 Electricity Billing Formula
+
+```text
+consumption_kwh = current_reading - previous_reading
+bill_total = consumption_kwh × price_per_kwh (active pricing at billing date)
+```
+
+### 7.2 Financial Formula
+
+```text
+net_profit = (rent_income + electricity_income) - total_expenses
+```
+
+### 7.3 Data Governance Rules
+
+- Records are soft-deleted where applicable.
+- Audit fields required (`created_at`, `updated_at`, actor references when relevant).
+- Currency defaults to USD unless configured otherwise.
 
 ---
 
-## 4. Technical Stack
+## 8. Technical Architecture (Current)
 
 | Layer | Technology |
-|-------|-----------|
-| **Frontend** | Next.js (TypeScript) |
-| **Backend** | Express.js (TypeScript) |
-| **Database** | PostgreSQL via Supabase |
-| **ORM** | Prisma |
-| **Auth** | Supabase Auth (JWT) |
-| **Validation** | Zod |
-| **Payment** | Cash only (future: bank transfer, other) |
+|------|------------|
+| Frontend | Next.js + TypeScript |
+| Backend | Express.js + TypeScript |
+| Database | PostgreSQL (Supabase) |
+| ORM | Prisma |
+| Auth | Supabase Auth + JWT |
+| Validation | Zod |
+| State/Data | Context modules + API helpers + mock fallback |
+| Localization | Arabic / English translations |
 
 ---
 
-## 5. Priority Definitions
+## 9. Database Domains Covered in Schema
 
-| Priority | Meaning |
-|----------|---------|
-| **P0** | Must have — blocking for MVP launch |
-| **P1** | Should have — core functionality |
-| **P2** | Nice to have — enhances UX |
-| **P3** | Future — planned for later phases |
+- Employees & role/access
+- Clients
+- Properties & units
+- Contracts & rent payments
+- Maintenance requests
+- Subscribers, meters, readings
+- Pricing history, bills, bill payments
+- Expenses
+- Notifications
+
+This domain coverage supports both current implementation and planned phases.
 
 ---
 
-## 6. Implementation Phases
+## 10. Implementation Status by Layer
 
-| Phase | Focus | Features |
-|-------|-------|----------|
-| **Phase 1** ✅ | Database schema | DB design, schema SQL |
-| **Phase 2** 🔨 | Auth + Backend setup | F01–F05, Prisma, seed data |
-| **Phase 3** | Rent module API | F10–F18 |
-| **Phase 4** | Electricity module API | F20–F27 |
-| **Phase 5** | Financial tracking | F30–F34 |
-| **Phase 6** | Client portal API | F50–F54 |
-| **Phase 7** | Notifications | F40–F42 |
+### 10.1 Frontend
+
+- Auth pages and protected dashboard structure are available.
+- Admin sections for rent and electricity are structured with dedicated pages.
+- Client portal sections for profile/history/reports are available.
+- Shared UI components (search, pagination, status, modal, confirm dialog) are available.
+
+### 10.2 Backend
+
+- Implemented APIs: `health`, `auth`, `properties`, `clients`.
+- Route placeholders identified for upcoming modules (`contracts`, `payments`, `electricity`, `expenses`, `employees`).
+
+### 10.3 Data Layer
+
+- Prisma schema covers full business model end-to-end.
+- Seed and SQL schema assets exist for bootstrap.
+
+---
+
+## 11. Priorities Definition
+
+| Priority | Definition |
+|----------|------------|
+| **P0** | Mandatory for MVP go-live |
+| **P1** | Core business functionality |
+| **P2** | UX/operational enhancement |
+| **P3** | Future phase |
+
+---
+
+## 12. Delivery Phases (Recommended)
+
+| Phase | Objective | Main Scope |
+|------|-----------|------------|
+| Phase 1 ✅ | Data foundation | Prisma schema, SQL schema, seeds |
+| Phase 2 🔨 | Identity & base APIs | Auth, session, role protection, clients/properties APIs |
+| Phase 3 | Rent operations | Contracts, rent payments, maintenance, debt tracking |
+| Phase 4 | Electricity operations | Subscribers, meters, readings, pricing, bills, debts |
+| Phase 5 | Financials | Expenses, P/L, periodic reporting |
+| Phase 6 | Client self-service | Complete client portal APIs and data ownership rules |
+| Phase 7 | Communication | In-app, email, WhatsApp notifications |
+
+---
+
+## 13. MVP Exit Criteria
+
+System is considered MVP-ready when all of the following are complete:
+
+1. P0 authentication and access flows are stable.
+2. Core rent and electricity billing flows (P1) are operational.
+3. Payment recording and debt tracking are available.
+4. Client portal shows reliable personal history.
+5. Basic financial visibility (income/expense/profit) is available.
+
