@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
 import { usePathname } from "next/navigation";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTranslation } from "@/lib/translation-context";
+import { getUserData } from "@/lib/auth-client";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -16,12 +17,54 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobilePrimaryOpen, setMobilePrimaryOpen] = useState(false);
   const [mobileSecondaryOpen, setMobileSecondaryOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
   const { t, dir, toggleLocale } = useTranslation();
   const pathname = usePathname();
 
   const hasSecondaryNav =
     pathname.startsWith("/admin-dashboard/rent") ||
     pathname.startsWith("/admin-dashboard/electricity");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadMe = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { method: "GET" });
+
+        if (!res.ok) return;
+
+        const result = await res.json();
+        const fullName = result?.data?.profile?.full_name;
+
+        if (isMounted && typeof fullName === "string" && fullName.trim()) {
+          setDisplayName(fullName.trim());
+          return;
+        }
+
+        const user = getUserData();
+        if (isMounted && user?.email) {
+          setDisplayName(user.email);
+        }
+      } catch {
+        const user = getUserData();
+        if (isMounted && user?.email) {
+          setDisplayName(user.email);
+        }
+      }
+    };
+
+    loadMe();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const avatarInitial = useMemo(() => {
+    const firstChar = displayName.trim().charAt(0);
+    return firstChar ? firstChar.toUpperCase() : "A";
+  }, [displayName]);
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>
@@ -67,7 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             )}
             {/* Breadcrumb placeholder */}
             <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <span>{t("dashboard")}</span>
+              <span>{displayName}</span>
             </div>
           </div>
 
@@ -114,7 +157,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Avatar */}
             <Link href="/admin-dashboard/profile">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
-                A
+                {avatarInitial}
               </div>
             </Link>
           </div>
