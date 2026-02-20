@@ -8,7 +8,6 @@ import {
   Building2,
   Home,
   MapPin,
-  FileDown,
   Eye,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
@@ -127,9 +126,7 @@ export default function PropertiesPage() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleExportPdf = () => {
-    alert("PDF export is a mock placeholder.");
-  };
+  
 
   return (
     <div>
@@ -144,13 +141,6 @@ export default function PropertiesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleExportPdf}
-            className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
-          >
-            <FileDown size={16} />
-            {t("exportPdf")}
-          </button>
           <button
             onClick={openAdd}
             className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
