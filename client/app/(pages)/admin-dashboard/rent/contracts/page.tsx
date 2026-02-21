@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Trash2, FileDown, FileText, Download } from "lucide-react";
+import { Plus, Trash2, FileDown, FileText, Download, Pencil } from "lucide-react";
 import { useTranslation } from "@/lib/translation-context";
 import { useRent } from "@/modules/rent/rent-context";
 import { SearchBar, StatusBadge, Pagination, Modal, ConfirmDialog } from "@/components/ui";
@@ -130,7 +130,8 @@ export default function ContractsPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -195,6 +196,51 @@ export default function ContractsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3 p-3">
+          {paginated.length === 0 ? (
+            <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
+          ) : (
+            paginated.map((c) => (
+              <div key={c.id} className="bg-surface rounded-xl border border-surface-border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="font-medium text-text-primary">{getTenantName(c.tenantId)}</div>
+                    <div className="text-xs text-text-secondary">{getPropertyName(c.propertyId)} - {c.unitNumber}</div>
+                  </div>
+                  <StatusBadge status={c.status} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-text-secondary mb-3">
+                  <div>
+                    <div className="text-[11px]">{t("startDate")}</div>
+                    <div className="font-medium text-text-primary">{c.startDate}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px]">{t("endDate")}</div>
+                    <div className="font-medium text-text-primary">{c.endDate || '—'}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setDetailModal(c)} className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-blue hover:border-card-blue transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <FileText size={14} />
+                    {t("view")}
+                  </button>
+                  <button onClick={() => openEdit(c)} className="h-9 px-3 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+                    <Pencil size={14} />
+                    {t("edit")}
+                  </button>
+                  <button onClick={() => setDeleteId(c.id)} className="h-9 px-3 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <Trash2 size={14} />
+                    {t("delete")}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

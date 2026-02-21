@@ -147,7 +147,8 @@ export default function MaintenancePage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -202,6 +203,52 @@ export default function MaintenancePage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3 p-3">
+          {paginated.length === 0 ? (
+            <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
+          ) : (
+            paginated.map((m) => (
+              <div key={m.id} className="bg-surface rounded-xl border border-surface-border p-3">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-card-blue-light text-card-blue flex items-center justify-center shrink-0">
+                      <Wrench size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-text-primary">{locale === "ar" ? m.titleAr : m.title}</div>
+                      <div className="text-xs text-text-secondary truncate">{locale === "ar" ? m.descriptionAr : m.description}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-text-secondary">{m.createdAt}</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-text-secondary mb-3">
+                  <div>
+                    <div className="text-[11px]">{t("property")}</div>
+                    <div className="font-medium text-text-primary">{getPropertyName(m.propertyId)} - {m.unitNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px]">{t("priority")}</div>
+                    <div className="font-medium text-text-primary">{m.priority}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button onClick={() => openEdit(m)} className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <Pencil size={14} />
+                    {t("edit")}
+                  </button>
+                  <button onClick={() => setDeleteId(m.id)} className="h-9 px-3 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <Trash2 size={14} />
+                    {t("delete")}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

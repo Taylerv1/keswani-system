@@ -180,7 +180,8 @@ export default function PropertiesPage() {
 
       {/* Table */}
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -280,6 +281,62 @@ export default function PropertiesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3 p-3">
+          {paginated.length === 0 ? (
+            <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
+          ) : (
+            paginated.map((p) => (
+              <div key={p.id} className="bg-surface rounded-xl border border-surface-border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-card-blue-light text-card-blue flex items-center justify-center shrink-0">
+                      {p.type === "building" ? (
+                        <Building2 size={16} />
+                      ) : p.type === "house" ? (
+                        <Home size={16} />
+                      ) : (
+                        <MapPin size={16} />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-text-primary">{locale === "ar" ? p.nameAr : p.name}</div>
+                      <div className="text-xs text-text-secondary">{locale === "ar" ? p.addressAr : p.address}</div>
+                    </div>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-text-secondary mb-3">
+                  <div>
+                    <div className="text-[11px]">{t("units")}</div>
+                    <div className="font-medium text-text-primary">{p.rentedUnits} / {p.totalUnits}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px]">{t("monthlyIncome")}</div>
+                    <div className="font-medium text-text-primary">${p.monthlyIncome.toLocaleString()}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setDetailModal(p)} className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-blue hover:border-card-blue transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <Eye size={14} />
+                    {t("view")}
+                  </button>
+                  <button onClick={() => openEdit(p)} className="h-9 px-3 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+                    <Pencil size={14} />
+                    {t("edit")}
+                  </button>
+                  <button onClick={() => setDeleteId(p.id)} className="h-9 px-3 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <Trash2 size={14} />
+                    {t("delete")}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

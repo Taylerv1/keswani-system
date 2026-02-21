@@ -198,3 +198,191 @@ body {
 .delay-300 { animation-delay: 0.30s; }
 .delay-400 { animation-delay: 0.40s; }
 .delay-500 { animation-delay: 0.50s; }
+
+/* Custom breakpoint for 1000px to match design at that width */
+@media (max-width: 1000px) {
+  .rent-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.9rem !important;
+  }
+
+  /* Compact KPI cards for the 1000px layout */
+  .rent-kpis > * {
+    padding: 0.5rem !important;
+    min-height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Icon sizing inside KPI card */
+  .rent-kpis > * > div:first-child {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .rent-kpis > * > div:first-child svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Layout: label (left, truncating) and value (right, no-shrink) */
+  .rent-kpis > * > .min-w-0 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .rent-kpis > * .min-w-0 > p:first-child {
+    flex: 1 1 auto !important;
+    font-size: 0.72rem !important;
+    color: var(--color-text-secondary) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important;
+  }
+
+  .rent-kpis > * .min-w-0 > p:nth-child(2) {
+    flex: 0 0 auto !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--color-text-primary) !important;
+    margin: 0 !important;
+    text-align: right !important;
+    min-width: 2.5rem !important;
+  }
+
+  /* Hide trend text in compact view */
+  .rent-kpis > * .min-w-0 > p:nth-child(3) {
+    display: none !important;
+  }
+
+  /* Slight heading tweak */
+  .page-heading-lg {
+    font-size: 1.55rem !important;
+  }
+}
+
+/* Additional rules targeting the new KpiCard classes for exact alignment */
+@media (max-width: 1000px) {
+  .rent-kpis .kpi-card {
+    padding: 0.5rem !important;
+  }
+
+  .rent-kpis .kpi-icon {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .rent-kpis .kpi-text {
+    gap: 0.25rem !important;
+    flex-direction: column !important; /* stack label above value to avoid truncation */
+    align-items: flex-start !important;
+  }
+
+  .rent-kpis .kpi-label {
+    font-size: 0.72rem !important;
+    color: var(--color-text-secondary) !important;
+    max-width: 7.25rem !important;
+  }
+
+  .rent-kpis .kpi-value {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+    min-width: 2.5rem !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    margin-top: 0.125rem !important;
+  }
+
+  .rent-kpis .kpi-trend {
+    display: none !important;
+  }
+}
+
+/* Extra enforcement to ensure values are always visible and label truncates */
+@media (max-width: 1000px) {
+  .rent-kpis .kpi-card {
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+
+  .rent-kpis .kpi-content { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 0.5rem !important;
+  }
+
+  .rent-kpis .kpi-text { 
+    width: 100% !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 0.5rem !important; 
+  }
+
+  .rent-kpis .kpi-label {
+    flex: 1 1 55% !important; /* take available space, but allow shrink */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+  }
+
+  .rent-kpis .kpi-value {
+    flex: 0 0 auto !important; /* never shrink */
+    margin-left: 0.5rem !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  /* If icon pushes too much, reduce its width slightly */
+  .rent-kpis .kpi-icon { width: 40px !important; height: 40px !important; }
+}
+
+/* Enforce label/value layout for KPI cards at all widths */
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.kpi-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpi-content { flex: 1 1 auto; min-width: 0; }
+.kpi-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.kpi-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+.kpi-value {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Larger screens: ensure comfortable spacing */
+@media (min-width: 1200px) {
+  .kpi-card { gap: 1rem; }
+  .kpi-icon { width: 56px; height: 56px; }
+  .kpi-value { font-size: 1.125rem; }
+}
