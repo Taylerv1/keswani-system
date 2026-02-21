@@ -131,16 +131,16 @@ export default function AlertsPage() {
             return (
               <div
                 key={a.id}
-                className={`bg-surface rounded-xl border p-4 flex items-start gap-4 transition-all ${
+                className={`bg-surface rounded-xl border p-3 sm:p-4 flex items-start gap-3 sm:gap-4 transition-all ${
                   a.read ? "border-surface-border" : "border-primary/30 shadow-sm"
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}>
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}>
                   {typeIcons[a.type] ?? <AlertTriangle size={16} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-sm font-semibold text-text-primary">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5">
+                    <h3 className="text-xs sm:text-sm font-semibold text-text-primary">
                       {locale === "ar" ? a.titleAr : a.title}
                     </h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
@@ -148,7 +148,7 @@ export default function AlertsPage() {
                     </span>
                     {!a.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                   </div>
-                  <p className="text-sm text-text-secondary">
+                  <p className="text-xs sm:text-sm text-text-secondary">
                     {locale === "ar" ? a.messageAr : a.message}
                   </p>
                   <p className="text-xs text-text-muted mt-1">{a.createdAt}</p>

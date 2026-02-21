@@ -62,18 +62,18 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="@container">
+      <div className="flex flex-col @md:flex-row @md:items-center @md:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">{t("paymentManagement")}</h1>
-          <p className="text-text-secondary text-sm mt-1">{t("paymentHistory")}</p>
+          <h1 className="text-xl @md:text-2xl font-bold text-text-primary">{t("paymentManagement")}</h1>
+          <p className="text-text-secondary text-xs @md:text-sm mt-1">{t("paymentHistory")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => alert("PDF export mock")} className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
+          <button onClick={() => alert("PDF export mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2">
             <FileDown size={16} />
             {t("exportPdf")}
           </button>
-          <button onClick={() => alert("Invoice generation mock")} className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+          <button onClick={() => alert("Invoice generation mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
             <Receipt size={16} />
             {t("generateInvoice")}
           </button>
@@ -81,13 +81,13 @@ export default function PaymentsPage() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
+      <div className="grid grid-cols-1 @sm:grid-cols-2 @2xl:grid-cols-3 gap-3 @md:gap-5 mb-6">
         <KpiCard label={t("totalIncome")} value={`$${totalIncome.toLocaleString()}`} icon={<TrendingUp size={22} />} color="text-card-green" bgColor="bg-card-green-light" trend={t("monthlyRent")} />
         <KpiCard label={t("totalCollected")} value={`$${totalCollected.toLocaleString()}`} icon={<CreditCard size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" />
         <KpiCard label={t("totalOutstanding")} value={totalOutstanding} icon={<AlertTriangle size={22} />} color="text-card-red" bgColor="bg-card-red-light" />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+      <div className="flex flex-col @xs:flex-row gap-3 mb-5">
         <div className="flex-1">
           <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
         </div>
@@ -99,7 +99,8 @@ export default function PaymentsPage() {
         </select>
       </div>
 
-      <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden @3xl:block bg-surface rounded-xl border border-surface-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -142,6 +143,48 @@ export default function PaymentsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="@3xl:hidden space-y-3">
+        {paginated.length === 0 ? (
+          <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
+        ) : (
+          paginated.map((p) => (
+            <div key={p.id} className="bg-surface rounded-xl border border-surface-border p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-sm text-text-primary">{getTenantName(p.tenantId)}</span>
+                <StatusBadge status={p.status} />
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-2">
+                <div>
+                  <span className="text-text-muted">{t("month")}: </span>
+                  <span className="text-text-secondary">{p.month}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("amount")}: </span>
+                  <span className="font-medium text-text-primary">{p.amount > 0 ? `$${p.amount.toLocaleString()}` : "—"}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("paymentDate")}: </span>
+                  <span className="text-text-secondary">{p.date ?? "—"}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("paymentMethod")}: </span>
+                  <span className="text-text-secondary">{p.method ? t(p.method === "bank_transfer" ? "bankTransfer" : "cash") : "—"}</span>
+                </div>
+              </div>
+              {p.receiptNumber && (
+                <p className="text-[11px] text-text-muted mb-2">{t("receiptNumber")}: {p.receiptNumber}</p>
+              )}
+              {p.status === "overdue" && (
+                <button onClick={() => setPayForm(p.id)} className="w-full h-8 mt-1 rounded-lg bg-card-green text-white text-xs font-medium cursor-pointer border-0 hover:bg-card-green/90 transition-colors">
+                  {t("addPayment")}
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <Pagination currentPage={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />

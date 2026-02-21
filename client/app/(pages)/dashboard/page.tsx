@@ -69,7 +69,7 @@ export default function CustomerDashboardPage() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
                 {hasRentData && (
                     <>
                         <KpiCard
@@ -121,19 +121,19 @@ export default function CustomerDashboardPage() {
             <h2 className="text-lg font-semibold text-text-primary mb-4">
                 {t("custQuickLinks")}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                 {quickLinks.map((link) => (
                     <Link
                         key={link.key}
                         href={link.href}
-                        className="bg-surface rounded-xl border border-surface-border p-5 flex items-center gap-4 hover:shadow-lg hover:border-primary/30 transition-all duration-200 no-underline group"
+                        className="bg-surface rounded-xl border border-surface-border p-3 sm:p-5 flex items-center gap-3 sm:gap-4 hover:shadow-lg hover:border-primary/30 transition-all duration-200 no-underline group"
                     >
                         <div
-                            className={`w-12 h-12 rounded-xl ${link.bgColor} ${link.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200`}
+                            className={`w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${link.bgColor} ${link.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-200`}
                         >
                             {link.icon}
                         </div>
-                        <span className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">
+                        <span className="text-xs sm:text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">
                             {t(link.key)}
                         </span>
                     </Link>

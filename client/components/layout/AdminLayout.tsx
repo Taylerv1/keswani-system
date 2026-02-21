@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Breadcrumb placeholder */}
             <div className="flex items-center gap-1.5 text-sm text-text-secondary">
               <span className="text-text-muted">{welcomeBackText},</span>
-              <span>{displayName || t("dashboard")}</span>
+              <span>{displayName}</span>
             </div>
           </div>
 
@@ -196,7 +196,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           />
 
           {/* Page content */}
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
         </div>
       </div>
     </div>

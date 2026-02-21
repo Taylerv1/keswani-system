@@ -105,19 +105,19 @@ export default function RentOverviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-text-primary mb-1">
+      <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-1">
         {t("rentOverview")}
       </h1>
-      <p className="text-text-secondary text-sm mb-6">{t("welcome")}</p>
+      <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
         {kpis.map((kpi) => (
           <KpiCard key={kpi.label} {...kpi} />
         ))}
       </div>
 
-      <div className="bg-surface rounded-xl border border-surface-border p-5">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">
+      <div className="bg-surface rounded-xl border border-surface-border p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">
           {t("recentActivity")}
         </h2>
         {recentNotifs.length === 0 ? (
@@ -127,7 +127,7 @@ export default function RentOverviewPage() {
             {recentNotifs.map((n) => (
               <div
                 key={n.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
                   n.read
                     ? "border-surface-border bg-background"
                     : "border-primary/20 bg-primary-light"

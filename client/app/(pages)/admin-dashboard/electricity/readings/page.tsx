@@ -151,7 +151,8 @@ export default function ReadingsPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -199,6 +200,51 @@ export default function ReadingsPage() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* Mobile/Tablet cards */}
+        <div className="lg:hidden divide-y divide-surface-border">
+          {paginated.length === 0 ? (
+            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+          ) : (
+            paginated.map((r) => (
+              <div key={r.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{getSubscriberName(r.subscriberId)}</span>
+                  <span className="text-xs text-text-muted">{r.month}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{getMeterNumber(r.meterId)}</span>
+                  <span className="font-medium text-card-orange">{r.consumption} {t("kwh")}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-background rounded-lg px-2 py-1.5">
+                    <span className="text-text-muted">{t("previousReading")}: </span>
+                    <span className="text-text-secondary">{r.previousReading.toLocaleString()}</span>
+                  </div>
+                  <div className="bg-background rounded-lg px-2 py-1.5">
+                    <span className="text-text-muted">{t("currentReading")}: </span>
+                    <span className="text-text-secondary">{r.currentReading.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-text-muted">{getEmployeeName(r.readBy)}</span>
+                    {r.billGenerated ? (
+                      <span className="text-card-green text-xs font-semibold">✓ {t("billGenerated")}</span>
+                    ) : (
+                      <span className="text-card-red text-xs font-semibold">✗</span>
+                    )}
+                  </div>
+                  {!r.billGenerated && (
+                    <button onClick={() => handleGenerateBill(r.id)} className="h-7 px-3 rounded-lg bg-card-blue text-white text-xs font-medium cursor-pointer border-0 hover:bg-card-blue/90 transition-colors flex items-center gap-1">
+                      <Receipt size={12} />
+                      {t("generateBill")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

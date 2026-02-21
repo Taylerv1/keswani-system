@@ -53,20 +53,20 @@ export default function DashboardPage() {
       <p className="text-text-secondary text-sm mb-6">{t("welcome")}</p>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5">
         {stats.map((card) => (
           <div
             key={card.labelKey}
-            className="bg-surface rounded-xl p-5 flex items-center gap-4 border border-surface-border hover:shadow-lg transition-shadow duration-200"
+            className="bg-surface rounded-xl p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border border-surface-border hover:shadow-lg transition-shadow duration-200"
           >
             <div
-              className={`w-12 h-12 rounded-xl ${card.bgColor} ${card.color} flex items-center justify-center shrink-0`}
+              className={`w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${card.bgColor} ${card.color} flex items-center justify-center shrink-0`}
             >
               {card.icon}
             </div>
-            <div>
-              <p className="text-sm text-text-secondary">{t(card.labelKey)}</p>
-              <p className="text-xl font-bold text-text-primary">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] sm:text-sm text-text-secondary leading-snug">{t(card.labelKey)}</p>
+              <p className="text-sm sm:text-xl font-bold text-text-primary leading-tight">
                 {card.value}
               </p>
             </div>

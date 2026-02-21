@@ -79,7 +79,8 @@ export default function BillsPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -122,6 +123,37 @@ export default function BillsPage() {
             </tbody>
           </table>
         </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-surface-border">
+          {paginated.length === 0 ? (
+            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+          ) : (
+            paginated.map((b) => (
+              <div key={b.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{getSubscriberName(b.subscriberId)}</span>
+                  <StatusBadge status={b.status} />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{b.month}</span>
+                  <span className="text-text-secondary">{b.consumption} {t("kwh")} · ${b.pricePerKwh}/{t("kwh")}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-muted">{t("dueDate")}: {b.dueDate}</span>
+                  <span className="text-sm font-semibold text-text-primary">${b.totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-end gap-1 pt-1">
+                  <button onClick={() => setDetailBill(b)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0" title={t("viewBill")}>
+                    <Eye size={15} />
+                  </button>
+                  <button onClick={() => alert("PDF download mock")} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0" title={t("exportPdf")}>
+                    <FileDown size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <Pagination currentPage={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
@@ -146,7 +178,7 @@ export default function BillsPage() {
                 <StatusBadge status={detailBill.status} />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   [t("consumption"), `${detailBill.consumption} ${t("kwh")}`],
                   [t("pricePerKwh"), `$${detailBill.pricePerKwh}`],
