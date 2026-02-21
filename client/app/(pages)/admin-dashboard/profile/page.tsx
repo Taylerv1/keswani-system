@@ -149,9 +149,9 @@ export default function ProfilePage() {
       )}
 
       {/* Page title */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">{t("profileTitle")}</h1>
-        <p className="text-text-secondary text-sm mt-1">{t("profileSubtitle")}</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-text-primary">{t("profileTitle")}</h1>
+        <p className="text-text-secondary text-xs sm:text-sm mt-1">{t("profileSubtitle")}</p>
       </div>
 
       {loading && <div className="text-sm text-text-secondary">{t("loading")}</div>}
@@ -170,7 +170,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Two-column layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6">
             {/* Left column */}
             <div className="space-y-6">
               <ProfileInfoCard

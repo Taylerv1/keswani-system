@@ -41,8 +41,8 @@ export default function SecuritySettings({
   };
 
   return (
-    <div className="bg-surface rounded-2xl border border-surface-border p-6">
-      <h2 className="text-base font-semibold text-text-primary mb-5">{t("securitySettings")}</h2>
+    <div className="bg-surface rounded-2xl border border-surface-border p-4 sm:p-6">
+      <h2 className="text-base font-semibold text-text-primary mb-4 sm:mb-5">{t("securitySettings")}</h2>
 
       {saved && (
         <div className="mb-4 p-3 rounded-xl bg-card-green-light text-card-green text-sm font-medium animate-in">
@@ -52,9 +52,9 @@ export default function SecuritySettings({
 
       <div className="space-y-4">
         {/* Change Password */}
-        <div className="flex items-center justify-between p-4 rounded-xl bg-background hover:bg-primary-light/30 transition-colors duration-200 group">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 rounded-xl bg-background hover:bg-primary-light/30 transition-colors duration-200 group">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-card-orange-light text-card-orange flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-card-orange-light text-card-orange flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
               <Lock size={18} />
             </div>
             <div>
@@ -63,22 +63,20 @@ export default function SecuritySettings({
           </div>
           <button
             onClick={() => setPasswordModal(true)}
-            className="h-9 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:text-primary hover:border-primary/40 transition-colors"
+            className="h-9 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:text-primary hover:border-primary/40 transition-colors w-full sm:w-auto"
           >
             {t("changePassword")}
           </button>
         </div>
 
         {/* Last Login */}
-        <div className="flex items-center justify-between p-4 rounded-xl bg-background">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-card-blue-light text-card-blue flex items-center justify-center">
-              <Clock size={18} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-text-primary">{t("lastLogin")}</p>
-              <p className="text-xs text-text-muted mt-0.5">{formatDate(lastLogin)}</p>
-            </div>
+        <div className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-background">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-card-blue-light text-card-blue flex items-center justify-center shrink-0">
+            <Clock size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-text-primary">{t("lastLogin")}</p>
+            <p className="text-xs text-text-muted mt-0.5 truncate">{formatDate(lastLogin)}</p>
           </div>
         </div>
 

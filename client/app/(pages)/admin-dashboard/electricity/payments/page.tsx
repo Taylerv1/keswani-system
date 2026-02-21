@@ -88,30 +88,30 @@ export default function ElecPaymentsPage() {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="@container">
+      <div className="flex flex-col @md:flex-row @md:items-center @md:justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">{t("elecPaymentManagement")}</h1>
-          <p className="text-text-secondary text-sm mt-1">{t("paymentHistory")}</p>
+          <h1 className="text-xl @md:text-2xl font-bold text-text-primary">{t("elecPaymentManagement")}</h1>
+          <p className="text-text-secondary text-xs @md:text-sm mt-1">{t("paymentHistory")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => alert("PDF export mock")} className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
-            <FileDown size={16} />
+          <button onClick={() => alert("PDF export mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2">
+            <FileDown size={15} />
             {t("exportPdf")}
           </button>
-          <button onClick={() => { resetForm(); setModalOpen(true); }} className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
-            <Plus size={16} />
+          <button onClick={() => { resetForm(); setModalOpen(true); }} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+            <Plus size={15} />
             {t("registerPayment")}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+      <div className="grid grid-cols-1 @sm:grid-cols-2 gap-3 @md:gap-5 mb-5">
         <KpiCard label={t("totalCollected")} value={`$${totalCollected.toFixed(2)}`} icon={<CreditCard size={22} />} color="text-card-green" bgColor="bg-card-green-light" />
         <KpiCard label={t("elecPayments")} value={data.payments.length} icon={<CreditCard size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+      <div className="flex flex-col @xs:flex-row gap-3 mb-5">
         <div className="flex-1">
           <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
         </div>
@@ -123,7 +123,8 @@ export default function ElecPaymentsPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden @3xl:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -152,6 +153,29 @@ export default function ElecPaymentsPage() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* Mobile cards */}
+        <div className="@3xl:hidden divide-y divide-surface-border">
+          {paginated.length === 0 ? (
+            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+          ) : (
+            paginated.map((p) => (
+              <div key={p.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{getSubscriberName(p.subscriberId)}</span>
+                  <span className="font-semibold text-card-green text-sm">${p.amount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{p.date}</span>
+                  <span className="text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{getEmployeeName(p.collectedBy ?? "")}</span>
+                  <span className="text-text-muted font-mono">{p.receiptNumber}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

@@ -42,21 +42,21 @@ export default function ProfileInfoCard({ fullName, email, phone, address, creat
   ];
 
   return (
-    <div className="bg-surface rounded-2xl border border-surface-border p-6">
-      <h2 className="text-base font-semibold text-text-primary mb-5">{t("personalInfo")}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="bg-surface rounded-2xl border border-surface-border p-4 sm:p-6">
+      <h2 className="text-base font-semibold text-text-primary mb-4 sm:mb-5">{t("personalInfo")}</h2>
+      <div className="space-y-3">
         {fields.map((f) => (
           <div
             key={f.label}
-            className="group flex items-start gap-3.5 p-3.5 rounded-xl bg-background hover:bg-primary-light/40 transition-colors duration-200"
+            className="group flex items-start gap-3 sm:gap-3.5 p-3 sm:p-3.5 rounded-xl bg-background hover:bg-primary-light/40 transition-colors duration-200"
           >
-            <div className={`w-9 h-9 rounded-xl ${f.bg} ${f.color} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}>
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${f.bg} ${f.color} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 [&>svg]:w-3.5 [&>svg]:h-3.5 sm:[&>svg]:w-4 sm:[&>svg]:h-4`}>
               {f.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-text-muted">{f.label}</p>
+              <p className="text-[11px] sm:text-xs text-text-muted">{f.label}</p>
               <p
-                className={`text-sm font-medium text-text-primary mt-0.5 truncate ${f.className || ""}`}
+                className={`text-xs sm:text-sm font-medium text-text-primary mt-0.5 truncate ${f.className || ""}`}
                 dir={f.dir}
                 style={f.style}
               >

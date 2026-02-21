@@ -69,13 +69,13 @@ export default function ElecDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">{t("elecDashboardTitle")}</h1>
-        <p className="text-text-secondary text-sm mt-1">{t("welcome")}</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-text-primary">{t("elecDashboardTitle")}</h1>
+        <p className="text-text-secondary text-xs sm:text-sm mt-1">{t("welcome")}</p>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
         <KpiCard label={t("activeSubscribers")} value={activeSubs} icon={<Users size={22} />} color="text-card-green" bgColor="bg-card-green-light" trend={`${suspendedSubs} ${t("suspendedSubscribers")}`} />
         <KpiCard label={t("monthlyConsumption")} value={`${monthlyConsumption.toLocaleString()} ${t("kwh")}`} icon={<Zap size={22} />} color="text-card-orange" bgColor="bg-card-orange-light" />
         <KpiCard label={t("totalBills")} value={`$${totalBillsAmount.toFixed(2)}`} icon={<Receipt size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" trend={`${currentMonthBills.length} ${t("recentBills")}`} />
@@ -86,11 +86,11 @@ export default function ElecDashboardPage() {
         <KpiCard label={t("totalConsumption")} value={`${data.readings.reduce((s, r) => s + r.consumption, 0).toLocaleString()} ${t("kwh")}`} icon={<TrendingUp size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
         {/* Consumption Chart */}
-        <div className="bg-surface rounded-xl border border-surface-border p-5">
+        <div className="bg-surface rounded-xl border border-surface-border p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-text-primary mb-4">{t("consumptionTrend")}</h2>
-          <div className="flex items-end gap-3 h-40">
+          <div className="flex items-end gap-1.5 sm:gap-3 h-32 sm:h-40">
             {consumptionByMonth.map((item) => (
               <div key={item.month} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-xs text-text-muted font-medium">{item.value || ""}</span>
@@ -105,9 +105,9 @@ export default function ElecDashboardPage() {
         </div>
 
         {/* Revenue Chart */}
-        <div className="bg-surface rounded-xl border border-surface-border p-5">
+        <div className="bg-surface rounded-xl border border-surface-border p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-text-primary mb-4">{t("revenueTrend")}</h2>
-          <div className="flex items-end gap-3 h-40">
+          <div className="flex items-end gap-1.5 sm:gap-3 h-32 sm:h-40">
             {revenueByMonth.map((item) => (
               <div key={item.month} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-xs text-text-muted font-medium">{item.value > 0 ? `$${item.value.toFixed(0)}` : ""}</span>
@@ -127,7 +127,8 @@ export default function ElecDashboardPage() {
         <div className="px-5 py-4 border-b border-surface-border">
           <h2 className="text-sm font-semibold text-text-primary">{t("recentBills")}</h2>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -150,6 +151,25 @@ export default function ElecDashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-surface-border">
+          {recentBills.map((b) => (
+            <div key={b.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-text-primary text-sm">{getSubscriberName(b.subscriberId)}</span>
+                <StatusBadge status={b.status} />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-muted">{b.month}</span>
+                <span className="text-text-secondary">{b.consumption} {t("kwh")}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-text-muted">{t("totalAmountBill")}</span>
+                <span className="text-sm font-semibold text-text-primary">${b.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

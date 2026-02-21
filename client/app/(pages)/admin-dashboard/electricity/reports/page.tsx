@@ -126,9 +126,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Report tabs */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-none">
         {reports.map((r) => (
-          <button key={r.type} onClick={() => setReportType(r.type)} className={`h-9 px-4 rounded-lg text-sm font-medium flex items-center gap-2 cursor-pointer border-0 transition-colors ${reportType === r.type ? "bg-primary text-white" : "bg-surface text-text-secondary hover:text-primary hover:bg-primary-light"}`}>
+          <button key={r.type} onClick={() => setReportType(r.type)} className={`h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 cursor-pointer border-0 transition-colors whitespace-nowrap shrink-0 ${reportType === r.type ? "bg-primary text-white" : "bg-surface text-text-secondary hover:text-primary hover:bg-primary-light"}`}>
             {r.icon} {r.label}
           </button>
         ))}
@@ -223,7 +223,8 @@ export default function ReportsPage() {
       {/* Building Report */}
       {reportType === "building" && (
         <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-surface-border bg-background">
@@ -245,13 +246,29 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-surface-border">
+            {perBuilding.map((b) => (
+              <div key={b.buildingId} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{getBuildingName(b.buildingId)}</span>
+                  <span className="font-semibold text-card-green text-sm">${b.revenue.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{b.subscriberCount} {t("totalSubscribers")}</span>
+                  <span className="text-text-secondary">{b.consumption} {t("kwh")}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Subscriber Report */}
       {reportType === "subscriber" && (
         <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-surface-border bg-background">
@@ -274,6 +291,24 @@ export default function ReportsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-surface-border">
+            {perSubscriber.map(([subId, vals]) => (
+              <div key={subId} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{getSubscriberName(subId)}</span>
+                  <span className="text-xs text-text-secondary">{vals.consumption} {t("kwh")}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{t("totalBilled")}: ${vals.billed.toFixed(2)}</span>
+                  <span className="text-card-green">{t("totalPaid")}: ${vals.paid.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-end">
+                  <span className="text-xs font-medium text-card-red">{t("totalOutstanding")}: ${(vals.billed - vals.paid).toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

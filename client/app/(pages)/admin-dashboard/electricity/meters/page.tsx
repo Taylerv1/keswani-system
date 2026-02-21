@@ -98,7 +98,8 @@ export default function MetersPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -139,6 +140,36 @@ export default function MetersPage() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-surface-border">
+          {paginated.length === 0 ? (
+            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+          ) : (
+            paginated.map((m) => (
+              <div key={m.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Gauge size={14} className="text-text-muted shrink-0" />
+                    <span className="font-medium text-text-primary text-sm">{m.meterNumber}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <StatusBadge status={m.type} />
+                    <StatusBadge status={m.status} />
+                  </div>
+                </div>
+                <div className="text-xs text-text-secondary">{getSubscriberName(m.subscriberId)}</div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{t("installDate")}: {m.installDate}</span>
+                  <span className="text-text-muted">{t("lastReadingDate")}: {m.lastReadingDate}</span>
+                </div>
+                <div className="flex items-center justify-end gap-1 pt-1">
+                  <button onClick={() => openEdit(m)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0" title={t("edit")}><Pencil size={15} /></button>
+                  <button onClick={() => setDeleteId(m.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0" title={t("delete")}><Trash2 size={15} /></button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

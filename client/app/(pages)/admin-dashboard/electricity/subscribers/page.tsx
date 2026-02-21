@@ -124,7 +124,8 @@ export default function SubscribersPage() {
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -169,6 +170,41 @@ export default function SubscribersPage() {
               )}
             </tbody>
           </table>
+        </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-surface-border">
+          {paginated.length === 0 ? (
+            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+          ) : (
+            paginated.map((s) => (
+              <div key={s.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-text-primary text-sm">{locale === "ar" ? s.nameAr : s.name}</span>
+                  <StatusBadge status={s.status} />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-text-muted">{getBuildingName(s.buildingId)} · {s.unitNumber}</span>
+                  <span className={`font-medium ${s.balance < 0 ? "text-card-red" : "text-card-green"}`}>
+                    ${Math.abs(s.balance).toFixed(2)}{s.balance < 0 ? " ▼" : ""}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-muted">{s.phone}</span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => { setDetailItem(s); setDetailTab("info"); }} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0" title={t("view")}>
+                      <Eye size={15} />
+                    </button>
+                    <button onClick={() => openEdit(s)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0" title={t("edit")}>
+                      <Pencil size={15} />
+                    </button>
+                    <button onClick={() => setDeleteId(s.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0" title={t("delete")}>
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -231,12 +267,12 @@ export default function SubscribersPage() {
       <Modal open={!!detailItem} onClose={() => setDetailItem(null)} title={t("subscriberDetails")} maxWidth="max-w-2xl">
         {detailItem && (
           <div>
-            <div className="flex gap-1 mb-4 border-b border-surface-border">
+            <div className="flex gap-1 mb-4 border-b border-surface-border overflow-x-auto scrollbar-none -mx-1 px-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setDetailTab(tab.key)}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer bg-transparent ${
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors cursor-pointer bg-transparent whitespace-nowrap ${
                     detailTab === tab.key
                       ? "border-primary text-primary"
                       : "border-transparent text-text-secondary hover:text-text-primary"
@@ -248,7 +284,7 @@ export default function SubscribersPage() {
             </div>
 
             {detailTab === "info" && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   [t("name"), locale === "ar" ? detailItem.nameAr : detailItem.name],
                   [t("phone"), detailItem.phone],
@@ -266,83 +302,149 @@ export default function SubscribersPage() {
             )}
 
             {detailTab === "readings" && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border">
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("month")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("previousReading")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("currentReading")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("consumption")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subReadings.length === 0 ? (
-                      <tr><td colSpan={4} className="px-3 py-4 text-center text-text-muted">{t("noData")}</td></tr>
-                    ) : subReadings.map((r) => (
-                      <tr key={r.id} className="border-b border-surface-border last:border-0">
-                        <td className="px-3 py-2 text-text-primary">{r.month}</td>
-                        <td className="px-3 py-2 text-text-secondary">{r.previousReading}</td>
-                        <td className="px-3 py-2 text-text-secondary">{r.currentReading}</td>
-                        <td className="px-3 py-2 font-medium text-text-primary">{r.consumption} {t("kwh")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                {subReadings.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-text-muted text-sm">{t("noData")}</p>
+                ) : (
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-surface-border">
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("month")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("previousReading")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("currentReading")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("consumption")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subReadings.map((r) => (
+                            <tr key={r.id} className="border-b border-surface-border last:border-0">
+                              <td className="px-3 py-2 text-text-primary">{r.month}</td>
+                              <td className="px-3 py-2 text-text-secondary">{r.previousReading}</td>
+                              <td className="px-3 py-2 text-text-secondary">{r.currentReading}</td>
+                              <td className="px-3 py-2 font-medium text-text-primary">{r.consumption} {t("kwh")}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Mobile cards */}
+                    <div className="sm:hidden divide-y divide-surface-border">
+                      {subReadings.map((r) => (
+                        <div key={r.id} className="py-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-text-primary">{r.month}</span>
+                            <span className="text-sm font-semibold text-text-primary">{r.consumption} {t("kwh")}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-text-muted">
+                            <span>{t("previousReading")}: {r.previousReading}</span>
+                            <span>{t("currentReading")}: {r.currentReading}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
             {detailTab === "bills" && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border">
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("billMonth")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("consumption")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("totalAmountBill")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("status")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subBills.length === 0 ? (
-                      <tr><td colSpan={4} className="px-3 py-4 text-center text-text-muted">{t("noData")}</td></tr>
-                    ) : subBills.map((b) => (
-                      <tr key={b.id} className="border-b border-surface-border last:border-0">
-                        <td className="px-3 py-2 text-text-primary">{b.month}</td>
-                        <td className="px-3 py-2 text-text-secondary">{b.consumption} {t("kwh")}</td>
-                        <td className="px-3 py-2 font-medium text-text-primary">${b.totalAmount.toFixed(2)}</td>
-                        <td className="px-3 py-2"><StatusBadge status={b.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                {subBills.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-text-muted text-sm">{t("noData")}</p>
+                ) : (
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-surface-border">
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("billMonth")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("consumption")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("totalAmountBill")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("status")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subBills.map((b) => (
+                            <tr key={b.id} className="border-b border-surface-border last:border-0">
+                              <td className="px-3 py-2 text-text-primary">{b.month}</td>
+                              <td className="px-3 py-2 text-text-secondary">{b.consumption} {t("kwh")}</td>
+                              <td className="px-3 py-2 font-medium text-text-primary">${b.totalAmount.toFixed(2)}</td>
+                              <td className="px-3 py-2"><StatusBadge status={b.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Mobile cards */}
+                    <div className="sm:hidden divide-y divide-surface-border">
+                      {subBills.map((b) => (
+                        <div key={b.id} className="py-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-text-primary">{b.month}</span>
+                            <StatusBadge status={b.status} />
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-text-muted">{b.consumption} {t("kwh")}</span>
+                            <span className="font-medium text-text-primary">${b.totalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
             {detailTab === "payments" && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border">
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("date")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("amount")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("paymentMethod")}</th>
-                      <th className="text-start px-3 py-2 text-text-secondary">{t("receiptNumber")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subPayments.length === 0 ? (
-                      <tr><td colSpan={4} className="px-3 py-4 text-center text-text-muted">{t("noData")}</td></tr>
-                    ) : subPayments.map((p) => (
-                      <tr key={p.id} className="border-b border-surface-border last:border-0">
-                        <td className="px-3 py-2 text-text-primary">{p.date}</td>
-                        <td className="px-3 py-2 font-medium text-card-green">${p.amount.toFixed(2)}</td>
-                        <td className="px-3 py-2 text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</td>
-                        <td className="px-3 py-2 text-text-muted text-xs">{p.receiptNumber}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                {subPayments.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-text-muted text-sm">{t("noData")}</p>
+                ) : (
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-surface-border">
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("date")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("amount")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("paymentMethod")}</th>
+                            <th className="text-start px-3 py-2 text-text-secondary">{t("receiptNumber")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subPayments.map((p) => (
+                            <tr key={p.id} className="border-b border-surface-border last:border-0">
+                              <td className="px-3 py-2 text-text-primary">{p.date}</td>
+                              <td className="px-3 py-2 font-medium text-card-green">${p.amount.toFixed(2)}</td>
+                              <td className="px-3 py-2 text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</td>
+                              <td className="px-3 py-2 text-text-muted text-xs">{p.receiptNumber}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Mobile cards */}
+                    <div className="sm:hidden divide-y divide-surface-border">
+                      {subPayments.map((p) => (
+                        <div key={p.id} className="py-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-text-primary">{p.date}</span>
+                            <span className="text-sm font-semibold text-card-green">${p.amount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-text-muted">
+                            <span>{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</span>
+                            <span>{p.receiptNumber}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

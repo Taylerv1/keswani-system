@@ -75,7 +75,8 @@ export default function PricingPage() {
         <div className="px-5 py-4 border-b border-surface-border">
           <h2 className="text-sm font-semibold text-text-primary">{t("pricingHistory")}</h2>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border bg-background">
@@ -106,13 +107,36 @@ export default function PricingPage() {
             </tbody>
           </table>
         </div>
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-surface-border">
+          {sorted.map((p, i) => (
+            <div key={p.id} className={`p-4 space-y-2 ${i === 0 ? "bg-card-green-light/30" : ""}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className={`font-bold ${i === 0 ? "text-card-green text-lg" : "text-text-primary"}`}>${p.pricePerKwh}</span>
+                  {i === 0 && <span className="text-xs text-card-green ms-1">({t("current")})</span>}
+                </div>
+                <button onClick={() => openEdit(p)} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0">
+                  <Edit2 size={15} />
+                </button>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-text-muted">{t("effectiveFrom")}: <span className="text-text-secondary">{p.effectiveFrom}</span></span>
+                <span className="text-text-muted">{t("effectiveTo")}: <span className="text-text-secondary">{p.effectiveTo ?? "—"}</span></span>
+              </div>
+              {(locale === "ar" ? p.notesAr : p.notes) && (
+                <p className="text-xs text-text-muted">{locale === "ar" ? (p.notesAr ?? p.notes ?? "") : (p.notes ?? "")}</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Price chart */}
       {sorted.length > 1 && (
-        <div className="mt-8 bg-surface rounded-xl border border-surface-border p-5">
+        <div className="mt-8 bg-surface rounded-xl border border-surface-border p-4 sm:p-5">
           <h3 className="text-sm font-semibold text-text-primary mb-4">{t("priceTrend")}</h3>
-          <div className="flex items-end gap-3 h-40">
+          <div className="flex items-end gap-2 sm:gap-3 h-32 sm:h-40">
             {[...sorted].reverse().map((p, i) => {
               const maxP = Math.max(...sorted.map((x) => x.pricePerKwh));
               const h = (p.pricePerKwh / maxP) * 100;
