@@ -17,6 +17,7 @@ const en = {
   // Sidebar
   rent: "Rent",
   electricity: "Electricity",
+  employees: "Employees",
   profile: "Profile",
   logout: "Logout",
 

@@ -6,6 +6,7 @@ import {
   Home,
   Zap,
   User,
+  Users,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: "rent", href: "/admin-dashboard/rent", icon: <Home size={20} /> },
   { key: "electricity", href: "/admin-dashboard/electricity", icon: <Zap size={20} /> },
+  { key: "employees", href: "/admin-dashboard/employees", icon: <Users size={20} /> },
   { key: "profile", href: "/admin-dashboard/profile", icon: <User size={20} /> },
 ];
 
