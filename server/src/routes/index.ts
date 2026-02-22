@@ -2,6 +2,9 @@ import { Router } from "express";
 import authRoutes from "./auth.routes";
 import propertyRoutes from "./property.routes";
 import clientRoutes from "./client.routes";
+import contractRoutes from "./contract.routes";
+import maintenanceRoutes from "./maintenance.routes";
+import paymentRoutes from "./payment.routes";
 
 const router = Router();
 
@@ -16,11 +19,12 @@ router.use("/auth", authRoutes);
 // Resource routes
 router.use("/properties", propertyRoutes);
 router.use("/clients", clientRoutes);
+router.use("/contracts", contractRoutes);
+router.use("/maintenance", maintenanceRoutes);
+router.use("/payments", paymentRoutes);
 
 // Future route modules:
 // router.use("/employees", employeeRoutes);
-// router.use("/contracts", contractRoutes);
-// router.use("/payments", paymentRoutes);
 // router.use("/electricity", electricityRoutes);
 // router.use("/expenses", expenseRoutes);
 
