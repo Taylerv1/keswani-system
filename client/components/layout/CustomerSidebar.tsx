@@ -119,7 +119,7 @@ export default function CustomerSidebar({
             </div>
 
             {/* Navigation */}
-            <nav dir={dir} className={`flex-1 py-4 px-2 space-y-1 overflow-y-auto ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
+            <nav dir={dir} className={`scrollbar-primary flex-1 py-4 px-2 space-y-1 overflow-y-auto ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
                 {navItems.map((item) => {
                     const isActive =
                         item.href === "/dashboard"

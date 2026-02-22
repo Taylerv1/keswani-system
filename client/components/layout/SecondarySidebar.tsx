@@ -96,7 +96,7 @@ export default function SecondarySidebar({
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
+      <nav className="scrollbar-primary flex-1 px-2 space-y-0.5 overflow-y-auto">
         {nav.items.map((item) => {
           const isExact = pathname === item.href;
           const isActive =

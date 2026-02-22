@@ -93,7 +93,7 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                 {/* Body: make fixed-height flex so sidebar and main scroll independently */}
                 <div className="flex h-[calc(100vh-64px)]">
                     {/* Spacer for left/right when sidebar is fixed */}
-                    <main className={`flex-1 overflow-y-auto p-6 ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
+                    <main className={`scrollbar-primary flex-1 overflow-y-auto p-6 ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`}>
                         {children}
                     </main>
                 </div>

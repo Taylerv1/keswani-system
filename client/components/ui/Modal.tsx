@@ -53,7 +53,7 @@ export default function Modal({
           </button>
         </div>
         {/* Body */}
-        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
+        <div className="scrollbar-primary px-6 py-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

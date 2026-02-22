@@ -196,7 +196,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           />
 
           {/* Page content */}
-          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
+          <main className="scrollbar-primary flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
         </div>
       </div>
     </div>
