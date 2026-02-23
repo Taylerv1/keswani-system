@@ -164,9 +164,14 @@ export const createMaintenance = async (
             estimated_cost: data.estimated_cost,
         };
 
-        if (data.requested_by) {
+        // If the requester is a client and is authenticated, set requested_by to their profile.
+        if (req.user?.user_type === "client") {
+            createData.requester = { connect: { id: req.user.profile_id } };
+        } else if (data.requested_by) {
+            // Employees may create requests on behalf of a client
             createData.requester = { connect: { id: data.requested_by } };
         }
+
         if (data.assigned_to) {
             createData.assignee = { connect: { id: data.assigned_to } };
         }

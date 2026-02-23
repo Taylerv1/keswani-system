@@ -71,6 +71,41 @@ export const requireAccess = (permission: string) => {
 };
 
 /**
+ * Require either a client user, or an employee with the specified access permission.
+ * Owner/admin bypass checks.
+ */
+export const requireAccessOrClient = (permission: string) => {
+    return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+        if (!req.user) {
+            res.status(401).json({ success: false, error: "Not authenticated" });
+            return;
+        }
+
+        // Allow clients to use the endpoint
+        if (req.user.user_type === "client") {
+            return next();
+        }
+
+        // Otherwise must be an employee and have access
+        if (req.user.user_type !== "employee") {
+            res.status(403).json({ success: false, error: "This endpoint is only accessible to employees or clients" });
+            return;
+        }
+
+        if (req.user.role === "owner" || req.user.role === "admin") {
+            return next();
+        }
+
+        if (!req.user.access || !req.user.access[permission]) {
+            res.status(403).json({ success: false, error: `You do not have '${permission}' access. Contact your administrator.` });
+            return;
+        }
+
+        next();
+    };
+};
+
+/**
  * Require the user to be a client (tenant/subscriber).
  */
 export const requireClient = (
