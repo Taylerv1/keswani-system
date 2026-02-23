@@ -86,6 +86,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const firstChar = displayName.trim().charAt(0);
     return firstChar ? firstChar.toUpperCase() : "A";
   }, [displayName]);
+  const userEmail = getUserData()?.email || "No email available";
 
   const welcomeBackText = locale === "ar" ? "أهلًا بعودتك" : "Welcome back";
 
@@ -179,11 +180,35 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </button>
 
             {/* Avatar */}
-            <Link href="/admin-dashboard/profile">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
-                {avatarInitial}
+            <div className="relative group">
+              <Link href="/admin-dashboard/profile">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer transition-transform duration-200 group-hover:scale-105">
+                  {avatarInitial}
+                </div>
+              </Link>
+
+              <div
+                className={`
+                  absolute top-[calc(100%+10px)] ${dir === "rtl" ? "left-0" : "right-0"}
+                  z-50 w-[240px] rounded-xl border border-white/10
+                  bg-gradient-to-b from-sidebar-bg to-sidebar-bg-dark text-sidebar-text shadow-xl backdrop-blur-md
+                  opacity-0 pointer-events-none translate-y-1 scale-95
+                  transition-all duration-200
+                  group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100
+                `}
+              >
+                <div
+                  className={`absolute -top-1.5 w-3 h-3 rotate-45 bg-sidebar-bg-dark border border-white/10 ${dir === "rtl" ? "left-3" : "right-3"}`}
+                />
+
+                <div className="px-3 py-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-primary font-semibold">Email</p>
+                  <p className="mt-1 text-sm font-medium text-white truncate" title={userEmail}>
+                    {userEmail}
+                  </p>
+                </div>
               </div>
-            </Link>
+            </div>
           </div>
         </header>
 
