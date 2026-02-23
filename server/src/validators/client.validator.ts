@@ -7,7 +7,7 @@ export const createClientSchema = z.object({
     full_name: z.string().min(1, "Full name is required"),
     email: z.string().email("Invalid email").optional().or(z.literal("")),
     phone: z.string().optional(),
-    address: z.string().optional(),
+    // address: z.string().optional(),
     notes: z.string().optional(),
 });
 

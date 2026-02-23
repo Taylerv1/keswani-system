@@ -205,7 +205,7 @@ export const createClient = async (
                 full_name: parsed.data.full_name,
                 email: parsed.data.email || null,
                 phone: parsed.data.phone || null,
-                address: parsed.data.address || null,
+                // address: parsed.data.address || null,
                 notes: parsed.data.notes || null,
             },
         });
