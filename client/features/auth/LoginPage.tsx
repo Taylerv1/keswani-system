@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Mail, Lock, Eye, EyeOff, Globe } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "@/lib/translation";
-import { LoadingLottie } from "@/components/ui";
+import { LoadingLottie, Modal } from "@/components/ui";
+import { forgotPassword } from "@/features/auth/api/auth";
 
 export default function LoginPage() {
   const { t, dir, toggleLocale } = useTranslation();
@@ -14,6 +15,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -57,6 +63,35 @@ export default function LoginPage() {
       console.error("Login error:", err);
       setError("An error occurred. Please try again.");
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setForgotError("");
+
+    if (!forgotEmail || !forgotEmail.includes("@")) {
+      setForgotError("Please enter a valid email address");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const result = await forgotPassword(forgotEmail);
+      if (!result.success) {
+        setForgotError(result.error || "Failed to send reset email");
+        return;
+      }
+
+      setForgotSuccess(true);
+      setForgotEmail("");
+      setTimeout(() => {
+        setForgotPasswordOpen(false);
+        setForgotSuccess(false);
+      }, 3000);
+    } catch (err) {
+      setForgotError("An error occurred. Please try again.");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -171,18 +206,27 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember me */}
-            <label className="flex items-center gap-2 cursor-pointer select-none pt-0.5">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 rounded border-surface-border accent-primary cursor-pointer"
-              />
-              <span className="text-[13px] text-text-secondary">
-                {t("rememberMe")}
-              </span>
-            </label>
+            {/* Remember me and Forgot Password */}
+            <div className="flex items-center justify-between pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="w-4 h-4 rounded border-surface-border accent-primary cursor-pointer"
+                />
+                <span className="text-[13px] text-text-secondary">
+                  {t("rememberMe")}
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setForgotPasswordOpen(true)}
+                className="text-primary text-xs font-medium hover:underline cursor-pointer"
+              >
+                {t("forgotPassword")}
+              </button>
+            </div>
 
             {/* Submit */}
             <button
@@ -238,6 +282,74 @@ export default function LoginPage() {
           </button>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        open={forgotPasswordOpen}
+        onClose={() => {
+          setForgotPasswordOpen(false);
+          setForgotEmail("");
+          setForgotError("");
+          setForgotSuccess(false);
+        }}
+        title={t("forgotPassword")}
+        maxWidth="max-w-sm"
+      >
+        <div className="space-y-4">
+          {forgotSuccess && (
+            <div className="rounded-lg border border-card-green/20 bg-card-green-light px-3 py-2 text-sm text-card-green font-medium">
+              {t("resetEmailSent")} {forgotEmail}
+            </div>
+          )}
+
+          {forgotError && (
+            <div className="rounded-lg border border-card-red/20 bg-card-red-light px-3 py-2 text-sm text-card-red">
+              {forgotError}
+            </div>
+          )}
+
+          {!forgotSuccess && (
+            <>
+              <p className="text-sm text-text-secondary">
+                {t("enterEmailResetPassword")}
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">
+                  {t("email")}
+                </label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder={t("email")}
+                  className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotPasswordOpen(false);
+                    setForgotEmail("");
+                    setForgotError("");
+                  }}
+                  className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  type="button"
+                  disabled={forgotLoading}
+                  onClick={handleForgotPassword}
+                  className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {forgotLoading ? <LoadingLottie size={24} /> : t("sendReset")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

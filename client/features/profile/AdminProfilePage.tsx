@@ -8,7 +8,8 @@ import SecuritySettings from "@/features/profile/components/SecuritySettings";
 import ActivityTimeline from "@/features/profile/components/ActivityTimeline";
 import PreferencesPanel from "@/features/profile/components/PreferencesPanel";
 import EditProfileModal from "@/features/profile/components/EditProfileModal";
-import { LoadingLottie } from "@/components/ui";
+import { LoadingLottie, Modal } from "@/components/ui";
+import { resetPassword } from "@/features/auth/api/auth";
 
 interface ProfileData {
   fullName: string;
@@ -34,6 +35,13 @@ export default function ProfilePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -140,6 +148,47 @@ export default function ProfilePage() {
     }));
   };
 
+  const handleResetPassword = async () => {
+    setResetError("");
+
+    if (!resetToken || !resetToken.trim()) {
+      setResetError("Reset token is required");
+      return;
+    }
+
+    if (!resetNewPassword || resetNewPassword.length < 6) {
+      setResetError("New password must be at least 6 characters");
+      return;
+    }
+
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetError("Passwords do not match");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const result = await resetPassword(resetToken, resetNewPassword);
+      if (!result.success) {
+        setResetError(result.error || "Failed to reset password");
+        return;
+      }
+
+      setResetSuccess(true);
+      setResetToken("");
+      setResetNewPassword("");
+      setResetConfirmPassword("");
+      setTimeout(() => {
+        setResetPasswordOpen(false);
+        setResetSuccess(false);
+      }, 3000);
+    } catch (err) {
+      setResetError("An error occurred. Please try again.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Success toast */}
@@ -174,6 +223,104 @@ export default function ProfilePage() {
             />
           </div>
 
+
+          {/* Reset Password Modal (accessible from email reset link) */}
+          <Modal
+            open={resetPasswordOpen}
+            onClose={() => {
+              setResetPasswordOpen(false);
+              setResetToken("");
+              setResetNewPassword("");
+              setResetConfirmPassword("");
+              setResetError("");
+              setResetSuccess(false);
+            }}
+            title={t("resetPassword")}
+            maxWidth="max-w-sm"
+          >
+            <div className="space-y-4">
+              {resetSuccess && (
+                <div className="rounded-lg border border-card-green/20 bg-card-green-light px-3 py-2 text-sm text-card-green font-medium">
+                  {t("passwordReset")}
+                </div>
+              )}
+
+              {resetError && (
+                <div className="rounded-lg border border-card-red/20 bg-card-red-light px-3 py-2 text-sm text-card-red">
+                  {resetError}
+                </div>
+              )}
+
+              {!resetSuccess && (
+                <>
+                  <p className="text-sm text-text-secondary">
+                    {t("enterResetToken")}
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      {t("resetToken")}
+                    </label>
+                    <input
+                      type="text"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                      placeholder="Paste token from email"
+                      className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      {t("newPassword")}
+                    </label>
+                    <input
+                      type="password"
+                      value={resetNewPassword}
+                      onChange={(e) => setResetNewPassword(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      {t("confirmPassword")}
+                    </label>
+                    <input
+                      type="password"
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetPasswordOpen(false);
+                        setResetToken("");
+                        setResetNewPassword("");
+                        setResetConfirmPassword("");
+                        setResetError("");
+                      }}
+                      className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                    >
+                      {t("cancel")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={resetLoading}
+                      onClick={handleResetPassword}
+                      className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {resetLoading ? <LoadingLottie size={24} /> : t("resetPassword")}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </Modal>
           {/* Two-column layout */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6">
             {/* Left column */}
