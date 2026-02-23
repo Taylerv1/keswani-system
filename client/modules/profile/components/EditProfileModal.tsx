@@ -90,7 +90,7 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
             disabled={!form.fullName || isSaving}
             className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
           >
-            {isSaving ? "..." : t("save")}
+            {isSaving ? t("saving") : t("save")}
           </button>
         </div>
       </div>

@@ -30,6 +30,7 @@ const ar: Record<string, string> = {
   // Common
   search: "ابحث هنا",
   save: "حفظ",
+  saving: "جاري الحفظ...",
   cancel: "إلغاء",
   delete: "حذف",
   edit: "تعديل",
