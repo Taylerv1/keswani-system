@@ -56,15 +56,7 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
             className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">{t("emailAddress")}</label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
+        {/* Email removed per request */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">{t("phoneNumber")}</label>
           <input
@@ -95,10 +87,10 @@ export default function EditProfileModal({ open, onClose, data, onSave }: EditPr
           </button>
           <button
             onClick={handleSave}
-            disabled={!form.fullName || !form.email || isSaving}
+            disabled={!form.fullName || isSaving}
             className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
           >
-            {isSaving ? "..." : t("save")}
+            {isSaving ? t("saving") : t("save")}
           </button>
         </div>
       </div>

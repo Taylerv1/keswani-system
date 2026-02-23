@@ -17,6 +17,7 @@ const en = {
   // Sidebar
   rent: "Rent",
   electricity: "Electricity",
+  employees: "Employees",
   profile: "Profile",
   logout: "Logout",
 
@@ -29,6 +30,7 @@ const en = {
   // Common
   search: "Search here",
   save: "Save",
+  saving: "Saving...",
   cancel: "Cancel",
   delete: "Delete",
   edit: "Edit",

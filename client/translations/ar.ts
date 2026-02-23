@@ -17,6 +17,7 @@ const ar: Record<string, string> = {
   // Sidebar
   rent: "الإيجار",
   electricity: "الكهرباء",
+  employees: "الموظفين",
   profile: "الملف الشخصي",
   logout: "تسجيل الخروج",
 
@@ -29,6 +30,7 @@ const ar: Record<string, string> = {
   // Common
   search: "ابحث هنا",
   save: "حفظ",
+  saving: "جاري الحفظ...",
   cancel: "إلغاء",
   delete: "حذف",
   edit: "تعديل",
