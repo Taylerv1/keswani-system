@@ -1,8 +1,11 @@
+"use client";
+
 // ============================================================
 // Property Module — Edit Modal
 // ============================================================
 
 import { Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
@@ -49,6 +52,19 @@ export function PropertyEditModal({
   actionLoading,
   t,
 }: PropertyEditModalProps) {
+  const unitsEndRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToUnitsEnd = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        unitsEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+    });
+  };
+
   const updateUnit = <K extends keyof CreateUnitInput>(
     index: number,
     key: K,
@@ -61,6 +77,7 @@ export function PropertyEditModal({
 
   const addUnit = () => {
     setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
+    scrollToUnitsEnd();
   };
 
   const removeUnit = (index: number) => {
@@ -265,6 +282,8 @@ export function PropertyEditModal({
                 </div>
               ))
             )}
+
+            <div ref={unitsEndRef} />
           </div>
         )}
 
