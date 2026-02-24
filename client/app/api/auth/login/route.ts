@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { login as backendLogin } from "@/api/auth";
+import { login as backendLogin } from "@/features/auth/api/auth";
 
 export async function POST(req: NextRequest) {
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslation } from "@/lib/translation-context";
+import { useTranslation } from "@/lib/translation";
 
 interface StatusBadgeProps {
   status: string;
@@ -14,6 +14,7 @@ const variantMap: Record<string, "success" | "warning" | "danger" | "info"> = {
   read: "info",
   rented: "success",
   vacant: "warning",
+  full: "success",
   inactive: "danger",
   expired: "danger",
   terminated: "danger",

@@ -6,8 +6,8 @@ import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
-import { useTranslation } from "@/lib/translation-context";
-import { getUserData } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/translation";
+import { getUserData } from "@/lib/helpers/auth-client";
 
 interface AdminLayoutProps {
   children: React.ReactNode;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import Modal from "./Modal";
-import { useTranslation } from "@/lib/translation-context";
+import { useTranslation } from "@/lib/translation";
 
 interface ConfirmDialogProps {
   open: boolean;

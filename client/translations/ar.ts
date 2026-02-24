@@ -113,6 +113,7 @@ const ar: Record<string, string> = {
   active: "نشط",
   inactive: "غير نشط",
   vacant: "شاغر",
+  full: "ممتلئ",
   rented: "مؤجر",
   underMaintenance: "تحت الصيانة",
   units: "الوحدات",

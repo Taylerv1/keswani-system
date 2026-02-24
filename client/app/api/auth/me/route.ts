@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getMe as backendGetMe } from "@/api/auth";
+import { getMe as backendGetMe } from "@/features/auth/api/auth";
 
 export async function GET(req: NextRequest) {
     try {

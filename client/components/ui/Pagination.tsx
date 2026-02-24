@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useTranslation } from "@/lib/translation-context";
+import { useTranslation } from "@/lib/translation";
 
 interface PaginationProps {
   currentPage: number;

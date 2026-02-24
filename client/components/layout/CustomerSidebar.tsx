@@ -12,9 +12,9 @@ import {
     ChevronRight,
     LayoutDashboard,
 } from "lucide-react";
-import { useTranslation } from "@/lib/translation-context";
-import { logout } from "@/lib/auth-client";
-import { useCustomer } from "@/modules/customer/customer-context";
+import { useTranslation } from "@/lib/translation";
+import { logout } from "@/lib/helpers/auth-client";
+import { useCustomer } from "@/features/profile/context/customer-context";
 
 interface NavItem {
     key: string;

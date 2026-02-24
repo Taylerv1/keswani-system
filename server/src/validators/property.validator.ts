@@ -52,7 +52,7 @@ export const propertyQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(10),
     search: z.string().optional(),
-    type: z.enum(["building", "house", "land", "commercial"]).optional(),
+    type: z.enum(["building", "house"]).optional(),
 });
 
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;

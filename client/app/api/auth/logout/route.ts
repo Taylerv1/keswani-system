@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { logout as backendLogout } from "@/api/auth";
+import { logout as backendLogout } from "@/features/auth/api/auth";
 
 export async function POST(req: NextRequest) {
     try {

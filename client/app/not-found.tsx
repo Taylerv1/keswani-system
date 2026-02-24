@@ -1,4 +1,4 @@
-﻿import NotFoundContent from "@/app/_components/NotFoundContent";
+import NotFoundContent from "@/components/shared/NotFoundContent";
 
 export default function NotFound() {
   return <NotFoundContent />;
