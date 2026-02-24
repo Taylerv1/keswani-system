@@ -16,7 +16,7 @@ import { getPropertyOccupancyStatus, getPropertyAddress } from "../utils";
 interface PropertyTableRowProps {
   property: Property;
   actionLoading: boolean;
-  onView: (id: string) => void;
+  onView: (property: Property) => void;
   onEdit: (p: Property) => void;
   onDelete: (id: string) => void;
   t: (key: string) => string;
@@ -55,7 +55,7 @@ export function PropertyTableRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => onView(p.id)}
+            onClick={() => onView(p)}
             disabled={actionLoading}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0"
             title={t("view")}

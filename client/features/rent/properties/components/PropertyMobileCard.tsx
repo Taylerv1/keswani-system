@@ -15,7 +15,7 @@ import { getPropertyOccupancyStatus, getPropertyAddress } from "../utils";
 
 interface PropertyMobileCardProps {
   property: Property;
-  onView: (id: string) => void;
+  onView: (property: Property) => void;
   onEdit: (p: Property) => void;
   onDelete: (id: string) => void;
   t: (key: string) => string;
@@ -62,7 +62,7 @@ export function PropertyMobileCard({
 
       <div className="flex items-center gap-2">
         <button
-          onClick={() => void onView(p.id)}
+          onClick={() => onView(p)}
           className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-blue hover:border-card-blue transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
         >
           <Eye size={14} />

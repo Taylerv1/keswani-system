@@ -35,7 +35,6 @@ export function PropertyPage() {
   const state = usePropertyState(t);
   const form = usePropertyForm({
     t,
-    getPropertyDetails: state.getPropertyDetails,
     createPropertyItem: state.createPropertyItem,
     updatePropertyItem: state.updatePropertyItem,
     deletePropertyItem: state.deletePropertyItem,
@@ -130,7 +129,7 @@ export function PropertyPage() {
       {/* Table container */}
       {state.loading ? (
         <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center" role="status" aria-live="polite">
-          <LoadingLottie size={110} className="p-2" />
+          <LoadingLottie size={150} className="p-6" />
         </div>
       ) : (
         <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
@@ -139,7 +138,7 @@ export function PropertyPage() {
             properties={state.filtered}
             loading={state.loading}
             actionLoading={state.actionLoading}
-            onView={(id) => void form.handleView(id)}
+            onView={(property) => form.handleView(property)}
             onEdit={(p) => void form.openEdit(p)}
             onDelete={(id) => form.setDeleteId(id)}
             t={t}
@@ -156,7 +155,7 @@ export function PropertyPage() {
                 <PropertyMobileCard
                   key={p.id}
                   property={p}
-                  onView={(id) => void form.handleView(id)}
+                  onView={(property) => form.handleView(property)}
                   onEdit={(prop) => void form.openEdit(prop)}
                   onDelete={(id) => form.setDeleteId(id)}
                   t={t}
