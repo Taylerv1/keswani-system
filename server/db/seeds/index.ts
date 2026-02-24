@@ -164,7 +164,6 @@ async function main() {
                 bedrooms: unit.bedrooms,
                 bathrooms: unit.bathrooms,
                 area_sqm: unit.area_sqm,
-                is_available: unit.is_available,
             },
         });
     }

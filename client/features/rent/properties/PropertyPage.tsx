@@ -182,6 +182,9 @@ export function PropertyPage() {
           onClose={closeModal}
           form={form.form}
           setForm={form.setForm}
+          units={form.units}
+          setUnits={form.setUnits}
+          handleUnitTypeChange={form.handleUnitTypeChange}
           onSave={form.handleSave}
           actionLoading={state.actionLoading}
           t={t}

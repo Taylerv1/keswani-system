@@ -232,6 +232,7 @@ interface UsePropertyFormDeps {
       city?: string;
       type?: PropertyType;
       owner_notes?: string | null;
+      units?: CreateUnitInput[];
     }
   ) => Promise<boolean>;
   deletePropertyItem: (id: string) => Promise<boolean>;
@@ -298,6 +299,23 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     if (!details) return;
 
     const item = details.dto;
+    const mappedUnits: CreateUnitInput[] = (item.units ?? []).map((unit) => ({
+      id: unit.id,
+      unit_number: unit.unit_number,
+      floor: unit.floor ?? undefined,
+      bedrooms: unit.bedrooms ?? undefined,
+      bathrooms: unit.bathrooms ?? undefined,
+      area_sqm:
+        unit.area_sqm !== null && unit.area_sqm !== undefined
+          ? Number(unit.area_sqm)
+          : undefined,
+      description: unit.description ?? undefined,
+    }));
+
+    if (item.type === "house" && mappedUnits.length === 0) {
+      mappedUnits.push({ ...EMPTY_UNIT });
+    }
+
     setEditItem(p);
     setForm({
       name: item.name,
@@ -306,6 +324,9 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
       city: item.city ?? "",
       ownerNotes: item.owner_notes ?? "",
     });
+    setUnits(
+      item.type === "building" || item.type === "house" ? mappedUnits : []
+    );
     setModalOpen(true);
   };
 
@@ -367,6 +388,21 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
 
     const payloadType: PropertyType = form.type;
     let success = false;
+    const sanitizedUnits = units
+      .map((unit) => sanitizeUnit(unit))
+      .filter((unit): unit is CreateUnitInput => unit !== null);
+
+    if (payloadType === "house" && sanitizedUnits.length === 0) {
+      setError(t("unitNumber") + " " + t("isRequired"));
+      return;
+    }
+
+    const unitsPayload =
+      payloadType === "house"
+        ? [sanitizedUnits[0]]
+        : payloadType === "building" && sanitizedUnits.length
+          ? sanitizedUnits
+          : undefined;
 
     if (editItem) {
       success = await updatePropertyItem(editItem.id, {
@@ -375,24 +411,9 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
         city: cityValue || undefined,
         type: payloadType,
         owner_notes: form.ownerNotes.trim() || null,
+        units: unitsPayload,
       });
     } else {
-      const sanitizedUnits = units
-        .map((unit) => sanitizeUnit(unit))
-        .filter((unit): unit is CreateUnitInput => unit !== null);
-
-      if (payloadType === "house" && sanitizedUnits.length === 0) {
-        setError(t("unitNumber") + " " + t("isRequired"));
-        return;
-      }
-
-      const unitsPayload =
-        payloadType === "house"
-          ? [sanitizedUnits[0]]
-          : payloadType === "building" && sanitizedUnits.length
-            ? sanitizedUnits
-            : undefined;
-
       success = await createPropertyItem({
         name: nameValue,
         address: addressValue || undefined,
@@ -446,6 +467,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     form,
     setForm,
     units,
+    setUnits,
     unitDraft,
     setUnitDraft,
 

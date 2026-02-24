@@ -25,6 +25,7 @@ export function getPropertyAddress(
 // --------------- Unit Helper Utilities ---------------
 
 export type CreateUnitInput = {
+  id?: string;
   unit_number: string;
   floor?: number;
   bedrooms?: number;
@@ -54,6 +55,7 @@ export function sanitizeUnit(unit: CreateUnitInput): CreateUnitInput | null {
   if (!unitNumber) return null;
 
   const sanitized: CreateUnitInput = { unit_number: unitNumber };
+  if (typeof unit.id === "string") sanitized.id = unit.id;
   if (typeof unit.floor === "number") sanitized.floor = unit.floor;
   if (typeof unit.bedrooms === "number") sanitized.bedrooms = unit.bedrooms;
   if (typeof unit.bathrooms === "number") sanitized.bathrooms = unit.bathrooms;

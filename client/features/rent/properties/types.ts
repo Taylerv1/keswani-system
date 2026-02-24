@@ -16,7 +16,6 @@ export interface PropertyUnit {
   bathrooms: number | null;
   area_sqm: number | string | null;
   description: string | null;
-  is_available: boolean;
 }
 
 export interface Property {
@@ -46,7 +45,6 @@ export interface PropertyUnitDto {
   bathrooms: number | null;
   area_sqm: number | string | null;
   description: string | null;
-  is_available: boolean;
 }
 
 export interface PropertyDto {
@@ -70,7 +68,7 @@ export interface PropertyLookup {
   id: string;
   name: string;
   type: string;
-  units: { id: string; unit_number: string; floor: number | null; is_available: boolean }[];
+  units: { id: string; unit_number: string; floor: number | null }[];
 }
 
 // --------------- API Input types ---------------
@@ -99,4 +97,13 @@ export interface UpdatePropertyInput {
   type?: PropertyType;
   managed_by?: string | null;
   owner_notes?: string | null;
+  units?: {
+    id?: string;
+    unit_number: string;
+    floor?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    area_sqm?: number;
+    description?: string;
+  }[];
 }
