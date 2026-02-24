@@ -22,6 +22,11 @@ export default function SecuritySettings({
   const [passwordModal, setPasswordModal] = useState(false);
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -34,10 +39,60 @@ export default function SecuritySettings({
     return d.toLocaleString();
   };
 
-  const handlePasswordSave = () => {
-    setPasswordModal(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handlePasswordSave = async () => {
+    setError(null);
+
+    // Basic validations
+    if (!currentPassword) {
+      setError("Current password is required");
+      return;
+    }
+    if (!newPassword) {
+      setError("New password is required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to change password");
+        return;
+      }
+
+      setPasswordModal(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setError("An error occurred while changing password");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,24 +158,55 @@ export default function SecuritySettings({
       {/* Change Password Modal */}
       <Modal open={passwordModal} onClose={() => setPasswordModal(false)} title={t("changePassword")} maxWidth="max-w-sm">
         <div className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("currentPassword")}</label>
-            <input type="password" className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              disabled={loading}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("newPassword")}</label>
-            <input type="password" className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={loading}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("confirmPassword")}</label>
-            <input type="password" className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setPasswordModal(false)} className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors">
+            <button
+              onClick={() => setPasswordModal(false)}
+              disabled={loading}
+              className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors disabled:opacity-50"
+            >
               {t("cancel")}
             </button>
-            <button onClick={handlePasswordSave} className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
-              {t("save")}
+            <button
+              onClick={handlePasswordSave}
+              disabled={loading}
+              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? t("saving") : t("save")}
             </button>
           </div>
         </div>
