@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Building2,
   Users,
@@ -14,90 +15,117 @@ import { KpiCard } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
 import { useRent } from "@/features/rent/context/rent-context";
 
+type RentOverview = {
+  total_properties: number;
+  total_units: number;
+  rented_units: number;
+  vacant_units: number;
+  total_tenants: number;
+  monthly_income: number;
+  late_payments: number;
+  contracts_ending_soon: number;
+  maintenance_notifications: number;
+  occupancy_rate: number;
+};
+
 export default function RentOverviewPage() {
   const { t, locale } = useTranslation();
   const { data } = useRent();
 
-  const totalProperties = data.properties.length;
-  const totalUnits = data.properties.reduce((s, p) => s + p.total_units, 0);
-  const rentedUnits = data.properties.reduce((s, p) => s + p.rented_units, 0);
-  const vacantUnits = data.properties.reduce((s, p) => s + p.available_units, 0);
-  const maintUnits = data.properties.reduce(
-    (s, p) => s + Math.max(0, p.total_units - p.rented_units - p.available_units),
-    0
-  );
-  const totalTenants = data.tenants.length;
-  const monthlyIncome = data.contracts
-    .filter((c) => c.status === "active")
-    .reduce((s, c) => s + c.monthlyRent, 0);
-  const latePayments = data.payments.filter((p) => p.status === "overdue").length;
-  const contractsEnding = data.contracts.filter((c) => {
-    if (c.status !== "active") return false;
-    const end = new Date(c.endDate);
-    const now = new Date();
-    const diff = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    return diff > 0 && diff <= 60;
-  }).length;
-  const openMaintenance = data.maintenanceRequests.filter(
-    (m) => m.status === "open" || m.status === "in_progress"
-  ).length;
+  const [overview, setOverview] = useState<RentOverview | null>(null);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
 
-  const occupancy = totalUnits > 0 ? Math.round((rentedUnits / totalUnits) * 100) : 0;
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOverview = async () => {
+      setLoadingOverview(true);
+      setOverviewError(null);
+      try {
+        const res = await fetch("/api/rent/overview", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const payload = await res.json();
+        if (!mounted) return;
+
+        if (!res.ok || !payload?.success || !payload?.data) {
+          setOverview(null);
+          setOverviewError(payload?.error || "Failed to load rent overview.");
+          return;
+        }
+
+        setOverview(payload.data as RentOverview);
+      } catch {
+        if (!mounted) return;
+        setOverview(null);
+        setOverviewError("Failed to load rent overview.");
+      } finally {
+        if (mounted) setLoadingOverview(false);
+      }
+    };
+
+    loadOverview();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const kpis = [
     {
       label: t("totalProperties"),
-      value: totalProperties,
+      value: overview ? overview.total_properties : "—",
       icon: <Building2 size={22} />,
       color: "text-card-blue",
       bgColor: "bg-card-blue-light",
     },
     {
       label: t("rentedUnits"),
-      value: `${rentedUnits} / ${totalUnits}`,
+      value: overview ? `${overview.rented_units} / ${overview.total_units}` : "—",
       icon: <Home size={22} />,
       color: "text-card-green",
       bgColor: "bg-card-green-light",
-      trend: `${occupancy}% ${t("occupancyRate")}`,
+      trend: overview ? `${overview.occupancy_rate}% ${t("occupancyRate")}` : undefined,
     },
     {
       label: t("vacantUnits"),
-      value: vacantUnits,
+      value: overview ? overview.vacant_units : "—",
       icon: <Building2 size={22} />,
       color: "text-card-orange",
       bgColor: "bg-card-orange-light",
     },
     {
       label: t("totalTenants"),
-      value: totalTenants,
+      value: overview ? overview.total_tenants : "—",
       icon: <Users size={22} />,
       color: "text-card-blue",
       bgColor: "bg-card-blue-light",
     },
     {
       label: t("monthlyIncome"),
-      value: `$${monthlyIncome.toLocaleString()}`,
+      value: overview ? `$${overview.monthly_income.toLocaleString()}` : "—",
       icon: <TrendingUp size={22} />,
       color: "text-card-green",
       bgColor: "bg-card-green-light",
     },
     {
       label: t("latePayments"),
-      value: latePayments,
+      value: overview ? overview.late_payments : "—",
       icon: <CreditCard size={22} />,
       color: "text-card-red",
       bgColor: "bg-card-red-light",
     },
     {
       label: t("contractsEndingSoon"),
-      value: contractsEnding,
+      value: overview ? overview.contracts_ending_soon : "—",
       icon: <FileText size={22} />,
       color: "text-card-orange",
       bgColor: "bg-card-orange-light",
     },
     {
       label: t("maintenanceNotifications"),
-      value: openMaintenance,
+      value: overview ? overview.maintenance_notifications : "—",
       icon: <Wrench size={22} />,
       color: "text-card-red",
       bgColor: "bg-card-red-light",
@@ -114,6 +142,12 @@ export default function RentOverviewPage() {
         {t("rentOverview")}
       </h1>
       <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
+      {loadingOverview && (
+        <p className="text-xs sm:text-sm text-text-secondary mb-3">{t("loading")}...</p>
+      )}
+      {overviewError && (
+        <p className="text-xs sm:text-sm text-card-red mb-3">{overviewError}</p>
+      )}
 
       <div className="rent-kpis grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
         {kpis.map((kpi) => (
