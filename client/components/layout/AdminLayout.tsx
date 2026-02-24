@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTranslation } from "@/lib/translation-context";
@@ -18,6 +18,35 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [mobilePrimaryOpen, setMobilePrimaryOpen] = useState(false);
   const [mobileSecondaryOpen, setMobileSecondaryOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: "notif-1",
+      title: "Rent payment reminder: due in 2 days.",
+      timestamp: "5 min ago",
+      unread: true,
+    },
+    {
+      id: "notif-2",
+      title: "New electricity bill is available.",
+      timestamp: "1 hour ago",
+      unread: true,
+    },
+    {
+      id: "notif-3",
+      title: "Maintenance report status was updated.",
+      timestamp: "Yesterday",
+      unread: false,
+    },
+    {
+      id: "notif-4",
+      title: "Welcome to your admin dashboard.",
+      timestamp: "2 days ago",
+      unread: false,
+    },
+  ]);
+  const notificationRootRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const { t, dir, locale, toggleLocale } = useTranslation();
   const pathname = usePathname();
 
@@ -82,11 +111,61 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!notificationRootRef.current) {
+        return;
+      }
+
+      const target = event.target as Node;
+      if (!notificationRootRef.current.contains(target)) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
   const avatarInitial = useMemo(() => {
     const firstChar = displayName.trim().charAt(0);
     return firstChar ? firstChar.toUpperCase() : "A";
   }, [displayName]);
   const userEmail = getUserData()?.email || "No email available";
+  const latestNotifications = useMemo(
+    () => notifications.slice(0, 3),
+    [notifications],
+  );
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => notification.unread).length,
+    [notifications],
+  );
+
+  const handleNotificationClick = (id: string) => {
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === id
+          ? { ...notification, unread: false }
+          : notification,
+      ),
+    );
+  };
+
+  const handleSeeMoreNotifications = () => {
+    setNotificationsOpen(false);
+    const notificationsSection = document.getElementById("notifications");
+    if (notificationsSection) {
+      notificationsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    router.push("/admin-dashboard/rent/notifications#notifications");
+  };
 
   const welcomeBackText = locale === "ar" ? "أهلًا بعودتك" : "Welcome back";
 
@@ -171,13 +250,72 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span className="hidden sm:inline">{t("switchLanguage")}</span>
             </button>
 
-            {/* Notifications placeholder */}
-            <button className="relative w-9 h-9 rounded-lg border border-surface-border bg-background flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
-              <Bell size={16} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-card-red text-white text-[10px] flex items-center justify-center font-bold">
-                3
-              </span>
-            </button>
+            <div ref={notificationRootRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen((prev) => !prev)}
+                className="relative w-9 h-9 rounded-lg border border-surface-border bg-background flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer"
+                aria-label="Notifications"
+                aria-expanded={notificationsOpen}
+                aria-haspopup="menu"
+              >
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-card-red text-white text-[10px] flex items-center justify-center font-bold leading-none">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <div
+                  className={`absolute top-[calc(100%+10px)] z-[80] w-[min(350px,88vw)] rounded-xl border border-surface-border bg-surface shadow-lg overflow-hidden animate-fade-in-up ${dir === "rtl" ? "left-0" : "right-0"}`}
+                  role="menu"
+                  aria-label="Notifications menu"
+                >
+                  <div className="px-4 py-3 text-sm font-bold text-text-primary border-b border-surface-border">
+                    Notifications
+                  </div>
+
+                  {latestNotifications.length === 0 ? (
+                    <div className="px-4 py-4 text-sm text-text-secondary">
+                      No notifications yet.
+                    </div>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto">
+                      {latestNotifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          className={`w-full px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"} hover:bg-background transition-colors cursor-pointer`}
+                          onClick={() => handleNotificationClick(notification.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <p className="m-0 text-[13px] font-semibold text-text-primary flex-1 leading-5">
+                              {notification.title}
+                            </p>
+                            {notification.unread && (
+                              <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="m-0 mt-1 text-[11px] text-text-secondary">
+                            {notification.timestamp}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSeeMoreNotifications}
+                    className="w-full border-0 border-t border-surface-border bg-surface hover:bg-background text-primary text-xs font-semibold px-4 py-3 cursor-pointer"
+                  >
+                    See more
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Avatar */}
             <div className="relative group">
