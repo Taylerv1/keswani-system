@@ -130,8 +130,14 @@ export function usePropertyState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
-        await updateProperty(id, payload);
-        await fetchProperties();
+        const response = await updateProperty(id, payload);
+        if (response.data) {
+          setProperties((prev) =>
+            prev.map((property) =>
+              property.id === id ? (response.data as Property) : property
+            )
+          );
+        }
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : t("error"));
@@ -140,7 +146,7 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchProperties, t]
+    [t]
   );
 
   const deletePropertyItem = useCallback(
@@ -149,7 +155,14 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(true);
         setError("");
         await deleteProperty(id);
-        await fetchProperties();
+        setProperties((prev) => prev.filter((property) => property.id !== id));
+        setTotalItems((prev) => {
+          const nextTotal = Math.max(0, prev - 1);
+          const nextPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+          setTotalPages(nextPages);
+          setPage((current) => Math.min(current, nextPages));
+          return nextTotal;
+        });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : t("error"));
@@ -158,7 +171,7 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchProperties, t]
+    [t]
   );
 
   const filtered = properties;
@@ -202,10 +215,6 @@ type PropertyType = PropertyDto["type"];
 
 interface UsePropertyFormDeps {
   t: TranslateFn;
-  getPropertyDetails: (id: string) => Promise<{
-    dto: PropertyDto;
-    ui: Property;
-  } | null>;
   createPropertyItem: (payload: {
     name: string;
     address?: string;
@@ -230,7 +239,7 @@ interface UsePropertyFormDeps {
 }
 
 export function usePropertyForm(deps: UsePropertyFormDeps) {
-  const { t, getPropertyDetails, createPropertyItem, updatePropertyItem, deletePropertyItem, setError } = deps;
+  const { t, createPropertyItem, updatePropertyItem, deletePropertyItem, setError } = deps;
 
   /* ------------------------------------------------------------------ */
   /* Modal state                                                         */
@@ -285,10 +294,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
   };
 
   const openEdit = async (p: Property) => {
-    const details = await getPropertyDetails(p.id);
-    if (!details) return;
-
-    const item = details.dto;
+    const item = p;
     const mappedUnits: CreateUnitInput[] = (item.units ?? []).map((unit) => ({
       id: unit.id,
       unit_number: unit.unit_number,
@@ -424,10 +430,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
   /* View / Delete                                                       */
   /* ------------------------------------------------------------------ */
 
-  const handleView = async (id: string) => {
-    const details = await getPropertyDetails(id);
-    if (!details) return;
-    setDetailModal(details.ui);
+  const handleView = (property: Property) => {
+    setDetailModal(property);
   };
 
   const handleDelete = async () => {

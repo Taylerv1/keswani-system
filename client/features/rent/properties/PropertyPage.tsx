@@ -35,7 +35,6 @@ export function PropertyPage() {
   const state = usePropertyState(t);
   const form = usePropertyForm({
     t,
-    getPropertyDetails: state.getPropertyDetails,
     createPropertyItem: state.createPropertyItem,
     updatePropertyItem: state.updatePropertyItem,
     deletePropertyItem: state.deletePropertyItem,
@@ -139,7 +138,7 @@ export function PropertyPage() {
             properties={state.filtered}
             loading={state.loading}
             actionLoading={state.actionLoading}
-            onView={(id) => void form.handleView(id)}
+            onView={(property) => form.handleView(property)}
             onEdit={(p) => void form.openEdit(p)}
             onDelete={(id) => form.setDeleteId(id)}
             t={t}
@@ -156,7 +155,7 @@ export function PropertyPage() {
                 <PropertyMobileCard
                   key={p.id}
                   property={p}
-                  onView={(id) => void form.handleView(id)}
+                  onView={(property) => form.handleView(property)}
                   onEdit={(prop) => void form.openEdit(prop)}
                   onDelete={(id) => form.setDeleteId(id)}
                   t={t}
