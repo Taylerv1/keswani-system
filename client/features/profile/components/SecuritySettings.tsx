@@ -184,7 +184,7 @@ export default function SecuritySettings({
               {t("cancel")}
             </button>
             <button disabled={isSubmitting} onClick={handlePasswordSave} className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-              {isSubmitting ? "Saving..." : t("save")}
+              {isSubmitting ? t("saving") : t("save")}
             </button>
           </div>
         </div>
