@@ -115,8 +115,6 @@ export function PropertyEditModal({
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
               {t("address")}
@@ -127,19 +125,19 @@ export function PropertyEditModal({
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t("priceNotes")}
-            </label>
-            <textarea
-              value={form.ownerNotes}
-              onChange={(e) =>
-                setForm({ ...form, ownerNotes: e.target.value })
-              }
-              rows={3}
-              className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-            />
-          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">
+            {t("priceNotes")}
+          </label>
+          <textarea
+            value={form.ownerNotes}
+            onChange={(e) =>
+              setForm({ ...form, ownerNotes: e.target.value })
+            }
+            rows={3}
+            className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+          />
         </div>
 
         {(form.type === "building" || form.type === "house") && (
