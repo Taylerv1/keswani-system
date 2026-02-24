@@ -305,14 +305,15 @@ body::-webkit-scrollbar-thumb:hover,
   }
 
   .rent-kpis .kpi-label {
-    font-size: 0.72rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
     color: var(--color-text-secondary) !important;
     max-width: 7.25rem !important;
   }
 
   .rent-kpis .kpi-value {
-    font-size: 1rem !important;
-    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
     text-align: left !important;
     min-width: 2.5rem !important;
     white-space: nowrap !important;
@@ -356,7 +357,9 @@ body::-webkit-scrollbar-thumb:hover,
 
   .rent-kpis .kpi-value {
     flex: 0 0 auto !important; /* never shrink */
-    margin-left: 0.5rem !important;
+    margin-left: 0.35rem !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
     white-space: nowrap !important;
     overflow: visible !important;
     text-overflow: clip !important;
@@ -381,12 +384,17 @@ body::-webkit-scrollbar-thumb:hover,
 .kpi-content { flex: 1 1 auto; min-width: 0; }
 .kpi-text {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
 }
 .kpi-label {
   flex: 1 1 auto;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -394,13 +402,27 @@ body::-webkit-scrollbar-thumb:hover,
 }
 .kpi-value {
   flex: 0 0 auto;
-  margin-left: 0.5rem;
+  margin-left: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
-/* Larger screens: ensure comfortable spacing */
-@media (min-width: 1200px) {
+@media (min-width: 1024px) {
+  .kpi-value { font-size: 1rem; }
+}
+
+/* Very wide screens: switch back to inline label/value and larger icon */
+@media (min-width: 1536px) {
+  .kpi-text {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .kpi-value { margin-left: 0.5rem; }
   .kpi-card { gap: 1rem; }
   .kpi-icon { width: 56px; height: 56px; }
-  .kpi-value { font-size: 1.125rem; }
+  .kpi-value { font-size: 1.05rem; }
 }

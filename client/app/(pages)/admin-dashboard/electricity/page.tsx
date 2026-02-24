@@ -75,7 +75,7 @@ export default function ElecDashboardPage() {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
         <KpiCard label={t("activeSubscribers")} value={activeSubs} icon={<Users size={22} />} color="text-card-green" bgColor="bg-card-green-light" trend={`${suspendedSubs} ${t("suspendedSubscribers")}`} />
         <KpiCard label={t("monthlyConsumption")} value={`${monthlyConsumption.toLocaleString()} ${t("kwh")}`} icon={<Zap size={22} />} color="text-card-orange" bgColor="bg-card-orange-light" />
         <KpiCard label={t("totalBills")} value={`$${totalBillsAmount.toFixed(2)}`} icon={<Receipt size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" trend={`${currentMonthBills.length} ${t("recentBills")}`} />
