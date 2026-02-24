@@ -2,7 +2,7 @@
 // Property Module — Edit Modal
 // ============================================================
 
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
@@ -61,6 +61,10 @@ export function PropertyEditModal({
 
   const addUnit = () => {
     setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
+  };
+
+  const removeUnit = (index: number) => {
+    setUnits((prev) => prev.filter((_, i) => i !== index));
   };
 
   const renderUnits = form.type === "house" ? units.slice(0, 1) : units;
@@ -170,10 +174,26 @@ export function PropertyEditModal({
             ) : (
               renderUnits.map((unit, index) => (
                 <div key={unit.id ?? `${index}-${unit.unit_number}`} className="rounded-lg border border-surface-border bg-background p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-text-secondary">
+                      {t("unitNumber")} #{index + 1}
+                    </p>
+                    {form.type === "building" && (
+                      <button
+                        type="button"
+                        onClick={() => removeUnit(index)}
+                        className="h-8 px-2 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-xs font-medium cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 size={13} />
+                        {t("delete")}
+                      </button>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-text-secondary mb-1">
-                        {t("unitNumber")} #{index + 1}
+                        {t("unitNumber")}
                       </label>
                       <input
                         value={unit.unit_number ?? ""}

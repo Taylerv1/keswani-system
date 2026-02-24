@@ -321,19 +321,26 @@ export const updateProperty = async (
             include: propertyInclude,
         });
 
-        // If units were provided, process edits and creations.
-        if (units && Array.isArray(units) && units.length > 0) {
+        // If units were provided, process edits, creations, and deletions.
+        if (Array.isArray(units)) {
             const updates = units.filter((u: any) => u.id);
             const creates = units.filter((u: any) => !u.id);
+            const submittedUpdateIds = updates.map((u: any) => u.id as string);
+
+            const currentUnits = await prisma.units.findMany({
+                where: { property_id: id, deleted_at: null },
+                select: { id: true },
+            });
+            const currentUnitIds = currentUnits.map((u) => u.id);
+            const unitsToDelete = currentUnitIds.filter((unitId) => !submittedUpdateIds.includes(unitId));
 
             // Validate that any update ids belong to this property
             if (updates.length > 0) {
-                const updateIds = updates.map((u: any) => u.id as string);
                 const existingUnits = await prisma.units.findMany({
-                    where: { id: { in: updateIds }, property_id: id, deleted_at: null },
+                    where: { id: { in: submittedUpdateIds }, property_id: id, deleted_at: null },
                     select: { id: true },
                 });
-                if (existingUnits.length !== updateIds.length) {
+                if (existingUnits.length !== submittedUpdateIds.length) {
                     res.status(400).json({ success: false, error: "One or more units not found or do not belong to this property." });
                     return;
                 }
@@ -353,6 +360,29 @@ export const updateProperty = async (
                 );
 
                 await prisma.$transaction(updatePromises);
+            }
+
+            if (unitsToDelete.length > 0) {
+                const activeContracts = await prisma.contracts.count({
+                    where: {
+                        unit_id: { in: unitsToDelete },
+                        status: "active",
+                        deleted_at: null,
+                    },
+                });
+
+                if (activeContracts > 0) {
+                    res.status(409).json({
+                        success: false,
+                        error: "Cannot delete unit(s) with active contract(s).",
+                    });
+                    return;
+                }
+
+                await prisma.units.updateMany({
+                    where: { id: { in: unitsToDelete } },
+                    data: { deleted_at: new Date() },
+                });
             }
 
             if (creates.length > 0) {

@@ -396,7 +396,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     const unitsPayload =
       payloadType === "house"
         ? [sanitizedUnits[0]]
-        : payloadType === "building" && sanitizedUnits.length
+        : payloadType === "building"
           ? sanitizedUnits
           : undefined;
 
