@@ -290,13 +290,14 @@ export const updateProperty = async (
             return;
         }
 
+
         const parsed = updatePropertySchema.safeParse(req.body);
         if (!parsed.success) {
             res.status(400).json({ success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors });
             return;
         }
 
-        const { managed_by, ...rest } = parsed.data;
+        const { managed_by, units, ...rest } = parsed.data as any;
         const updateData: Prisma.propertiesUpdateInput = { ...rest };
         if (managed_by !== undefined) {
             if (managed_by === null) {
@@ -306,11 +307,75 @@ export const updateProperty = async (
             }
         }
 
-        const property = await prisma.properties.update({
+        // First update the property fields
+        let property = await prisma.properties.update({
             where: { id },
             data: updateData,
             include: propertyInclude,
         });
+
+        // If units were provided, process edits and creations.
+        if (units && Array.isArray(units) && units.length > 0) {
+            const updates = units.filter((u: any) => u.id);
+            const creates = units.filter((u: any) => !u.id);
+
+            // Validate that any update ids belong to this property
+            if (updates.length > 0) {
+                const updateIds = updates.map((u: any) => u.id as string);
+                const existingUnits = await prisma.units.findMany({
+                    where: { id: { in: updateIds }, property_id: id, deleted_at: null },
+                    select: { id: true },
+                });
+                if (existingUnits.length !== updateIds.length) {
+                    res.status(400).json({ success: false, error: "One or more units not found or do not belong to this property." });
+                    return;
+                }
+
+                const updatePromises = updates.map((u: any) =>
+                    prisma.units.update({
+                        where: { id: u.id },
+                        data: {
+                            unit_number: u.unit_number,
+                            floor: u.floor,
+                            bedrooms: u.bedrooms,
+                            bathrooms: u.bathrooms,
+                            area_sqm: u.area_sqm,
+                            description: u.description,
+                            is_available: u.is_available,
+                        },
+                    })
+                );
+
+                await prisma.$transaction(updatePromises);
+            }
+
+            if (creates.length > 0) {
+                const createPromises = creates.map((u: any) =>
+                    prisma.units.create({
+                        data: {
+                            unit_number: u.unit_number,
+                            floor: u.floor,
+                            bedrooms: u.bedrooms,
+                            bathrooms: u.bathrooms,
+                            area_sqm: u.area_sqm,
+                            description: u.description,
+                            is_available: u.is_available,
+                            property: { connect: { id } },
+                        },
+                    })
+                );
+
+                await prisma.$transaction(createPromises);
+            }
+
+            // Re-fetch property to include updated/created units
+            const refreshed = await prisma.properties.findFirst({ where: { id }, include: propertyInclude });
+            if (!refreshed) {
+                res.status(500).json({ success: false, error: "Failed to reload property after unit updates." });
+                return;
+            }
+            property = refreshed;
+        }
 
         const rentedCount = await computeRentedCount(id);
 
