@@ -31,7 +31,6 @@ const propertyInclude = {
             bathrooms: true,
             area_sqm: true,
             description: true,
-            is_available: true,
         },
     },
     manager: {
@@ -182,7 +181,7 @@ export const getPropertiesLookup = async (
                 units: {
                     where: { deleted_at: null },
                     orderBy: { unit_number: "asc" },
-                    select: { id: true, unit_number: true, floor: true, is_available: true },
+                    select: { id: true, unit_number: true, floor: true },
                 },
             },
         });
@@ -341,7 +340,6 @@ export const updateProperty = async (
                             bathrooms: u.bathrooms,
                             area_sqm: u.area_sqm,
                             description: u.description,
-                            is_available: u.is_available,
                         },
                     })
                 );
@@ -359,7 +357,6 @@ export const updateProperty = async (
                             bathrooms: u.bathrooms,
                             area_sqm: u.area_sqm,
                             description: u.description,
-                            is_available: u.is_available,
                             property: { connect: { id } },
                         },
                     })

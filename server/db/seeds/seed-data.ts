@@ -250,26 +250,26 @@ export const properties = [
 // ===========================
 export const units = [
     // Keswani Tower (p1) — 4 apartments
-    { id: UNIT_IDS.u1, property_id: PROPERTY_IDS.p1, unit_number: "101", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 85, is_available: false },
-    { id: UNIT_IDS.u2, property_id: PROPERTY_IDS.p1, unit_number: "102", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 120, is_available: false },
-    { id: UNIT_IDS.u3, property_id: PROPERTY_IDS.p1, unit_number: "201", floor: 2, bedrooms: 2, bathrooms: 1, area_sqm: 85, is_available: false },
-    { id: UNIT_IDS.u4, property_id: PROPERTY_IDS.p1, unit_number: "202", floor: 2, bedrooms: 1, bathrooms: 1, area_sqm: 60, is_available: true },
+    { id: UNIT_IDS.u1, property_id: PROPERTY_IDS.p1, unit_number: "101", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 85 },
+    { id: UNIT_IDS.u2, property_id: PROPERTY_IDS.p1, unit_number: "102", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 120 },
+    { id: UNIT_IDS.u3, property_id: PROPERTY_IDS.p1, unit_number: "201", floor: 2, bedrooms: 2, bathrooms: 1, area_sqm: 85 },
+    { id: UNIT_IDS.u4, property_id: PROPERTY_IDS.p1, unit_number: "202", floor: 2, bedrooms: 1, bathrooms: 1, area_sqm: 60 },
     // Al-Nour Building (p2) — 3 apartments
-    { id: UNIT_IDS.u5, property_id: PROPERTY_IDS.p2, unit_number: "A1", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 90, is_available: false },
-    { id: UNIT_IDS.u6, property_id: PROPERTY_IDS.p2, unit_number: "A2", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 90, is_available: false },
-    { id: UNIT_IDS.u7, property_id: PROPERTY_IDS.p2, unit_number: "B1", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 130, is_available: true },
+    { id: UNIT_IDS.u5, property_id: PROPERTY_IDS.p2, unit_number: "A1", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 90 },
+    { id: UNIT_IDS.u6, property_id: PROPERTY_IDS.p2, unit_number: "A2", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 90 },
+    { id: UNIT_IDS.u7, property_id: PROPERTY_IDS.p2, unit_number: "B1", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 130 },
     // Sea View Residence (p3) — 3 apartments
-    { id: UNIT_IDS.u8, property_id: PROPERTY_IDS.p3, unit_number: "1A", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 140, is_available: false },
-    { id: UNIT_IDS.u9, property_id: PROPERTY_IDS.p3, unit_number: "1B", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 95, is_available: false },
-    { id: UNIT_IDS.u10, property_id: PROPERTY_IDS.p3, unit_number: "2A", floor: 2, bedrooms: 3, bathrooms: 2, area_sqm: 140, is_available: true },
+    { id: UNIT_IDS.u8, property_id: PROPERTY_IDS.p3, unit_number: "1A", floor: 1, bedrooms: 3, bathrooms: 2, area_sqm: 140 },
+    { id: UNIT_IDS.u9, property_id: PROPERTY_IDS.p3, unit_number: "1B", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 95 },
+    { id: UNIT_IDS.u10, property_id: PROPERTY_IDS.p3, unit_number: "2A", floor: 2, bedrooms: 3, bathrooms: 2, area_sqm: 140 },
     // Sunrise Apartments (p4) — 2 apartments
-    { id: UNIT_IDS.u11, property_id: PROPERTY_IDS.p4, unit_number: "S1", floor: 0, bedrooms: 1, bathrooms: 1, area_sqm: 55, is_available: false },
-    { id: UNIT_IDS.u12, property_id: PROPERTY_IDS.p4, unit_number: "S2", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 80, is_available: false },
+    { id: UNIT_IDS.u11, property_id: PROPERTY_IDS.p4, unit_number: "S1", floor: 0, bedrooms: 1, bathrooms: 1, area_sqm: 55 },
+    { id: UNIT_IDS.u12, property_id: PROPERTY_IDS.p4, unit_number: "S2", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 80 },
     // Downtown Plaza (p6) — 2 shops
-    { id: UNIT_IDS.u13, property_id: PROPERTY_IDS.p6, unit_number: "Shop-1", floor: 0, bedrooms: 0, bathrooms: 1, area_sqm: 45, is_available: false },
-    { id: UNIT_IDS.u14, property_id: PROPERTY_IDS.p6, unit_number: "Shop-2", floor: 0, bedrooms: 0, bathrooms: 1, area_sqm: 50, is_available: true },
+    { id: UNIT_IDS.u13, property_id: PROPERTY_IDS.p6, unit_number: "Shop-1", floor: 0, bedrooms: 0, bathrooms: 1, area_sqm: 45 },
+    { id: UNIT_IDS.u14, property_id: PROPERTY_IDS.p6, unit_number: "Shop-2", floor: 0, bedrooms: 0, bathrooms: 1, area_sqm: 50 },
     // Valley Residence (p7) — 1 apartment
-    { id: UNIT_IDS.u15, property_id: PROPERTY_IDS.p7, unit_number: "V1", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 100, is_available: false },
+    { id: UNIT_IDS.u15, property_id: PROPERTY_IDS.p7, unit_number: "V1", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 100 },
 ];
 
 // ===========================

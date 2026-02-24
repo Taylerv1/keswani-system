@@ -143,8 +143,7 @@ export const getContractById = async (
 
 /**
  * POST /api/contracts
- * Create a new contract. Validates unit is available.
- * Sets unit is_available = false when status is active.
+ * Create a new contract.
  */
 export const createContract = async (
     req: AuthenticatedRequest,
@@ -187,31 +186,19 @@ export const createContract = async (
             return;
         }
 
-        // Create contract + update unit availability if active
-        const contract = await prisma.$transaction(async (tx) => {
-            const created = await tx.contracts.create({
-                data: {
-                    unit_id: data.unit_id,
-                    client_id: data.client_id,
-                    start_date: new Date(data.start_date),
-                    end_date: data.end_date ? new Date(data.end_date) : null,
-                    monthly_rent: data.monthly_rent,
-                    currency: data.currency,
-                    deposit_amount: data.deposit_amount,
-                    status: data.status,
-                    notes: data.notes,
-                },
-                include: contractInclude,
-            });
-
-            if (data.status === "active") {
-                await tx.units.update({
-                    where: { id: data.unit_id },
-                    data: { is_available: false },
-                });
-            }
-
-            return created;
+        const contract = await prisma.contracts.create({
+            data: {
+                unit_id: data.unit_id,
+                client_id: data.client_id,
+                start_date: new Date(data.start_date),
+                end_date: data.end_date ? new Date(data.end_date) : null,
+                monthly_rent: data.monthly_rent,
+                currency: data.currency,
+                deposit_amount: data.deposit_amount,
+                status: data.status,
+                notes: data.notes,
+            },
+            include: contractInclude,
         });
 
         res.status(201).json({
@@ -226,7 +213,7 @@ export const createContract = async (
 
 /**
  * PATCH /api/contracts/:id
- * Update contract fields. Handles unit availability on status changes.
+ * Update contract fields.
  */
 export const updateContract = async (
     req: AuthenticatedRequest,
@@ -264,35 +251,10 @@ export const updateContract = async (
         if (data.status !== undefined) updateData.status = data.status;
         if (data.notes !== undefined) updateData.notes = data.notes;
 
-        const contract = await prisma.$transaction(async (tx) => {
-            const updated = await tx.contracts.update({
-                where: { id },
-                data: updateData,
-                include: contractInclude,
-            });
-
-            // Handle unit availability based on status change
-            if (data.status && data.status !== existing.status) {
-                const wasActive = existing.status === "active";
-                const isNowActive = data.status === "active";
-                const isNowInactive = data.status === "terminated" || data.status === "expired";
-
-                if (wasActive && isNowInactive) {
-                    // Contract ended → unit becomes available
-                    await tx.units.update({
-                        where: { id: existing.unit_id },
-                        data: { is_available: true },
-                    });
-                } else if (!wasActive && isNowActive) {
-                    // Contract activated → unit becomes unavailable
-                    await tx.units.update({
-                        where: { id: existing.unit_id },
-                        data: { is_available: false },
-                    });
-                }
-            }
-
-            return updated;
+        const contract = await prisma.contracts.update({
+            where: { id },
+            data: updateData,
+            include: contractInclude,
         });
 
         res.json({
@@ -307,7 +269,7 @@ export const updateContract = async (
 
 /**
  * DELETE /api/contracts/:id
- * Soft delete. Sets unit back to available if contract was active.
+ * Soft delete.
  */
 export const deleteContract = async (
     req: AuthenticatedRequest,
@@ -337,19 +299,9 @@ export const deleteContract = async (
             return;
         }
 
-        await prisma.$transaction(async (tx) => {
-            await tx.contracts.update({
-                where: { id },
-                data: { deleted_at: new Date() },
-            });
-
-            // If contract was active, free the unit
-            if (existing.status === "active") {
-                await tx.units.update({
-                    where: { id: existing.unit_id },
-                    data: { is_available: true },
-                });
-            }
+        await prisma.contracts.update({
+            where: { id },
+            data: { deleted_at: new Date() },
         });
 
         res.json({ success: true, message: "Contract has been soft-deleted" } as ApiResponse);

@@ -12,10 +12,9 @@ const unitSchema = z.object({
     description: z.string().optional(),
 });
 
-// Unit update schema: includes optional id for existing units and optional availability flag
+// Unit update schema: includes optional id for existing units
 const unitUpdateSchema = unitSchema.extend({
     id: z.string().uuid().optional(),
-    is_available: z.boolean().optional(),
 });
 
 // ===========================

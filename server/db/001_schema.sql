@@ -105,7 +105,6 @@ CREATE TABLE units (
   bathrooms     INT,
   area_sqm      NUMERIC(10, 2),
   description   TEXT,
-  is_available  BOOLEAN NOT NULL DEFAULT true,
   deleted_at    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
