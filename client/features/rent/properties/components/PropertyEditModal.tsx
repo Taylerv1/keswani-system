@@ -34,7 +34,6 @@ interface PropertyEditModalProps {
   >;
   units: CreateUnitInput[];
   setUnits: React.Dispatch<React.SetStateAction<CreateUnitInput[]>>;
-  handleUnitTypeChange: (value: PropertyType) => void;
   onSave: () => void;
   actionLoading: boolean;
   t: (key: string) => string;
@@ -47,7 +46,6 @@ export function PropertyEditModal({
   setForm,
   units,
   setUnits,
-  handleUnitTypeChange,
   onSave,
   actionLoading,
   t,
@@ -107,21 +105,6 @@ export function PropertyEditModal({
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t("propertyType")}
-            </label>
-            <select
-              value={form.type === "commercial" ? "commercial" : form.type}
-              onChange={(e) => handleUnitTypeChange(e.target.value as PropertyType)}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="building">{t("building")}</option>
-              <option value="house">{t("house")}</option>
-              <option value="land">{t("land")}</option>
-              <option value="commercial">{t("commercial")}</option>
-            </select>
-          </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
               {t("city")}

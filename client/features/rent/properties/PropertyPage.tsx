@@ -183,7 +183,6 @@ export function PropertyPage() {
           setForm={form.setForm}
           units={form.units}
           setUnits={form.setUnits}
-          handleUnitTypeChange={form.handleUnitTypeChange}
           onSave={form.handleSave}
           actionLoading={state.actionLoading}
           t={t}
