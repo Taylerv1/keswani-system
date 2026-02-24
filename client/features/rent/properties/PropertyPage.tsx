@@ -130,7 +130,7 @@ export function PropertyPage() {
       {/* Table container */}
       {state.loading ? (
         <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center" role="status" aria-live="polite">
-          <LoadingLottie size={110} className="p-2" />
+          <LoadingLottie size={150} className="p-6" />
         </div>
       ) : (
         <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
