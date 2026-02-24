@@ -331,7 +331,13 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
   /* ------------------------------------------------------------------ */
 
   const ensureHouseUnit = () => {
-    setUnits((prev) => (prev.length > 0 ? [prev[0]] : [{ ...EMPTY_UNIT }]));
+    setUnits((prev) => {
+      if (prev.length > 0) {
+        const base = prev[0];
+        return [{ ...base, unit_number: base.unit_number || "HOUSE" }];
+      }
+      return [{ ...EMPTY_UNIT, unit_number: "HOUSE" }];
+    });
   };
 
   const handleUnitTypeChange = (value: PropertyType) => {
@@ -388,15 +394,22 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
       .map((unit) => sanitizeUnit(unit))
       .filter((unit): unit is CreateUnitInput => unit !== null);
 
-    if (payloadType === "house" && sanitizedUnits.length === 0) {
-      setError(t("unitNumber") + " " + t("isRequired"));
-      return;
-    }
+    const houseBase = units[0] ?? { ...EMPTY_UNIT };
+    const houseUnit: CreateUnitInput = {
+      unit_number: (houseBase.unit_number || "HOUSE").trim() || "HOUSE",
+    };
+    if (typeof houseBase.id === "string") houseUnit.id = houseBase.id;
+    if (typeof houseBase.floor === "number") houseUnit.floor = houseBase.floor;
+    if (typeof houseBase.bedrooms === "number") houseUnit.bedrooms = houseBase.bedrooms;
+    if (typeof houseBase.bathrooms === "number") houseUnit.bathrooms = houseBase.bathrooms;
+    if (typeof houseBase.area_sqm === "number") houseUnit.area_sqm = houseBase.area_sqm;
+    const houseDescription = houseBase.description?.trim();
+    if (houseDescription) houseUnit.description = houseDescription;
 
     const unitsPayload =
       payloadType === "house"
-        ? [sanitizedUnits[0]]
-        : payloadType === "building" && sanitizedUnits.length
+        ? [houseUnit]
+        : payloadType === "building"
           ? sanitizedUnits
           : undefined;
 

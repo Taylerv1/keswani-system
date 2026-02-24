@@ -1,8 +1,11 @@
+"use client";
+
 // ============================================================
 // Property Module — Edit Modal
 // ============================================================
 
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
@@ -31,7 +34,6 @@ interface PropertyEditModalProps {
   >;
   units: CreateUnitInput[];
   setUnits: React.Dispatch<React.SetStateAction<CreateUnitInput[]>>;
-  handleUnitTypeChange: (value: PropertyType) => void;
   onSave: () => void;
   actionLoading: boolean;
   t: (key: string) => string;
@@ -44,11 +46,23 @@ export function PropertyEditModal({
   setForm,
   units,
   setUnits,
-  handleUnitTypeChange,
   onSave,
   actionLoading,
   t,
 }: PropertyEditModalProps) {
+  const unitsEndRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToUnitsEnd = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        unitsEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+    });
+  };
+
   const updateUnit = <K extends keyof CreateUnitInput>(
     index: number,
     key: K,
@@ -61,6 +75,11 @@ export function PropertyEditModal({
 
   const addUnit = () => {
     setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
+    scrollToUnitsEnd();
+  };
+
+  const removeUnit = (index: number) => {
+    setUnits((prev) => prev.filter((_, i) => i !== index));
   };
 
   const renderUnits = form.type === "house" ? units.slice(0, 1) : units;
@@ -88,21 +107,6 @@ export function PropertyEditModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t("propertyType")}
-            </label>
-            <select
-              value={form.type === "commercial" ? "commercial" : form.type}
-              onChange={(e) => handleUnitTypeChange(e.target.value as PropertyType)}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="building">{t("building")}</option>
-              <option value="house">{t("house")}</option>
-              <option value="land">{t("land")}</option>
-              <option value="commercial">{t("commercial")}</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
               {t("city")}
             </label>
             <input
@@ -111,8 +115,6 @@ export function PropertyEditModal({
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">
               {t("address")}
@@ -123,26 +125,26 @@ export function PropertyEditModal({
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t("priceNotes")}
-            </label>
-            <textarea
-              value={form.ownerNotes}
-              onChange={(e) =>
-                setForm({ ...form, ownerNotes: e.target.value })
-              }
-              rows={3}
-              className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-            />
-          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1">
+            {t("priceNotes")}
+          </label>
+          <textarea
+            value={form.ownerNotes}
+            onChange={(e) =>
+              setForm({ ...form, ownerNotes: e.target.value })
+            }
+            rows={3}
+            className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+          />
         </div>
 
         {(form.type === "building" || form.type === "house") && (
           <div className="space-y-3 rounded-lg border border-surface-border p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
-              {form.type === "building" && (
+            {form.type === "building" && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
                 <button
                   type="button"
                   onClick={addUnit}
@@ -150,8 +152,8 @@ export function PropertyEditModal({
                 >
                   Add Unit
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {renderUnits.length === 0 ? (
               <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
@@ -170,17 +172,35 @@ export function PropertyEditModal({
             ) : (
               renderUnits.map((unit, index) => (
                 <div key={unit.id ?? `${index}-${unit.unit_number}`} className="rounded-lg border border-surface-border bg-background p-3 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">
+                  {form.type === "building" && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-text-secondary">
                         {t("unitNumber")} #{index + 1}
-                      </label>
-                      <input
-                        value={unit.unit_number ?? ""}
-                        onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
-                        className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => removeUnit(index)}
+                        className="h-8 px-2 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-xs font-medium cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 size={13} />
+                        {t("delete")}
+                      </button>
                     </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {form.type === "building" && (
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          {t("unitNumber")}
+                        </label>
+                        <input
+                          value={unit.unit_number ?? ""}
+                          onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
+                          className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-text-secondary mb-1">
                         {t("floor")}
@@ -245,6 +265,8 @@ export function PropertyEditModal({
                 </div>
               ))
             )}
+
+            <div ref={unitsEndRef} />
           </div>
         )}
 

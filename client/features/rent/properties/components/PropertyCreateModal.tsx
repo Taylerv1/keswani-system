@@ -95,8 +95,6 @@ export function PropertyCreateModal({
               >
                 <option value="building">{t("building")}</option>
                 <option value="house">{t("house")}</option>
-                <option value="land">{t("land")}</option>
-                <option value="commercial">{t("commercial")}</option>
               </select>
             </div>
             <div>
@@ -161,24 +159,9 @@ export function PropertyCreateModal({
               </div>
             </div>
           ) : form.type === "house" ? (
-            /* House unit inline form */
+            /* House details inline form */
             <div className="space-y-3 rounded-lg border border-surface-border p-3">
-              <p className="text-sm font-medium text-text-secondary">
-                {t("units")}
-              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">
-                    {t("unitNumber")}
-                  </label>
-                  <input
-                    value={units[0]?.unit_number ?? ""}
-                    onChange={(e) =>
-                      updateHouseUnit("unit_number", e.target.value)
-                    }
-                    className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">
                     {t("floor")}
