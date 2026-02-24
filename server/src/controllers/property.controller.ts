@@ -323,8 +323,25 @@ export const updateProperty = async (
 
         // If units were provided, process edits, creations, and deletions.
         if (Array.isArray(units)) {
-            const updates = units.filter((u: any) => u.id);
-            const creates = units.filter((u: any) => !u.id);
+            const normalizedUnits = units.map((u: any) => ({
+                ...u,
+                unit_number: String(u.unit_number ?? "").trim(),
+            }));
+
+            const unitNumbers = normalizedUnits.map((u: any) => u.unit_number);
+            const duplicateUnitNumbers = Array.from(
+                new Set(unitNumbers.filter((number, idx) => unitNumbers.indexOf(number) !== idx))
+            );
+            if (duplicateUnitNumbers.length > 0) {
+                res.status(400).json({
+                    success: false,
+                    error: `Duplicate unit number(s) in request: ${duplicateUnitNumbers.join(", ")}`,
+                });
+                return;
+            }
+
+            const updates = normalizedUnits.filter((u: any) => u.id);
+            const creates = normalizedUnits.filter((u: any) => !u.id);
             const submittedUpdateIds = updates.map((u: any) => u.id as string);
 
             const currentUnits = await prisma.units.findMany({
@@ -386,21 +403,69 @@ export const updateProperty = async (
             }
 
             if (creates.length > 0) {
-                const createPromises = creates.map((u: any) =>
-                    prisma.units.create({
-                        data: {
-                            unit_number: u.unit_number,
-                            floor: u.floor,
-                            bedrooms: u.bedrooms,
-                            bathrooms: u.bathrooms,
-                            area_sqm: u.area_sqm,
-                            description: u.description,
-                            property: { connect: { id } },
-                        },
-                    })
+                const createNumbers = creates.map((u: any) => u.unit_number);
+                const existingSameNumbers = await prisma.units.findMany({
+                    where: {
+                        property_id: id,
+                        unit_number: { in: createNumbers },
+                    },
+                    select: { id: true, unit_number: true, deleted_at: true },
+                });
+
+                const activeConflicts = existingSameNumbers.filter((u) => u.deleted_at === null);
+                if (activeConflicts.length > 0) {
+                    const conflicted = activeConflicts.map((u) => u.unit_number).join(", ");
+                    res.status(409).json({
+                        success: false,
+                        error: `Unit number(s) already exist in this property: ${conflicted}`,
+                    });
+                    return;
+                }
+
+                const deletedByNumber = new Map(
+                    existingSameNumbers
+                        .filter((u) => u.deleted_at !== null)
+                        .map((u) => [u.unit_number, u])
                 );
 
-                await prisma.$transaction(createPromises);
+                const restorePromises: Prisma.PrismaPromise<any>[] = [];
+                const createPromises: Prisma.PrismaPromise<any>[] = [];
+
+                for (const u of creates) {
+                    const deletedMatch = deletedByNumber.get(u.unit_number);
+                    if (deletedMatch) {
+                        restorePromises.push(
+                            prisma.units.update({
+                                where: { id: deletedMatch.id },
+                                data: {
+                                    deleted_at: null,
+                                    floor: u.floor,
+                                    bedrooms: u.bedrooms,
+                                    bathrooms: u.bathrooms,
+                                    area_sqm: u.area_sqm,
+                                    description: u.description,
+                                },
+                            })
+                        );
+                        deletedByNumber.delete(u.unit_number);
+                    } else {
+                        createPromises.push(
+                            prisma.units.create({
+                                data: {
+                                    unit_number: u.unit_number,
+                                    floor: u.floor,
+                                    bedrooms: u.bedrooms,
+                                    bathrooms: u.bathrooms,
+                                    area_sqm: u.area_sqm,
+                                    description: u.description,
+                                    property: { connect: { id } },
+                                },
+                            })
+                        );
+                    }
+                }
+
+                await prisma.$transaction([...restorePromises, ...createPromises]);
             }
 
             // Re-fetch property to include updated/created units
