@@ -272,7 +272,7 @@ export function PropertyPage() {
               </div>
             </div>
 
-            {(form.detailModal.type === "building" || form.detailModal.type === "house") && (
+            {form.detailModal.type === "building" && (
               <div className="pt-1 space-y-3">
                 <p className="text-sm font-semibold text-text-secondary">{t("units")}</p>
 
@@ -300,6 +300,31 @@ export function PropertyPage() {
                         ) : null}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {form.detailModal.type === "house" && (
+              <div className="pt-1 space-y-3">
+                <p className="text-sm font-semibold text-text-secondary">{t("propertyDetails")}</p>
+                {form.detailModal.units.length === 0 ? (
+                  <div className="bg-background rounded-lg border border-surface-border p-3 text-sm text-text-muted">
+                    {t("noResults")}
+                  </div>
+                ) : (
+                  <div className="bg-background rounded-lg border border-surface-border p-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <p className="text-text-secondary">{t("floor")}: <span className="text-text-primary">{form.detailModal.units[0]?.floor ?? "-"}</span></p>
+                      <p className="text-text-secondary">{t("bedrooms")}: <span className="text-text-primary">{form.detailModal.units[0]?.bedrooms ?? "-"}</span></p>
+                      <p className="text-text-secondary">{t("bathrooms")}: <span className="text-text-primary">{form.detailModal.units[0]?.bathrooms ?? "-"}</span></p>
+                      <p className="text-text-secondary">{t("area_sqm")}: <span className="text-text-primary">{form.detailModal.units[0]?.area_sqm ?? "-"}</span></p>
+                    </div>
+                    {form.detailModal.units[0]?.description ? (
+                      <p className="text-sm text-text-secondary mt-2">
+                        {t("description")}: <span className="text-text-primary">{form.detailModal.units[0].description}</span>
+                      </p>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -142,9 +142,9 @@ export function PropertyEditModal({
 
         {(form.type === "building" || form.type === "house") && (
           <div className="space-y-3 rounded-lg border border-surface-border p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
-              {form.type === "building" && (
+            {form.type === "building" && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
                 <button
                   type="button"
                   onClick={addUnit}
@@ -152,8 +152,8 @@ export function PropertyEditModal({
                 >
                   Add Unit
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {renderUnits.length === 0 ? (
               <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
@@ -172,11 +172,11 @@ export function PropertyEditModal({
             ) : (
               renderUnits.map((unit, index) => (
                 <div key={unit.id ?? `${index}-${unit.unit_number}`} className="rounded-lg border border-surface-border bg-background p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-text-secondary">
-                      {t("unitNumber")} #{index + 1}
-                    </p>
-                    {form.type === "building" && (
+                  {form.type === "building" && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-text-secondary">
+                        {t("unitNumber")} #{index + 1}
+                      </p>
                       <button
                         type="button"
                         onClick={() => removeUnit(index)}
@@ -185,20 +185,22 @@ export function PropertyEditModal({
                         <Trash2 size={13} />
                         {t("delete")}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">
-                        {t("unitNumber")}
-                      </label>
-                      <input
-                        value={unit.unit_number ?? ""}
-                        onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
-                        className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
+                    {form.type === "building" && (
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          {t("unitNumber")}
+                        </label>
+                        <input
+                          value={unit.unit_number ?? ""}
+                          onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
+                          className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-text-secondary mb-1">
                         {t("floor")}
