@@ -282,6 +282,7 @@ export function PropertyPage() {
         open={!!form.deleteId}
         onClose={() => form.setDeleteId(null)}
         onConfirm={form.handleDelete}
+        loading={state.actionLoading}
       />
     </div>
   );
