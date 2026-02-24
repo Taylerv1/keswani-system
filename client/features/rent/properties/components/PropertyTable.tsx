@@ -10,7 +10,7 @@ interface PropertyTableProps {
   properties: Property[];
   loading: boolean;
   actionLoading: boolean;
-  onView: (id: string) => void;
+  onView: (property: Property) => void;
   onEdit: (p: Property) => void;
   onDelete: (id: string) => void;
   t: (key: string) => string;

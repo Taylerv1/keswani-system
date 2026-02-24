@@ -8,6 +8,7 @@ import SecuritySettings from "@/features/profile/components/SecuritySettings";
 import ActivityTimeline from "@/features/profile/components/ActivityTimeline";
 import PreferencesPanel from "@/features/profile/components/PreferencesPanel";
 import EditProfileModal from "@/features/profile/components/EditProfileModal";
+import { LoadingLottie } from "@/components/ui";
 
 interface ProfileData {
   fullName: string;
@@ -154,7 +155,11 @@ export default function ProfilePage() {
         <p className="text-text-secondary text-xs sm:text-sm mt-1">{t("profileSubtitle")}</p>
       </div>
 
-      {loading && <div className="text-sm text-text-secondary">{t("loading")}</div>}
+      {loading && (
+        <div className="mb-4 flex items-center">
+          <LoadingLottie size={40} />
+        </div>
+      )}
 
       {profile && (
         <>

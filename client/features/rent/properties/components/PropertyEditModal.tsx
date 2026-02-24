@@ -2,6 +2,7 @@
 // Property Module — Edit Modal
 // ============================================================
 
+import { Plus } from "lucide-react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
@@ -244,6 +245,19 @@ export function PropertyEditModal({
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {form.type === "building" && (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={addUnit}
+              className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Add Unit
+            </button>
           </div>
         )}
 
