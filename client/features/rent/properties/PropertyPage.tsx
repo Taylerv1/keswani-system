@@ -128,44 +128,44 @@ export function PropertyPage() {
       </div>
 
       {/* Table container */}
-      <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        {/* Desktop */}
-        <PropertyTable
-          properties={state.filtered}
-          loading={state.loading}
-          actionLoading={state.actionLoading}
-          onView={(id) => void form.handleView(id)}
-          onEdit={(p) => void form.openEdit(p)}
-          onDelete={(id) => form.setDeleteId(id)}
-          t={t}
-        />
-
-        {/* Mobile cards */}
-        <div className="md:hidden space-y-3 p-3">
-          {state.filtered.length === 0 ? (
-            <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">
-              {state.loading ? (
-                <div className="flex justify-center">
-                  <LoadingLottie size={92} className="p-3" />
-                </div>
-              ) : (
-                t("noResults")
-              )}
-            </div>
-          ) : (
-            state.filtered.map((p) => (
-              <PropertyMobileCard
-                key={p.id}
-                property={p}
-                onView={(id) => void form.handleView(id)}
-                onEdit={(prop) => void form.openEdit(prop)}
-                onDelete={(id) => form.setDeleteId(id)}
-                t={t}
-              />
-            ))
-          )}
+      {state.loading ? (
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center" role="status" aria-live="polite">
+          <LoadingLottie size={110} className="p-2" />
         </div>
-      </div>
+      ) : (
+        <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
+          {/* Desktop */}
+          <PropertyTable
+            properties={state.filtered}
+            loading={state.loading}
+            actionLoading={state.actionLoading}
+            onView={(id) => void form.handleView(id)}
+            onEdit={(p) => void form.openEdit(p)}
+            onDelete={(id) => form.setDeleteId(id)}
+            t={t}
+          />
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3 p-3">
+            {state.filtered.length === 0 ? (
+              <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">
+                {t("noResults")}
+              </div>
+            ) : (
+              state.filtered.map((p) => (
+                <PropertyMobileCard
+                  key={p.id}
+                  property={p}
+                  onView={(id) => void form.handleView(id)}
+                  onEdit={(prop) => void form.openEdit(prop)}
+                  onDelete={(id) => form.setDeleteId(id)}
+                  t={t}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <Pagination
         currentPage={state.page}
@@ -282,6 +282,7 @@ export function PropertyPage() {
         open={!!form.deleteId}
         onClose={() => form.setDeleteId(null)}
         onConfirm={form.handleDelete}
+        loading={state.actionLoading}
       />
     </div>
   );

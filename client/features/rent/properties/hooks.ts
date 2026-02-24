@@ -5,7 +5,7 @@
 // Combines: usePropertyState + usePropertyForm
 // ============================================================
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getProperties,
   getPropertyById,
@@ -16,12 +16,7 @@ import {
   type UpdatePropertyInput,
 } from "./api";
 import type { Property, PropertyDto } from "./types";
-import {
-  getPropertyOccupancyStatus,
-  type CreateUnitInput,
-  EMPTY_UNIT,
-  sanitizeUnit,
-} from "./utils";
+import { type CreateUnitInput, EMPTY_UNIT, sanitizeUnit } from "./utils";
 
 // ============================================================
 // usePropertyState — Page-level State Hook
@@ -59,6 +54,10 @@ export function usePropertyState(t: TranslateFn) {
         limit: PAGE_SIZE,
         search: search || undefined,
         type: filterType === "all" ? undefined : filterType,
+        status:
+          filterStatus === "all"
+            ? undefined
+            : (filterStatus as "full" | "vacant"),
       });
 
       const items = response.data?.items ?? [];
@@ -75,7 +74,7 @@ export function usePropertyState(t: TranslateFn) {
     } finally {
       setLoading(false);
     }
-  }, [filterType, page, search, t]);
+  }, [filterStatus, filterType, page, search, t]);
 
   useEffect(() => {
     fetchProperties();
@@ -162,16 +161,7 @@ export function usePropertyState(t: TranslateFn) {
     [fetchProperties, t]
   );
 
-  /* ------------------------------------------------------------------ */
-  /* Client-side status filter                                           */
-  /* ------------------------------------------------------------------ */
-
-  const filtered = useMemo(() => {
-    if (filterStatus === "all") return properties;
-    return properties.filter(
-      (property) => getPropertyOccupancyStatus(property) === filterStatus
-    );
-  }, [filterStatus, properties]);
+  const filtered = properties;
 
   /* ------------------------------------------------------------------ */
   /* Public API                                                          */

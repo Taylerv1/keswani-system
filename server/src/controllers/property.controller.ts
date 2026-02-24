@@ -54,7 +54,7 @@ export const getProperties = async (
             return;
         }
 
-        const { page, limit, search, type } = parsed.data;
+        const { page, limit, search, type, status } = parsed.data;
         const skip = (page - 1) * limit;
 
         const where: Prisma.propertiesWhereInput = { deleted_at: null };
@@ -67,16 +67,11 @@ export const getProperties = async (
             ];
         }
 
-        const [properties, total] = await Promise.all([
-            prisma.properties.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: { created_at: "desc" },
-                include: propertyInclude,
-            }),
-            prisma.properties.count({ where }),
-        ]);
+        const properties = await prisma.properties.findMany({
+            where,
+            orderBy: { created_at: "desc" },
+            include: propertyInclude,
+        });
 
         const enriched = await Promise.all(
             properties.map(async (prop) => {
@@ -101,10 +96,23 @@ export const getProperties = async (
             })
         );
 
+        const statusFiltered = status
+            ? enriched.filter((prop) => {
+                const occupancyStatus =
+                    prop.total_units > 0 && prop.rented_units === prop.total_units
+                        ? "full"
+                        : "vacant";
+                return occupancyStatus === status;
+            })
+            : enriched;
+
+        const pagedItems = statusFiltered.slice(skip, skip + limit);
+        const total = statusFiltered.length;
+
         res.json({
             success: true,
             data: {
-                items: enriched,
+                items: pagedItems,
                 pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
             },
         } as ApiResponse);

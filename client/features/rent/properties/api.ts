@@ -63,13 +63,20 @@ async function fetchApi<T>(
 // --------------- CRUD functions ---------------
 
 export async function getProperties(
-  params?: { page?: number; limit?: number; search?: string; type?: string },
+  params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    status?: "full" | "vacant";
+  },
 ): Promise<ApiResponse<PaginatedResponse<PropertyDto>>> {
   const query = new URLSearchParams();
   if (params?.page) query.set("page", String(params.page));
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.search) query.set("search", params.search);
   if (params?.type) query.set("type", params.type);
+  if (params?.status) query.set("status", params.status);
   const queryString = query.toString();
   return fetchApi(`/api/properties${queryString ? `?${queryString}` : ""}`);
 }

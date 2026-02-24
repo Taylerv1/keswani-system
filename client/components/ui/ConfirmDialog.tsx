@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import Modal from "./Modal";
 import { useTranslation } from "@/lib/translation";
+import LoadingLottie from "./LoadingLottie";
 
 interface ConfirmDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
+  loading?: boolean;
   title?: string;
   message?: string;
   /**
@@ -23,6 +25,7 @@ export default function ConfirmDialog({
   open,
   onClose,
   onConfirm,
+  loading = false,
   title,
   message,
   confirmWord,
@@ -36,10 +39,10 @@ export default function ConfirmDialog({
   }, [open]);
 
   const requiresTyping = Boolean(confirmWord);
-  const isConfirmEnabled = requiresTyping ? typed === confirmWord : true;
+  const isConfirmEnabled = (requiresTyping ? typed === confirmWord : true) && !loading;
 
   return (
-    <Modal open={open} onClose={onClose} title={title ?? t("areYouSure")} maxWidth="max-w-sm">
+    <Modal open={open} onClose={loading ? () => {} : onClose} title={title ?? t("areYouSure")} maxWidth="max-w-sm">
       <div className="flex flex-col items-center text-center gap-4 py-2">
         {/* Icon */}
         <div className="w-14 h-14 rounded-full bg-card-red-light flex items-center justify-center">
@@ -68,6 +71,7 @@ export default function ConfirmDialog({
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={confirmWord}
+              disabled={loading}
               autoComplete="off"
               spellCheck={false}
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-card-red/30 focus:border-card-red/60 transition-all"
@@ -79,21 +83,25 @@ export default function ConfirmDialog({
         <div className="flex items-center gap-3 w-full pt-1">
           <button
             onClick={onClose}
+            disabled={loading}
             className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary hover:bg-background transition-colors text-sm font-medium cursor-pointer"
           >
             {t("cancel")}
           </button>
           <button
             disabled={!isConfirmEnabled}
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={() => void onConfirm()}
             className="flex-1 h-10 rounded-lg bg-card-red text-white text-sm font-medium border-0 transition-all
               enabled:hover:bg-card-red/90 enabled:cursor-pointer
               disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {t("delete")}
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <LoadingLottie size={24} />
+              </span>
+            ) : (
+              t("delete")
+            )}
           </button>
         </div>
       </div>
