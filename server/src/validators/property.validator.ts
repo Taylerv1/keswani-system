@@ -12,6 +12,12 @@ const unitSchema = z.object({
     description: z.string().optional(),
 });
 
+// Unit update schema: includes optional id for existing units and optional availability flag
+const unitUpdateSchema = unitSchema.extend({
+    id: z.string().uuid().optional(),
+    is_available: z.boolean().optional(),
+});
+
 // ===========================
 // Create Property
 // ===========================
@@ -36,6 +42,8 @@ export const updatePropertySchema = z.object({
     type: z.enum(["building", "house", "land", "commercial"]).optional(),
     managed_by: z.string().uuid().nullable().optional(),
     owner_notes: z.string().nullable().optional(),
+    // Allow editing existing units (provide id) and/or adding new units (no id)
+    units: z.array(unitUpdateSchema).optional(),
 });
 
 // ===========================
