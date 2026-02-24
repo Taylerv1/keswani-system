@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Home,
 } from "lucide-react";
-import { KpiCard } from "@/components/ui";
+import { KpiCard, LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
 import { useRent } from "@/features/rent/context/rent-context";
 
@@ -143,7 +143,9 @@ export default function RentOverviewPage() {
       </h1>
       <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
       {loadingOverview && (
-        <p className="text-xs sm:text-sm text-text-secondary mb-3">{t("loading")}...</p>
+        <div className="mb-3 flex items-center">
+          <LoadingLottie size={40} />
+        </div>
       )}
       {overviewError && (
         <p className="text-xs sm:text-sm text-card-red mb-3">{overviewError}</p>
