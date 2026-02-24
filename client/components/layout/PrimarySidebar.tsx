@@ -11,8 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useTranslation } from "@/lib/translation-context";
-import { logout } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/translation";
+import { logout } from "@/lib/helpers/auth-client";
 
 interface NavItem {
   key: string;

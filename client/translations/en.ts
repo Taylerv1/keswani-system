@@ -113,6 +113,7 @@ const en = {
   active: "Active",
   inactive: "Inactive",
   vacant: "Vacant",
+  full: "Full",
   rented: "Rented",
   underMaintenance: "Under Maintenance",
   units: "Units",

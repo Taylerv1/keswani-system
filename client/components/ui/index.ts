@@ -4,3 +4,4 @@ export { default as KpiCard } from "./KpiCard";
 export { default as Pagination } from "./Pagination";
 export { default as ConfirmDialog } from "./ConfirmDialog";
 export { default as SearchBar } from "./SearchBar";
+export { default as LoadingLottie } from "./LoadingLottie";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useTranslation } from "@/lib/translation-context";
+import { useTranslation } from "@/lib/translation";
 
 interface SearchBarProps {
   value: string;

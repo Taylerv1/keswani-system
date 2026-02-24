@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { refreshToken as backendRefreshToken } from "@/api/auth";
+import { refreshToken as backendRefreshToken } from "@/features/auth/api/auth";
 
 export async function POST(req: NextRequest) {
     try {

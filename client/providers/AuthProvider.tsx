@@ -5,7 +5,7 @@ import {
   getUserData,
   refreshToken as refreshApi,
   logout as logoutApi,
-} from "@/lib/auth-client";
+} from "@/lib/helpers/auth-client";
 
 type UserData = ReturnType<typeof getUserData>;
 

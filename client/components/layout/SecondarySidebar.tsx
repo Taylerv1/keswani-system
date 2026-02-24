@@ -21,7 +21,7 @@ import {
   Zap,
   X,
 } from "lucide-react";
-import { useTranslation } from "@/lib/translation-context";
+import { useTranslation } from "@/lib/translation";
 
 interface SubNavItem {
   key: string;

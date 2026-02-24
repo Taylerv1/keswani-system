@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Globe, Bell, Menu } from "lucide-react";
 import CustomerSidebar from "@/components/layout/CustomerSidebar";
-import { useTranslation } from "@/lib/translation-context";
-import { useCustomer } from "@/modules/customer/customer-context";
+import { useTranslation } from "@/lib/translation";
+import { useCustomer } from "@/features/profile/context/customer-context";
 
 interface CustomerLayoutProps {
     children: React.ReactNode;

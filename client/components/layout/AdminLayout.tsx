@@ -6,8 +6,8 @@ import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
-import { useTranslation } from "@/lib/translation-context";
-import { getUserData } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/translation";
+import { getUserData } from "@/lib/helpers/auth-client";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [mobilePrimaryOpen, setMobilePrimaryOpen] = useState(false);
   const [mobileSecondaryOpen, setMobileSecondaryOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [userEmail, setUserEmail] = useState("No email available");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     {
@@ -57,6 +58,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   useEffect(() => {
     let isMounted = true;
 
+    const initialUser = getUserData();
+    if (isMounted && initialUser?.email) {
+      setUserEmail(initialUser.email);
+    }
+
     const loadMe = async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -83,11 +89,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         const user = getUserData();
         if (isMounted && user?.email) {
           setDisplayName(user.email);
+          setUserEmail(user.email);
         }
       } catch {
         const user = getUserData();
         if (isMounted && user?.email) {
           setDisplayName(user.email);
+          setUserEmail(user.email);
         }
       }
     };
@@ -100,6 +108,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       if (typeof fullName === "string" && fullName.trim()) {
         setDisplayName(fullName.trim());
+      }
+
+      const user = getUserData();
+      if (user?.email) {
+        setUserEmail(user.email);
       }
     };
 
@@ -136,7 +149,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const firstChar = displayName.trim().charAt(0);
     return firstChar ? firstChar.toUpperCase() : "A";
   }, [displayName]);
-  const userEmail = getUserData()?.email || "No email available";
   const latestNotifications = useMemo(
     () => notifications.slice(0, 3),
     [notifications],
