@@ -117,6 +117,27 @@ export async function resetPassword(
 }
 
 /**
+ * Change password for an authenticated user.
+ * Expects `token` (access token) to be provided and current/new passwords.
+ */
+export async function changePassword(
+    token: string,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+): Promise<ApiResponse> {
+    return fetchApi("/auth/change-password", {
+        method: "PATCH",
+        headers: authHeaders(token),
+        body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+            confirm_password: confirmPassword,
+        }),
+    });
+}
+
+/**
  * Get the current authenticated user's profile.
  */
 export async function getMe(

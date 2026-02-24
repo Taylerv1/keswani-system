@@ -5,8 +5,8 @@ import {
     loginSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
-    updateProfileSchema,
     changePasswordSchema,
+    updateProfileSchema,
 } from "../validators/auth.validator";
 import { AuthenticatedRequest, ApiResponse, LoginResponse } from "../types";
 
@@ -230,6 +230,79 @@ export const resetPassword = async (
 };
 
 /**
+ * PATCH /api/auth/change-password
+ * Changes password for authenticated user after validating current password.
+ */
+export const changePassword = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        if (!req.user) {
+            res.status(401).json({ success: false, error: "Not authenticated" } as ApiResponse);
+            return;
+        }
+
+        const parsed = changePasswordSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({
+                success: false,
+                error: "Validation failed",
+                details: parsed.error.flatten().fieldErrors,
+            } as ApiResponse);
+            return;
+        }
+
+        const { current_password, new_password } = parsed.data;
+
+        const { data: userData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(req.user.id);
+        const email = userData?.user?.email;
+
+        if (getUserError || !email) {
+            res.status(404).json({
+                success: false,
+                error: "User account not found",
+            } as ApiResponse);
+            return;
+        }
+
+        // Validate current password by attempting sign-in.
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: current_password,
+        });
+
+        if (signInError) {
+            res.status(400).json({
+                success: false,
+                error: "Current password is incorrect",
+            } as ApiResponse);
+            return;
+        }
+
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, {
+            password: new_password,
+        });
+
+        if (updateError) {
+            res.status(500).json({
+                success: false,
+                error: "Failed to update password",
+            } as ApiResponse);
+            return;
+        }
+
+        res.json({
+            success: true,
+            message: "Password changed successfully",
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
  * GET /api/auth/me
  * Returns the current authenticated user's profile.
  */
@@ -428,93 +501,6 @@ export const refreshToken = async (
                 refresh_token: data.session.refresh_token,
                 expires_at: data.session.expires_at,
             },
-        } as ApiResponse);
-    } catch (err) {
-        next(err);
-    }
-};
-
-/**
- * PATCH /api/auth/change-password
- * Change password for authenticated user.
- * Verifies current password and updates to new password.
- */
-export const changePassword = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        if (!req.user) {
-            res.status(401).json({ success: false, error: "Not authenticated" });
-            return;
-        }
-
-        const parsed = changePasswordSchema.safeParse(req.body);
-        if (!parsed.success) {
-            res.status(400).json({
-                success: false,
-                error: "Validation failed",
-                details: parsed.error.flatten().fieldErrors,
-            } as ApiResponse);
-            return;
-        }
-
-        const { current_password, new_password } = parsed.data;
-
-        // Get user's email to verify current password
-        let userEmail: string | null | undefined;
-        if (req.user.user_type === "employee") {
-            const emp = await prisma.employees.findUnique({
-                where: { id: req.user.profile_id },
-            });
-            userEmail = emp?.email;
-        } else {
-            const client = await prisma.clients.findUnique({
-                where: { id: req.user.profile_id },
-            });
-            userEmail = client?.email;
-        }
-
-        if (!userEmail) {
-            res.status(500).json({
-                success: false,
-                error: "User email not found in system",
-            } as ApiResponse);
-            return;
-        }
-
-        // Verify current password by attempting to sign in
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: userEmail,
-            password: current_password,
-        });
-
-        if (signInError) {
-            res.status(401).json({
-                success: false,
-                error: "Current password is incorrect",
-            } as ApiResponse);
-            return;
-        }
-
-        // Update password using admin API with the authenticated user's ID
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-            req.user.id,
-            { password: new_password }
-        );
-
-        if (updateError) {
-            res.status(500).json({
-                success: false,
-                error: "Failed to update password. Please try again.",
-            } as ApiResponse);
-            return;
-        }
-
-        res.json({
-            success: true,
-            message: "Password changed successfully",
         } as ApiResponse);
     } catch (err) {
         next(err);
