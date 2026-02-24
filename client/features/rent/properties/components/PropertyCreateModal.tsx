@@ -95,8 +95,6 @@ export function PropertyCreateModal({
               >
                 <option value="building">{t("building")}</option>
                 <option value="house">{t("house")}</option>
-                <option value="land">{t("land")}</option>
-                <option value="commercial">{t("commercial")}</option>
               </select>
             </div>
             <div>
