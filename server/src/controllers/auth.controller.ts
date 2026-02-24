@@ -463,7 +463,7 @@ export const changePassword = async (
         const { current_password, new_password } = parsed.data;
 
         // Get user's email to verify current password
-        let userEmail: string | undefined;
+        let userEmail: string | null | undefined;
         if (req.user.user_type === "employee") {
             const emp = await prisma.employees.findUnique({
                 where: { id: req.user.profile_id },
