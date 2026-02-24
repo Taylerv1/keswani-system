@@ -57,18 +57,27 @@ export function hasAccess(module: string): boolean {
 }
 
 /**
- * Logout - calls API route to clear cookies
+ * Best-effort removal of client-readable auth cookies
  */
-export async function logout() {
-    try {
-        await fetch("/api/auth/logout", {
-            method: "POST",
-        });
-        window.location.href = "/login";
-    } catch (error) {
-        console.error("Logout error:", error);
-        window.location.href = "/login";
-    }
+function clearClientAuthCookies() {
+    if (typeof document === "undefined") return;
+
+    document.cookie = "user_data=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+}
+
+/**
+ * Logout - clears client auth state immediately and clears server cookies in background.
+ * Navigation should be handled by the caller (e.g. router.replace('/login')).
+ */
+export function logout() {
+    clearClientAuthCookies();
+
+    void fetch("/api/auth/logout", {
+        method: "POST",
+        keepalive: true,
+    }).catch((error) => {
+        console.error("Background logout error:", error);
+    });
 }
 
 /**

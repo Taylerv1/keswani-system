@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     Home,
     FileText,
@@ -36,8 +36,14 @@ export default function CustomerSidebar({
     onMobileClose,
 }: CustomerSidebarProps) {
     const pathname = usePathname();
+    const router = useRouter();
     const { t, dir } = useTranslation();
     const { hasRentData, hasElectricityData } = useCustomer();
+
+    const handleLogout = () => {
+        router.replace("/login");
+        logout();
+    };
 
     const navItems: NavItem[] = [
         {
@@ -151,7 +157,7 @@ export default function CustomerSidebar({
             {/* Bottom actions */}
             <div dir={dir} className="py-4 px-2 border-t border-white/10 space-y-1">
                 <button
-                    onClick={() => logout()}
+                    onClick={handleLogout}
                     className={`
             flex items-center gap-3 px-3 py-2.5 rounded-lg w-full cursor-pointer
             text-sidebar-text hover:bg-card-red/20 hover:text-card-red

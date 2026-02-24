@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
-import { requireAccess } from "../middlewares/role.middleware";
+import { requireAccess, requireAccessOrClient } from "../middlewares/role.middleware";
 import {
     getMaintenanceRequests,
     getMaintenanceById,
@@ -18,8 +18,8 @@ router.use(authenticate);
 router.get("/", getMaintenanceRequests);
 router.get("/:id", getMaintenanceById);
 
-// Write — require 'rent' access
-router.post("/", requireAccess("rent"), createMaintenance);
+// Write — allow clients or employees with 'rent' access
+router.post("/", requireAccessOrClient("rent"), createMaintenance);
 router.patch("/:id", requireAccess("rent"), updateMaintenance);
 router.delete("/:id", requireAccess("rent"), deleteMaintenance);
 
