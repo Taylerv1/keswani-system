@@ -142,73 +142,79 @@ export default function RentOverviewPage() {
         {t("rentOverview")}
       </h1>
       <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
+
       {loadingOverview && (
-        <div className="mb-3 flex items-center">
-          <LoadingLottie size={40} />
+        <div className="min-h-[55vh] flex items-center justify-center">
+          <LoadingLottie size={120} className="p-4" />
         </div>
       )}
-      {overviewError && (
+
+      {!loadingOverview && overviewError && (
         <p className="text-xs sm:text-sm text-card-red mb-3">{overviewError}</p>
       )}
 
-      <div className="rent-kpis grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
-        {kpis.map((kpi) => (
-          <KpiCard key={kpi.label} {...kpi} />
-        ))}
-      </div>
-
-      <div className="bg-surface rounded-xl border border-surface-border p-3 sm:p-5">
-        <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">
-          {t("recentActivity")}
-        </h2>
-        {recentNotifs.length === 0 ? (
-          <p className="text-text-muted text-sm">{t("noData")}</p>
-        ) : (
-          <div className="space-y-3">
-            {recentNotifs.map((n) => (
-              <div
-                key={n.id}
-                className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
-                  n.read
-                    ? "border-surface-border bg-background"
-                    : "border-primary/20 bg-primary-light"
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    n.type === "late_payment"
-                      ? "bg-card-red-light text-card-red"
-                      : n.type === "contract_ending"
-                        ? "bg-card-orange-light text-card-orange"
-                        : n.type === "maintenance"
-                          ? "bg-card-blue-light text-card-blue"
-                          : "bg-card-green-light text-card-green"
-                  }`}
-                >
-                  {n.type === "late_payment" ? (
-                    <CreditCard size={14} />
-                  ) : n.type === "contract_ending" ? (
-                    <FileText size={14} />
-                  ) : n.type === "maintenance" ? (
-                    <Wrench size={14} />
-                  ) : (
-                    <AlertTriangle size={14} />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-text-primary">
-                    {locale === "ar" ? n.titleAr : n.title}
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    {locale === "ar" ? n.messageAr : n.message}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">{n.createdAt}</p>
-                </div>
-              </div>
+      {!loadingOverview && overview && (
+        <>
+          <div className="rent-kpis grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 mb-8">
+            {kpis.map((kpi) => (
+              <KpiCard key={kpi.label} {...kpi} />
             ))}
           </div>
-        )}
-      </div>
+
+          <div className="bg-surface rounded-xl border border-surface-border p-3 sm:p-5">
+            <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">
+              {t("recentActivity")}
+            </h2>
+            {recentNotifs.length === 0 ? (
+              <p className="text-text-muted text-sm">{t("noData")}</p>
+            ) : (
+              <div className="space-y-3">
+                {recentNotifs.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
+                      n.read
+                        ? "border-surface-border bg-background"
+                        : "border-primary/20 bg-primary-light"
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        n.type === "late_payment"
+                          ? "bg-card-red-light text-card-red"
+                          : n.type === "contract_ending"
+                            ? "bg-card-orange-light text-card-orange"
+                            : n.type === "maintenance"
+                              ? "bg-card-blue-light text-card-blue"
+                              : "bg-card-green-light text-card-green"
+                      }`}
+                    >
+                      {n.type === "late_payment" ? (
+                        <CreditCard size={14} />
+                      ) : n.type === "contract_ending" ? (
+                        <FileText size={14} />
+                      ) : n.type === "maintenance" ? (
+                        <Wrench size={14} />
+                      ) : (
+                        <AlertTriangle size={14} />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary">
+                        {locale === "ar" ? n.titleAr : n.title}
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        {locale === "ar" ? n.messageAr : n.message}
+                      </p>
+                      <p className="text-xs text-text-muted mt-1">{n.createdAt}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
