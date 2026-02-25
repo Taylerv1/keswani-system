@@ -303,7 +303,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           onClick={() => handleNotificationClick(notification.id)}
                         >
                           <div className="flex items-center gap-2">
-                            <p className="m-0 text-[13px] font-semibold text-text-primary flex-1 leading-5">
+                            <p
+                              className={`m-0 text-[13px] ${notification.unread ? "font-semibold" : "font-normal"} text-text-primary flex-1 leading-5`}
+                            >
                               {notification.title}
                             </p>
                             {notification.unread && (
