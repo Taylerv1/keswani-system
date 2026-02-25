@@ -205,8 +205,8 @@ export default function ProfilePage() {
       </div>
 
       {loading && (
-        <div className="mb-4 flex items-center">
-          <LoadingLottie size={40} />
+        <div className="min-h-[55vh] flex items-center justify-center mb-6">
+          <LoadingLottie size={120} className="p-4" />
         </div>
       )}
 
