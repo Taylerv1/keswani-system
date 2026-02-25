@@ -6,6 +6,7 @@ import contractRoutes from "./contract.routes";
 import maintenanceRoutes from "./maintenance.routes";
 import paymentRoutes from "./payment.routes";
 import rentRoutes from "./rent.routes";
+import electricityRoutes from "./electricity.routes";
 
 const router = Router();
 
@@ -24,10 +25,10 @@ router.use("/contracts", contractRoutes);
 router.use("/maintenance", maintenanceRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/rent", rentRoutes);
+router.use("/electricity", electricityRoutes);
 
 // Future route modules:
 // router.use("/employees", employeeRoutes);
-// router.use("/electricity", electricityRoutes);
 // router.use("/expenses", expenseRoutes);
 
 export default router;

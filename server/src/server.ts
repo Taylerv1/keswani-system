@@ -7,9 +7,9 @@ import prisma from "./config/prisma";
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+    console.log(`Auth API: http://localhost:${PORT}/api/auth`);
 });
 
 // Graceful shutdown to ensure Prisma disconnects and releases DB connections

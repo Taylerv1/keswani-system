@@ -17,17 +17,13 @@ import {
 export default function ElectricityHistoryPage() {
     const { t } = useTranslation();
     const { data } = useCustomer();
-
-    if (!data.electricity) {
-        return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <p className="text-text-secondary">{t("noData")}</p>
-            </div>
-        );
-    }
-
-    const { readings, bills, payments, currentPricePerKwh, meterId, meterType } =
-        data.electricity;
+    const electricity = data.electricity;
+    const readings = electricity?.readings ?? [];
+    const bills = electricity?.bills ?? [];
+    const payments = electricity?.payments ?? [];
+    const currentPricePerKwh = electricity?.currentPricePerKwh ?? 0;
+    const meterId = electricity?.meterId ?? "";
+    const meterType = electricity?.meterType ?? "residential";
 
     const totalOutstanding = bills
         .filter((b) => b.status === "unpaid" || b.status === "partial")
@@ -43,6 +39,14 @@ export default function ElectricityHistoryPage() {
         [readings]
     );
     const maxConsumption = Math.max(...consumptionData.map((c) => c.value), 1);
+
+    if (!electricity) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <p className="text-text-secondary">{t("noData")}</p>
+            </div>
+        );
+    }
 
     return (
         <div>

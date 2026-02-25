@@ -5,8 +5,8 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "npx prisma generate && nodemon --exec ts-node src/server.ts",
-    "build": "npx prisma generate && tsc",
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx db/seeds/index.ts",
     "prisma:pull": "prisma db pull",
