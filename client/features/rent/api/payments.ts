@@ -92,21 +92,21 @@ export async function getPayments(
     if (params?.limit) query.set("limit", String(params.limit));
     if (params?.search) query.set("search", params.search);
     if (params?.status) query.set("status", params.status);
-    return fetchApi(`/payments?${query}`, token);
+    return fetchApi(`/rent/payments?${query}`, token);
 }
 
 export async function getPaymentById(token: string, id: string): Promise<ApiResponse<RentPayment>> {
-    return fetchApi(`/payments/${id}`, token);
+    return fetchApi(`/rent/payments/${id}`, token);
 }
 
 export async function createPayment(token: string, data: CreatePaymentInput): Promise<ApiResponse<RentPayment>> {
-    return fetchApi("/payments", token, { method: "POST", body: JSON.stringify(data) });
+    return fetchApi("/rent/payments", token, { method: "POST", body: JSON.stringify(data) });
 }
 
 export async function updatePayment(token: string, id: string, data: UpdatePaymentInput): Promise<ApiResponse<RentPayment>> {
-    return fetchApi(`/payments/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
+    return fetchApi(`/rent/payments/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
 }
 
 export async function deletePayment(token: string, id: string): Promise<ApiResponse> {
-    return fetchApi(`/payments/${id}`, token, { method: "DELETE" });
+    return fetchApi(`/rent/payments/${id}`, token, { method: "DELETE" });
 }
