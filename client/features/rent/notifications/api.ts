@@ -1,17 +1,17 @@
-import { fetchApi } from "@/features/rent/properties/api";
+// ============================================================
+// Notification Module — API Layer (via Next.js /api proxy)
+// ============================================================
 
-// ─── Types ───────────────────────────────────────────────
-export type NotificationChannel = "email" | "whatsapp" | "in_app";
-export type NotificationStatus = "pending" | "sent" | "failed";
+// --------------- Types ---------------
 
-export interface NotificationItem {
+export interface NotificationDto {
     id: string;
-    recipient_type: string;
+    recipient_type: "client" | "employee";
     recipient_id: string;
-    channel: NotificationChannel;
-    subject: string | null;
+    channel: "email" | "whatsapp" | "in_app";
+    subject: string;
     body: string | null;
-    status: NotificationStatus;
+    status: "pending" | "sent" | "failed";
     scheduled_at: string | null;
     sent_at: string | null;
     related_entity_type: string | null;
@@ -21,36 +21,50 @@ export interface NotificationItem {
 }
 
 export interface NotificationListResponse {
-    success: boolean;
-    data: {
-        items: NotificationItem[];
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            total_pages: number;
-        };
-        unread_count: number;
+    items: NotificationDto[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        total_pages: number;
     };
+    unread_count: number;
 }
 
-interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
-    error?: string;
     message?: string;
+    error?: string;
 }
 
-// ─── API Functions ───────────────────────────────────────
+// --------------- Fetch helper ---------------
+
+async function fetchApi<T>(
+    endpoint: string,
+    options: RequestInit = {},
+): Promise<ApiResponse<T>> {
+    const res = await fetch(endpoint, {
+        headers: { "Content-Type": "application/json", ...options.headers },
+        ...options,
+    });
+    const data: ApiResponse<T> = await res.json();
+    if (!res.ok || !data.success) {
+        throw new Error(data.error || `Request failed: ${res.status}`);
+    }
+    return data;
+}
+
+// --------------- CRUD ---------------
 
 export async function getNotifications(params?: {
     page?: number;
     limit?: number;
     search?: string;
-    channel?: NotificationChannel;
-    status?: NotificationStatus;
+    channel?: string;
+    status?: string;
     related_entity_type?: string;
-}): Promise<NotificationListResponse> {
+}): Promise<ApiResponse<NotificationListResponse>> {
     const query = new URLSearchParams();
     if (params?.page) query.set("page", String(params.page));
     if (params?.limit) query.set("limit", String(params.limit));
@@ -62,51 +76,24 @@ export async function getNotifications(params?: {
     return fetchApi(`/api/rent/notifications${qs ? `?${qs}` : ""}`);
 }
 
-export async function getNotificationById(
-    id: string,
-): Promise<ApiResponse<NotificationItem>> {
+export async function getNotificationById(id: string): Promise<ApiResponse<NotificationDto>> {
     return fetchApi(`/api/rent/notifications/${id}`);
 }
 
-export async function createNotification(data: {
-    recipient_type: "client" | "employee";
-    recipient_id: string;
-    channel?: NotificationChannel;
-    subject: string;
-    body?: string;
-    related_entity_type?: string;
-    related_entity_id?: string;
-}): Promise<ApiResponse<NotificationItem>> {
-    return fetchApi("/api/rent/notifications", {
-        method: "POST",
-        body: JSON.stringify(data),
-    });
+export async function markAllNotificationsRead(): Promise<ApiResponse> {
+    return fetchApi("/api/rent/notifications/mark-all-read", { method: "PATCH" });
 }
 
 export async function updateNotification(
     id: string,
-    data: {
-        subject?: string;
-        body?: string;
-        status?: NotificationStatus;
-    },
-): Promise<ApiResponse<NotificationItem>> {
+    data: { status?: string; subject?: string; body?: string },
+): Promise<ApiResponse<NotificationDto>> {
     return fetchApi(`/api/rent/notifications/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
     });
 }
 
-export async function markAllNotificationsRead(): Promise<ApiResponse> {
-    return fetchApi("/api/rent/notifications/mark-all-read", {
-        method: "PATCH",
-    });
-}
-
-export async function deleteNotification(
-    id: string,
-): Promise<ApiResponse> {
-    return fetchApi(`/api/rent/notifications/${id}`, {
-        method: "DELETE",
-    });
+export async function deleteNotification(id: string): Promise<ApiResponse> {
+    return fetchApi(`/api/rent/notifications/${id}`, { method: "DELETE" });
 }

@@ -2,343 +2,293 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Bell,
-  CreditCard,
-  FileText,
-  Wrench,
-  Building2,
-  CheckCheck,
-  Check,
-  Trash2,
-  Send,
-  Filter,
-  Search,
+    Bell,
+    BellOff,
+    CheckCheck,
+    Mail,
+    MessageCircle,
+    Monitor,
+    Search,
+    RefreshCw,
+    Loader2,
+    AlertCircle,
+    Filter,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { Pagination, LoadingLottie } from "@/components/ui";
 import {
-  getNotifications,
-  markAllNotificationsRead,
-  updateNotification,
-  deleteNotification,
-  type NotificationItem,
-  type NotificationStatus,
-  type NotificationChannel,
+    getNotifications,
+    markAllNotificationsRead,
+    updateNotification,
+    type NotificationDto,
+    type NotificationListResponse,
 } from "./api";
 
-const PAGE_SIZE = 10;
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 
-const typeIcons: Record<string, React.ReactNode> = {
-  contract: <FileText size={16} />,
-  payment: <CreditCard size={16} />,
-  maintenance: <Wrench size={16} />,
-  property: <Building2 size={16} />,
-};
+function channelIcon(ch: NotificationDto["channel"]) {
+    switch (ch) {
+        case "email": return <Mail size={14} />;
+        case "whatsapp": return <MessageCircle size={14} />;
+        case "in_app": return <Monitor size={14} />;
+    }
+}
 
-const typeColors: Record<string, { bg: string; text: string }> = {
-  contract: { bg: "bg-card-blue-light", text: "text-card-blue" },
-  payment: { bg: "bg-card-green-light", text: "text-card-green" },
-  maintenance: { bg: "bg-card-orange-light", text: "text-card-orange" },
-  property: { bg: "bg-card-red-light", text: "text-card-red" },
-};
+function statusColor(s: NotificationDto["status"]) {
+    switch (s) {
+        case "pending": return "bg-amber-500/15 text-amber-600";
+        case "sent": return "bg-emerald-500/15 text-emerald-600";
+        case "failed": return "bg-red-500/15 text-red-600";
+    }
+}
 
-const statusColors: Record<NotificationStatus, { bg: string; text: string; label: string }> = {
-  pending: { bg: "bg-amber-50", text: "text-amber-600", label: "Unread" },
-  sent: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Read" },
-  failed: { bg: "bg-red-50", text: "text-red-600", label: "Failed" },
-};
+function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+}
 
-const channelLabels: Record<NotificationChannel, string> = {
-  email: "Email",
-  whatsapp: "WhatsApp",
-  in_app: "In-App",
-};
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 export default function NotificationsPage() {
-  const { t } = useTranslation();
+    const { t } = useTranslation();
 
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [unreadCount, setUnreadCount] = useState(0);
+    // Data
+    const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+    const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, total_pages: 0 });
+    const [unreadCount, setUnreadCount] = useState(0);
 
-  // Filters
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterChannel, setFilterChannel] = useState<string>("all");
+    // Filters
+    const [search, setSearch] = useState("");
+    const [filterStatus, setFilterStatus] = useState<string>("all");
+    const [filterChannel, setFilterChannel] = useState<string>("all");
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getNotifications({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        status: filterStatus !== "all" ? (filterStatus as NotificationStatus) : undefined,
-        channel: filterChannel !== "all" ? (filterChannel as NotificationChannel) : undefined,
-      });
-      if (res.success && res.data) {
-        setItems(res.data.items);
-        setTotalPages(res.data.pagination.total_pages);
-        setTotalItems(res.data.pagination.total);
-        setUnreadCount(res.data.unread_count);
-      } else {
-        setError("Failed to load notifications");
-      }
-    } catch {
-      setError("Failed to load notifications");
-    } finally {
-      setLoading(false);
+    // UI state
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // ---- Fetch ----
+    const fetchData = useCallback(
+        async (page = 1) => {
+            try {
+                setError(null);
+                const res = await getNotifications({
+                    page,
+                    limit: 20,
+                    search: search || undefined,
+                    status: filterStatus !== "all" ? filterStatus : undefined,
+                    channel: filterChannel !== "all" ? filterChannel : undefined,
+                });
+                if (res.success && res.data) {
+                    const d = res.data as NotificationListResponse;
+                    setNotifications(d.items);
+                    setPagination(d.pagination);
+                    setUnreadCount(d.unread_count);
+                }
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Failed to load notifications");
+            } finally {
+                setLoading(false);
+                setRefreshing(false);
+            }
+        },
+        [search, filterStatus, filterChannel],
+    );
+
+    useEffect(() => {
+        setLoading(true);
+        fetchData(1);
+    }, [fetchData]);
+
+    // ---- Actions ----
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllNotificationsRead();
+            fetchData(pagination.page);
+        } catch { /* silently ignore */ }
+    };
+
+    const handleMarkRead = async (id: string) => {
+        try {
+            await updateNotification(id, { status: "sent" });
+            fetchData(pagination.page);
+        } catch { /* silently ignore */ }
+    };
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchData(pagination.page);
+    };
+
+    // ---- Render ----
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                <Loader2 size={28} className="animate-spin text-primary" />
+            </div>
+        );
     }
-  }, [page, search, filterStatus, filterChannel]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllNotificationsRead();
-      fetchData();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const handleMarkRead = async (id: string) => {
-    try {
-      await updateNotification(id, { status: "sent" });
-      fetchData();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteNotification(id);
-      fetchData();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const getEntityIcon = (type: string | null) => {
-    if (!type) return <Bell size={16} />;
-    const key = type.toLowerCase();
-    return typeIcons[key] ?? <Bell size={16} />;
-  };
-
-  const getEntityColors = (type: string | null) => {
-    if (!type) return typeColors.maintenance;
-    const key = type.toLowerCase();
-    return typeColors[key] ?? typeColors.maintenance;
-  };
-
-  return (
-    <div>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">
-            {t("notificationManagement")}
-          </h1>
-          <p className="text-text-secondary text-sm mt-1">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="relative flex h-2.5 w-2.5">
-                {unreadCount > 0 && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                )}
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${unreadCount > 0 ? "bg-primary" : "bg-text-muted"}`} />
-              </span>
-              {unreadCount} {t("unread")}
-            </span>
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="h-10 px-4 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all text-sm font-medium cursor-pointer flex items-center gap-2 border-0"
-          >
-            <CheckCheck size={16} />
-            {t("markAllRead")}
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <div className="flex-1 relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder={t("searchPlaceholder") || "Search notifications..."}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-surface-border bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
-          />
-        </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Filter size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary pl-8 pr-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none"
-            >
-              <option value="all">{t("all")} — Status</option>
-              <option value="pending">{t("unread")}</option>
-              <option value="sent">{t("read")}</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
-          <select
-            value={filterChannel}
-            onChange={(e) => {
-              setFilterChannel(e.target.value);
-              setPage(1);
-            }}
-            className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            <option value="all">{t("all")} — Channel</option>
-            <option value="in_app">In-App</option>
-            <option value="email">Email</option>
-            <option value="whatsapp">WhatsApp</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="min-h-[40vh] flex items-center justify-center">
-          <LoadingLottie size={100} className="p-4" />
-        </div>
-      )}
-
-      {/* Error */}
-      {!loading && error && (
-        <div className="bg-card-red-light border border-card-red/20 rounded-xl p-6 text-center">
-          <p className="text-card-red text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !error && items.length === 0 && (
-        <div className="bg-surface rounded-xl border border-surface-border p-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-background flex items-center justify-center mx-auto mb-4">
-            <Bell size={24} className="text-text-muted" />
-          </div>
-          <p className="text-text-muted text-sm font-medium">{t("noResults")}</p>
-          <p className="text-text-muted text-xs mt-1">No notifications match your filters</p>
-        </div>
-      )}
-
-      {/* Items */}
-      {!loading && !error && items.length > 0 && (
-        <div className="space-y-2.5">
-          {items.map((n) => {
-            const colors = getEntityColors(n.related_entity_type);
-            const statusConfig = statusColors[n.status];
-            const isUnread = n.status === "pending";
-            const timeStr = new Date(n.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-            return (
-              <div
-                key={n.id}
-                className={`group bg-surface rounded-xl border p-4 flex items-start gap-4 transition-all ${isUnread
-                  ? "border-primary/25 shadow-sm shadow-primary/5"
-                  : "border-surface-border hover:border-surface-border/80"
-                  }`}
-              >
-                {/* Icon */}
-                <div
-                  className={`w-10 h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}
-                >
-                  {getEntityIcon(n.related_entity_type)}
+    return (
+        <div className="flex-1 flex flex-col gap-5 p-6 max-w-4xl">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Bell size={22} className="text-primary" />
+                    <h1 className="text-xl font-bold text-text-primary">{t("rentNotifications")}</h1>
+                    {unreadCount > 0 && (
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-semibold">
+                            {unreadCount}
+                        </span>
+                    )}
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className={`text-sm font-semibold text-text-primary truncate ${isUnread ? "" : "font-medium"}`}>
-                      {n.subject ?? "Notification"}
-                    </h3>
-                    {isUnread && (
-                      <span className="w-2 h-2 rounded-full bg-primary shrink-0 animate-pulse" />
-                    )}
-                  </div>
-                  {n.body && (
-                    <p className="text-sm text-text-secondary line-clamp-2">{n.body}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-text-muted">{timeStr}</span>
-                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.text}`}>
-                      {statusConfig.label}
-                    </span>
-                    <span className="text-[10px] font-medium text-text-muted bg-background px-2 py-0.5 rounded-full">
-                      {channelLabels[n.channel]}
-                    </span>
-                    {n.related_entity_type && (
-                      <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>
-                        {n.related_entity_type}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {isUnread && (
+                <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleMarkRead(n.id)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0"
-                      title={t("markAsRead")}
+                        onClick={handleRefresh}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:bg-background transition-all cursor-pointer"
                     >
-                      <Check size={15} />
+                        <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+                        {t("refresh") || "Refresh"}
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(n.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0"
-                    title="Delete"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                    {unreadCount > 0 && (
+                        <button
+                            onClick={handleMarkAllRead}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-primary/10 text-primary hover:bg-primary/20 transition-all cursor-pointer"
+                        >
+                            <CheckCheck size={14} />
+                            {t("markAllRead") || "Mark all read"}
+                        </button>
+                    )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
 
-      {/* Pagination */}
-      {!loading && totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
-        />
-      )}
-    </div>
-  );
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-[200px] max-w-xs">
+                    <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder={t("search") || "Search notifications..."}
+                        className="w-full ps-9 pe-3 py-2 rounded-lg bg-background border border-surface-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                    <Filter size={14} className="text-text-muted" />
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="px-2.5 py-2 rounded-lg bg-background border border-surface-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
+                    >
+                        <option value="all">{t("allStatuses") || "All statuses"}</option>
+                        <option value="pending">{t("pending") || "Pending"}</option>
+                        <option value="sent">{t("sent") || "Sent"}</option>
+                        <option value="failed">{t("failed") || "Failed"}</option>
+                    </select>
+                </div>
+
+                <select
+                    value={filterChannel}
+                    onChange={(e) => setFilterChannel(e.target.value)}
+                    className="px-2.5 py-2 rounded-lg bg-background border border-surface-border text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
+                >
+                    <option value="all">{t("allChannels") || "All channels"}</option>
+                    <option value="in_app">In-App</option>
+                    <option value="email">Email</option>
+                    <option value="whatsapp">WhatsApp</option>
+                </select>
+            </div>
+
+            {/* Error */}
+            {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 text-red-600 text-sm">
+                    <AlertCircle size={16} />
+                    {error}
+                </div>
+            )}
+
+            {/* List */}
+            {notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-text-muted gap-3">
+                    <BellOff size={40} />
+                    <p className="text-sm">{t("noNotifications") || "No notifications found"}</p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2">
+                    {notifications.map((n) => (
+                        <div
+                            key={n.id}
+                            className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${n.status === "pending"
+                                    ? "bg-primary/[0.03] border-primary/20"
+                                    : "bg-surface border-surface-border"
+                                }`}
+                        >
+                            {/* channel icon */}
+                            <div className="mt-0.5 shrink-0 w-7 h-7 rounded-full bg-background flex items-center justify-center text-text-muted">
+                                {channelIcon(n.channel)}
+                            </div>
+
+                            {/* content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <p className={`text-sm leading-snug ${n.status === "pending" ? "font-semibold text-text-primary" : "text-text-secondary"}`}>
+                                        {n.subject}
+                                    </p>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${statusColor(n.status)}`}>
+                                        {n.status}
+                                    </span>
+                                </div>
+
+                                {n.body && (
+                                    <p className="text-xs text-text-muted line-clamp-2 mt-0.5">{n.body}</p>
+                                )}
+
+                                <p className="text-[11px] text-text-muted mt-1.5">{timeAgo(n.created_at)}</p>
+                            </div>
+
+                            {/* mark read */}
+                            {n.status === "pending" && (
+                                <button
+                                    onClick={() => handleMarkRead(n.id)}
+                                    title="Mark as read"
+                                    className="shrink-0 mt-1 p-1.5 rounded-lg hover:bg-background text-text-muted hover:text-primary transition-all cursor-pointer"
+                                >
+                                    <CheckCheck size={14} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Pagination */}
+            {pagination.total_pages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-2">
+                    {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => { setLoading(true); fetchData(p); }}
+                            className={`w-8 h-8 rounded-lg text-sm transition-all cursor-pointer ${p === pagination.page
+                                    ? "bg-primary text-white font-semibold"
+                                    : "text-text-secondary hover:bg-background"
+                                }`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }
