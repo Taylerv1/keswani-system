@@ -119,6 +119,12 @@ const ar: Record<string, string> = {
   units: "الوحدات",
   propertyDetails: "تفاصيل العقار",
   propertyInfo: "معلومات العقار",
+  city: "المدينة",
+  addUnit: "إضافة وحدة",
+  floor: "الطابق",
+  bedrooms: "غرف النوم",
+  bathrooms: "الحمامات",
+  area_sqm: "المساحة (م²)",
 
   // Tenants
   tenantManagement: "إدارة المستأجرين",

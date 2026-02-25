@@ -119,6 +119,12 @@ const en = {
   units: "Units",
   propertyDetails: "Property Details",
   propertyInfo: "Property Information",
+  city: "City",
+  addUnit: "Add Unit",
+  floor: "Floor",
+  bedrooms: "Bedrooms",
+  bathrooms: "Bathrooms",
+  area_sqm: "Area (sqm)",
 
   // Tenants
   tenantManagement: "Tenant Management",
