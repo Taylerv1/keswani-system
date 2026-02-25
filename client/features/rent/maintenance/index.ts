@@ -12,6 +12,11 @@ export { useMaintenanceState, useMaintenanceForm } from "./hooks";
 
 export {
   PAGE_SIZE,
+  backendStatusToUi,
+  uiStatusToBackend,
+  backendPriorityToUi,
+  uiPriorityToBackend,
+  mapBackendMaintenance,
   createEmptyForm,
   getPropertyName,
   getTenantName,
@@ -19,7 +24,12 @@ export {
   filterMaintenanceRequests,
 } from "./utils";
 
-export { getMaintenanceRequests } from "./api";
+export {
+  getMaintenanceRequests,
+  createMaintenanceRequest,
+  updateMaintenanceRequest,
+  deleteMaintenanceRequest,
+} from "./api";
 export type { ApiResponse, PaginatedResponse } from "./api";
 
 export { MaintenanceTable } from "./components/MaintenanceTable";

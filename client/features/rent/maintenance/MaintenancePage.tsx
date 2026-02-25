@@ -12,19 +12,25 @@ import { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";
 
 export default function MaintenancePage() {
   const { t, locale } = useTranslation();
-  const { data, addMaintenance, updateMaintenance, removeMaintenance } = useRent();
+  const { data } = useRent();
 
   const state = useMaintenanceState({
-    maintenanceRequests: data.maintenanceRequests,
     properties: data.properties,
     tenants: data.tenants,
     locale,
   });
 
   const form = useMaintenanceForm({
-    addMaintenance,
-    updateMaintenance,
-    removeMaintenance,
+    createMaintenanceItem: state.createMaintenanceItem,
+    updateMaintenanceItem: state.updateMaintenanceItem,
+    removeMaintenanceItem: state.removeMaintenanceItem,
+    resolveUnitId: (propertyId, unitNumber) => {
+      const property = data.properties.find((item) => item.id === propertyId);
+      if (!property) return null;
+      const unit = property.units.find((item) => item.unit_number === unitNumber);
+      return unit?.id ?? null;
+    },
+    setError: state.setError,
   });
 
   const closeModal = () => {
@@ -37,7 +43,7 @@ export default function MaintenancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">{t("maintenanceManagement")}</h1>
-          <p className="text-text-secondary text-sm mt-1">{state.filtered.length} {t("maintenanceRequests")}</p>
+          <p className="text-text-secondary text-sm mt-1">{state.totalItems} {t("maintenanceRequests")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => alert("PDF export mock")} className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2">
@@ -100,10 +106,16 @@ export default function MaintenancePage() {
         </div>
       </div>
 
+      {state.error && (
+        <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {state.error}
+        </div>
+      )}
+
       <Pagination
         currentPage={state.page}
         totalPages={state.totalPages}
-        totalItems={state.filtered.length}
+        totalItems={state.totalItems}
         pageSize={state.PAGE_SIZE}
         onPageChange={state.setPage}
       />

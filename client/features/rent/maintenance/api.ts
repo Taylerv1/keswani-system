@@ -1,4 +1,12 @@
-import type { MaintenanceRequest } from "./types";
+import type {
+  BackendMaintenanceItem,
+  BackendMaintenancePriority,
+  BackendMaintenanceStatus,
+  MaintenanceRequest,
+} from "./types";
+import {
+  mapBackendMaintenance,
+} from "./utils";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -17,11 +25,14 @@ export interface PaginatedResponse<T> {
   };
 }
 
-async function fetchApi<T>(endpoint: string): Promise<ApiResponse<T>> {
+async function fetchApi<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
   const response = await fetch(endpoint, {
-    method: "GET",
     headers: { "Content-Type": "application/json" },
-    cache: "no-store",
+    cache: options.method === "GET" || !options.method ? "no-store" : undefined,
+    ...options,
   });
 
   const data: ApiResponse<T> = await response.json();
@@ -47,5 +58,57 @@ export async function getMaintenanceRequests(params?: {
   if (params?.priority) query.set("priority", params.priority);
   const queryString = query.toString();
 
-  return fetchApi(`/api/maintenance${queryString ? `?${queryString}` : ""}`);
+  const response = await fetchApi<PaginatedResponse<BackendMaintenanceItem>>(
+    `/api/maintenance${queryString ? `?${queryString}` : ""}`,
+    { method: "GET" }
+  );
+
+  return {
+    ...response,
+    data: response.data
+      ? {
+          ...response.data,
+          items: response.data.items.map(mapBackendMaintenance),
+        }
+      : undefined,
+  };
+}
+
+export async function createMaintenanceRequest(payload: {
+  unit_id: string;
+  requested_by?: string;
+  title: string;
+  description: string;
+  priority: BackendMaintenancePriority;
+  estimated_cost?: number;
+}): Promise<ApiResponse> {
+  return fetchApi("/api/maintenance", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateMaintenanceRequest(
+  id: string,
+  payload: {
+    unit_id?: string;
+    requested_by?: string | null;
+    title?: string;
+    description?: string;
+    priority?: BackendMaintenancePriority;
+    status?: BackendMaintenanceStatus;
+    estimated_cost?: number;
+    actual_cost?: number;
+  }
+): Promise<ApiResponse> {
+  return fetchApi(`/api/maintenance/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteMaintenanceRequest(id: string): Promise<ApiResponse> {
+  return fetchApi(`/api/maintenance/${id}`, {
+    method: "DELETE",
+  });
 }
