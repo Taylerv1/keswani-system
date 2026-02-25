@@ -2,10 +2,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { Modal } from "@/components/ui";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant, TranslateFn } from "../types";
 
-interface MaintenanceFormModalProps {
+interface MaintenanceCreateModalProps {
   open: boolean;
   onClose: () => void;
-  editItem: MaintenanceRequest | null;
   form: MaintenanceFormData;
   setForm: Dispatch<SetStateAction<MaintenanceFormData>>;
   properties: PropertyLookup[];
@@ -16,10 +15,9 @@ interface MaintenanceFormModalProps {
   t: TranslateFn;
 }
 
-export function MaintenanceFormModal({
+export function MaintenanceCreateModal({
   open,
   onClose,
-  editItem,
   form,
   setForm,
   properties,
@@ -28,14 +26,14 @@ export function MaintenanceFormModal({
   onSave,
   error,
   t,
-}: MaintenanceFormModalProps) {
+}: MaintenanceCreateModalProps) {
   const selectedProperty = properties.find((property) => property.id === form.propertyId);
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={editItem ? t("editMaintenanceRequest") : t("addMaintenanceRequest")}
+      title={t("addMaintenanceRequest")}
       maxWidth="max-w-xl"
     >
       <div className="space-y-4">

@@ -7,29 +7,37 @@ import {
   getMaintenanceRequests,
   updateMaintenanceRequest,
 } from "./api";
-import type { MaintenanceFormData, MaintenanceRequest, Property, Tenant } from "./types";
+import { getPropertiesLookup } from "../properties/api";
+import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant } from "./types";
 import {
   PAGE_SIZE,
   createEmptyForm,
   filterMaintenanceRequests,
-  getPropertyName,
   getTenantName,
   uiPriorityToBackend,
   uiStatusToBackend,
 } from "./utils";
 
 interface UseMaintenanceStateInput {
-  properties: Property[];
   tenants: Tenant[];
   locale: string;
 }
 
+const UUID_V4_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function asUuid(value?: string): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return UUID_V4_REGEX.test(trimmed) ? trimmed : undefined;
+}
+
 export function useMaintenanceState({
-  properties,
   tenants,
   locale,
 }: UseMaintenanceStateInput) {
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [propertyOptions, setPropertyOptions] = useState<PropertyLookup[]>([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
@@ -39,6 +47,15 @@ export function useMaintenanceState({
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const fetchPropertyOptions = useCallback(async () => {
+    try {
+      const response = await getPropertiesLookup();
+      setPropertyOptions(response.data ?? []);
+    } catch {
+      setPropertyOptions([]);
+    }
+  }, []);
 
   const fetchMaintenance = useCallback(async () => {
     try {
@@ -79,6 +96,10 @@ export function useMaintenanceState({
     void fetchMaintenance();
   }, [fetchMaintenance]);
 
+  useEffect(() => {
+    void fetchPropertyOptions();
+  }, [fetchPropertyOptions]);
+
   const filtered = useMemo(
     () =>
       filterMaintenanceRequests(
@@ -86,7 +107,7 @@ export function useMaintenanceState({
         search,
         filterStatus,
         filterPriority,
-        properties,
+        [],
         tenants,
         locale
       ),
@@ -95,7 +116,6 @@ export function useMaintenanceState({
       filterStatus,
       locale,
       maintenanceRequests,
-      properties,
       search,
       tenants,
     ]
@@ -110,8 +130,11 @@ export function useMaintenanceState({
         next.set(item.propertyId, item.propertyName);
       }
     });
+    propertyOptions.forEach((item) => {
+      next.set(item.id, item.name);
+    });
     return next;
-  }, [maintenanceRequests]);
+  }, [maintenanceRequests, propertyOptions]);
 
   const tenantNameMap = useMemo(() => {
     const next = new Map<string, string>();
@@ -123,16 +146,22 @@ export function useMaintenanceState({
     return next;
   }, [maintenanceRequests]);
 
-  const resolvePropertyName = (id: string) => {
-    const fromContext = getPropertyName(properties, id);
-    if (fromContext !== id) return fromContext;
-    return propertyNameMap.get(id) || id;
-  };
+  const resolvePropertyName = (id: string) => propertyNameMap.get(id) || id;
 
   const resolveTenantName = (id: string) => {
     const fromContext = getTenantName(tenants, id, locale);
     if (fromContext !== id) return fromContext;
     return tenantNameMap.get(id) || id;
+  };
+
+  const resolveUnitId = (propertyId: string, unitNumber: string) => {
+    const property = propertyOptions.find((item) => item.id === propertyId);
+    if (!property) return null;
+    const normalized = unitNumber.trim().toLowerCase();
+    const unit = property.units.find(
+      (item) => item.unit_number.trim().toLowerCase() === normalized
+    );
+    return unit?.id ?? null;
   };
 
   const createMaintenanceItem = useCallback(
@@ -149,7 +178,7 @@ export function useMaintenanceState({
         setError("");
         await createMaintenanceRequest({
           unit_id: payload.unitId,
-          requested_by: payload.tenantId || undefined,
+          requested_by: asUuid(payload.tenantId),
           title: payload.title,
           description: payload.description,
           priority: uiPriorityToBackend(payload.priority),
@@ -185,7 +214,7 @@ export function useMaintenanceState({
         setError("");
         await updateMaintenanceRequest(id, {
           unit_id: payload.unitId,
-          requested_by: payload.tenantId ?? null,
+          requested_by: asUuid(payload.tenantId) ?? null,
           title: payload.title,
           description: payload.description,
           priority: payload.priority ? uiPriorityToBackend(payload.priority) : undefined,
@@ -241,8 +270,10 @@ export function useMaintenanceState({
     totalItems,
     totalPages,
     fetchMaintenance,
+    propertyOptions,
     resolvePropertyName,
     resolveTenantName,
+    resolveUnitId,
     createMaintenanceItem,
     updateMaintenanceItem,
     removeMaintenanceItem,
@@ -304,9 +335,7 @@ export function useMaintenanceForm({
       unitNumber: request.unitNumber,
       tenantId: request.tenantId,
       title: request.title,
-      titleAr: request.titleAr,
       description: request.description,
-      descriptionAr: request.descriptionAr,
       priority: request.priority,
       status: request.status,
       createdAt: request.createdAt,
@@ -317,7 +346,11 @@ export function useMaintenanceForm({
   };
 
   const handleSave = async () => {
-    const unitId = resolveUnitId(form.propertyId, form.unitNumber);
+    setError("");
+
+    const resolvedUnitId = resolveUnitId(form.propertyId, form.unitNumber);
+    const unitId = resolvedUnitId ?? (editItem ? editItem.unitId : null);
+
     if (!unitId) {
       setError("Unit not found for selected property and unit number");
       return;

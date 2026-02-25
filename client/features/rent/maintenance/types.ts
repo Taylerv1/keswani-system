@@ -1,6 +1,8 @@
 import type { Property, Tenant } from "@/features/rent/types";
+import type { PropertyLookup } from "../properties/types";
 
 export type { Property, Tenant };
+export type { PropertyLookup };
 
 export type MaintenancePriority = "high" | "medium" | "low";
 export type MaintenanceStatus = "open" | "in_progress" | "completed" | "closed";
@@ -14,9 +16,7 @@ export interface MaintenanceRequest {
   tenantId: string;
   tenantName: string;
   title: string;
-  titleAr: string;
   description: string;
-  descriptionAr: string;
   priority: MaintenancePriority;
   status: MaintenanceStatus;
   createdAt: string;
@@ -53,9 +53,7 @@ export interface MaintenanceFormData {
   unitNumber: string;
   tenantId: string;
   title: string;
-  titleAr: string;
   description: string;
-  descriptionAr: string;
   priority: MaintenancePriority;
   status: MaintenanceStatus;
   createdAt: string;

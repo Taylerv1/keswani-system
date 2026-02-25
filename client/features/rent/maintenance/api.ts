@@ -37,7 +37,9 @@ async function fetchApi<T>(
 
   const data: ApiResponse<T> = await response.json();
   if (!response.ok || !data.success) {
-    throw new Error(data.error || `Request failed: ${response.status}`);
+    const details = (data as { details?: unknown }).details;
+    const detailsText = details ? ` | ${JSON.stringify(details)}` : "";
+    throw new Error((data.error || `Request failed: ${response.status}`) + detailsText);
   }
 
   return data;

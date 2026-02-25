@@ -35,5 +35,6 @@ export type { ApiResponse, PaginatedResponse } from "./api";
 export { MaintenanceTable } from "./components/MaintenanceTable";
 export { MaintenanceTableRow } from "./components/MaintenanceTableRow";
 export { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
+export { MaintenanceCreateModal } from "./components/MaintenanceCreateModal";
 export { MaintenanceFormModal } from "./components/MaintenanceFormModal";
 export { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";

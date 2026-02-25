@@ -7,6 +7,7 @@ import { SearchBar, Pagination } from "@/components/ui";
 import { useMaintenanceForm, useMaintenanceState } from "./hooks";
 import { MaintenanceTable } from "./components/MaintenanceTable";
 import { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
+import { MaintenanceCreateModal } from "./components/MaintenanceCreateModal";
 import { MaintenanceFormModal } from "./components/MaintenanceFormModal";
 import { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";
 
@@ -15,7 +16,6 @@ export default function MaintenancePage() {
   const { data } = useRent();
 
   const state = useMaintenanceState({
-    properties: data.properties,
     tenants: data.tenants,
     locale,
   });
@@ -24,12 +24,7 @@ export default function MaintenancePage() {
     createMaintenanceItem: state.createMaintenanceItem,
     updateMaintenanceItem: state.updateMaintenanceItem,
     removeMaintenanceItem: state.removeMaintenanceItem,
-    resolveUnitId: (propertyId, unitNumber) => {
-      const property = data.properties.find((item) => item.id === propertyId);
-      if (!property) return null;
-      const unit = property.units.find((item) => item.unit_number === unitNumber);
-      return unit?.id ?? null;
-    },
+    resolveUnitId: state.resolveUnitId,
     setError: state.setError,
   });
 
@@ -79,7 +74,6 @@ export default function MaintenancePage() {
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
         <MaintenanceTable
           requests={state.paginated}
-          locale={locale}
           resolvePropertyName={state.resolvePropertyName}
           resolveTenantName={state.resolveTenantName}
           onEdit={form.openEdit}
@@ -95,7 +89,6 @@ export default function MaintenancePage() {
               <MaintenanceMobileCard
                 key={request.id}
                 request={request}
-                locale={locale}
                 propertyName={state.resolvePropertyName(request.propertyId)}
                 onEdit={form.openEdit}
                 onDelete={form.setDeleteId}
@@ -120,18 +113,34 @@ export default function MaintenancePage() {
         onPageChange={state.setPage}
       />
 
-      <MaintenanceFormModal
-        open={form.modalOpen}
-        onClose={closeModal}
-        editItem={form.editItem}
-        form={form.form}
-        setForm={form.setForm}
-        properties={data.properties}
-        tenants={data.tenants}
-        locale={locale}
-        onSave={form.handleSave}
-        t={t}
-      />
+      {form.editItem ? (
+        <MaintenanceFormModal
+          open={form.modalOpen}
+          onClose={closeModal}
+          editItem={form.editItem}
+          form={form.form}
+          setForm={form.setForm}
+          properties={state.propertyOptions}
+          tenants={data.tenants}
+          locale={locale}
+          onSave={form.handleSave}
+          error={state.error}
+          t={t}
+        />
+      ) : (
+        <MaintenanceCreateModal
+          open={form.modalOpen}
+          onClose={closeModal}
+          form={form.form}
+          setForm={form.setForm}
+          properties={state.propertyOptions}
+          tenants={data.tenants}
+          locale={locale}
+          onSave={form.handleSave}
+          error={state.error}
+          t={t}
+        />
+      )}
 
       <MaintenanceDeleteModal
         open={!!form.deleteId}

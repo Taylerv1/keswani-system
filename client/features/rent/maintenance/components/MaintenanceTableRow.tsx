@@ -5,7 +5,6 @@ import type { MaintenanceRequest, TranslateFn } from "../types";
 
 interface MaintenanceTableRowProps {
   request: MaintenanceRequest;
-  locale: string;
   propertyName: string;
   tenantName: string;
   onEdit: (request: MaintenanceRequest) => void;
@@ -15,7 +14,6 @@ interface MaintenanceTableRowProps {
 
 export function MaintenanceTableRow({
   request,
-  locale,
   propertyName,
   tenantName,
   onEdit,
@@ -28,12 +26,8 @@ export function MaintenanceTableRow({
         <div className="flex items-center gap-2">
           <Wrench size={14} className="text-text-muted shrink-0" />
           <div>
-            <p className="font-medium text-text-primary">
-              {locale === "ar" ? request.titleAr : request.title}
-            </p>
-            <p className="text-xs text-text-muted truncate max-w-[200px]">
-              {locale === "ar" ? request.descriptionAr : request.description}
-            </p>
+            <p className="font-medium text-text-primary">{request.title}</p>
+            <p className="text-xs text-text-muted truncate max-w-[200px]">{request.description}</p>
           </div>
         </div>
       </td>

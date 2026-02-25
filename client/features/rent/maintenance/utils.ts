@@ -55,9 +55,7 @@ export function mapBackendMaintenance(item: BackendMaintenanceItem): Maintenance
     tenantId: item.requested_by ?? "",
     tenantName: item.requester_name ?? "",
     title: item.title,
-    titleAr: item.title,
     description: item.description,
-    descriptionAr: item.description,
     priority: backendPriorityToUi(item.priority),
     status: backendStatusToUi(item.status),
     createdAt,
@@ -73,9 +71,7 @@ export function createEmptyForm(): MaintenanceFormData {
     unitNumber: "",
     tenantId: "",
     title: "",
-    titleAr: "",
     description: "",
-    descriptionAr: "",
     priority: "medium",
     status: "open",
     createdAt: today,
@@ -121,7 +117,6 @@ export function filterMaintenanceRequests(
     items = items.filter(
       (request) =>
         request.title.toLowerCase().includes(query) ||
-        request.titleAr.includes(query) ||
         request.propertyName.toLowerCase().includes(query) ||
         request.tenantName.toLowerCase().includes(query) ||
         getPropertyName(properties, request.propertyId)
