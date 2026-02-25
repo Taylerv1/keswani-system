@@ -125,6 +125,7 @@ const ar: Record<string, string> = {
   bedrooms: "غرف النوم",
   bathrooms: "الحمامات",
   area_sqm: "المساحة (م²)",
+  manager: "مدير",
 
   // Tenants
   tenantManagement: "إدارة المستأجرين",

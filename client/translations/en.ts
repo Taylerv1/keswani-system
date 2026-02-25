@@ -125,6 +125,7 @@ const en = {
   bedrooms: "Bedrooms",
   bathrooms: "Bathrooms",
   area_sqm: "Area (sqm)",
+  manager: "Manager",
 
   // Tenants
   tenantManagement: "Tenant Management",
