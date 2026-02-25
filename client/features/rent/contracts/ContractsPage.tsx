@@ -26,6 +26,8 @@ interface SearchableSelectProps {
   placeholder?: string;
   searchPlaceholder: string;
   noResultsLabel: string;
+  addActionLabel?: string;
+  onAddAction?: () => void;
 }
 
 function SearchableSelect({
@@ -35,6 +37,8 @@ function SearchableSelect({
   placeholder = "--",
   searchPlaceholder,
   noResultsLabel,
+  addActionLabel,
+  onAddAction,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -91,6 +95,20 @@ function SearchableSelect({
               placeholder={searchPlaceholder}
               className="w-full h-9 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
+            {onAddAction && addActionLabel && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setQuery("");
+                  onAddAction();
+                }}
+                className="mt-2 w-full h-8 rounded-md border border-surface-border bg-surface text-text-secondary hover:bg-background transition-colors text-sm cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Plus size={14} />
+                {addActionLabel}
+              </button>
+            )}
           </div>
 
           <div className="max-h-56 overflow-y-auto py-1">
@@ -333,16 +351,7 @@ export default function ContractsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <label className="block text-sm font-medium text-text-secondary">{t("tenant")}</label>
-                <button
-                  type="button"
-                  onClick={form.openCreateClientModal}
-                  className="h-7 px-2 rounded-md border border-surface-border bg-surface text-xs text-text-secondary hover:bg-background transition-colors cursor-pointer"
-                >
-                  + {t("addTenant")}
-                </button>
-              </div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">{t("tenant")}</label>
               <SearchableSelect
                 value={form.form.client_id}
                 options={tenantOptions}
@@ -350,6 +359,8 @@ export default function ContractsPage() {
                 placeholder="--"
                 searchPlaceholder={`${t("search")}...`}
                 noResultsLabel={t("noResults")}
+                addActionLabel={t("addTenant")}
+                onAddAction={form.openCreateClientModal}
               />
             </div>
             <div>
