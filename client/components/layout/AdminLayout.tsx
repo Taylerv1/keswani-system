@@ -73,7 +73,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         if (!res.ok) {
           const user = getUserData();
           if (isMounted && user?.email) {
-            setDisplayName(user.email);
+            setDisplayName("Admin");
           }
           return;
         }
@@ -88,13 +88,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         const user = getUserData();
         if (isMounted && user?.email) {
-          setDisplayName(user.email);
+          setDisplayName("Admin");
           setUserEmail(user.email);
         }
       } catch {
         const user = getUserData();
         if (isMounted && user?.email) {
-          setDisplayName(user.email);
+          setDisplayName("Admin");
           setUserEmail(user.email);
         }
       }

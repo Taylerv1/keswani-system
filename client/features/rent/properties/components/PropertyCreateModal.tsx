@@ -149,7 +149,7 @@ export function PropertyCreateModal({
                   type="button"
                   className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
                 >
-                  Add Unit
+                  {t("addUnit")}
                 </button>
               </div>
               <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
@@ -266,7 +266,7 @@ export function PropertyCreateModal({
       <Modal
         open={unitModalOpen}
         onClose={() => setUnitModalOpen(false)}
-        title="Add Unit"
+        title={t("addUnit")}
         maxWidth="max-w-lg"
       >
         <div className="space-y-4">
