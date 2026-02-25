@@ -141,7 +141,6 @@ export default function RentOverviewPage() {
       <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-1">
         {t("rentOverview")}
       </h1>
-      <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
 
       {loadingOverview && (
         <div className="min-h-[55vh] flex items-center justify-center">
