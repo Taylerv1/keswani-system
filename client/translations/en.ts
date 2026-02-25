@@ -149,6 +149,14 @@ const en = {
   linkedProperty: "Linked Property",
   contractDuration: "Contract Duration",
   maintenanceRequests: "Maintenance Requests",
+  withContract: "With Contract",
+  withoutContract: "Without Contract",
+  noContract: "No Contract",
+  contractsSummary: "Contracts Summary",
+  recentPayments: "Recent Payments",
+  recentMaintenance: "Recent Maintenance",
+  noDataYet: "No data yet",
+  fullNameRequired: "Full name is required",
 
   // Contracts
   contractManagement: "Contract Management",
