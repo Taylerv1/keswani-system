@@ -121,7 +121,7 @@ export default function MaintenancePage() {
           form={form.form}
           setForm={form.setForm}
           properties={state.propertyOptions}
-          tenants={data.tenants}
+          tenants={state.tenantOptions}
           locale={locale}
           onSave={form.handleSave}
           error={state.error}
@@ -134,7 +134,7 @@ export default function MaintenancePage() {
           form={form.form}
           setForm={form.setForm}
           properties={state.propertyOptions}
-          tenants={data.tenants}
+          tenants={state.tenantOptions}
           locale={locale}
           onSave={form.handleSave}
           error={state.error}

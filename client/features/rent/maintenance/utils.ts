@@ -24,16 +24,36 @@ export function uiStatusToBackend(status: MaintenanceStatus): BackendMaintenance
   return status;
 }
 
-export function backendPriorityToUi(priority: BackendMaintenancePriority): MaintenancePriority {
-  if (priority === "urgent" || priority === "critical") return "high";
-  if (priority === "medium") return "medium";
-  return "low";
+export function backendPriorityToUi(priority: BackendMaintenancePriority | string): MaintenancePriority {
+  const normalized = String(priority ?? "").trim().toLowerCase();
+
+  if (normalized === "critical" || normalized === "urgent" || normalized === "high") {
+    return "high";
+  }
+  if (normalized === "medium") {
+    return "medium";
+  }
+  if (normalized === "low") {
+    return "low";
+  }
+
+  return "medium";
 }
 
-export function uiPriorityToBackend(priority: MaintenancePriority): BackendMaintenancePriority {
-  if (priority === "high") return "high";
-  if (priority === "medium") return "medium";
-  return "low";
+export function uiPriorityToBackend(priority: MaintenancePriority | string): BackendMaintenancePriority {
+  const normalized = String(priority ?? "").trim().toLowerCase();
+
+  if (normalized === "critical" || normalized === "urgent" || normalized === "high") {
+    return "high";
+  }
+  if (normalized === "medium") {
+    return "medium";
+  }
+  if (normalized === "low") {
+    return "low";
+  }
+
+  return "medium";
 }
 
 function toNumber(value: string | number | null): number | null {

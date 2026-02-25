@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createMaintenanceRequest,
   deleteMaintenanceRequest,
+  getMaintenanceLookups,
   getMaintenanceRequests,
   updateMaintenanceRequest,
 } from "./api";
-import { getPropertiesLookup } from "../properties/api";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant } from "./types";
 import {
   PAGE_SIZE,
@@ -38,6 +38,7 @@ export function useMaintenanceState({
 }: UseMaintenanceStateInput) {
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
   const [propertyOptions, setPropertyOptions] = useState<PropertyLookup[]>([]);
+  const [tenantOptions, setTenantOptions] = useState<Tenant[]>(tenants);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
@@ -48,14 +49,16 @@ export function useMaintenanceState({
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchPropertyOptions = useCallback(async () => {
+  const fetchLookupOptions = useCallback(async () => {
     try {
-      const response = await getPropertiesLookup();
-      setPropertyOptions(response.data ?? []);
+      const response = await getMaintenanceLookups();
+      setPropertyOptions(response.data?.properties ?? []);
+      setTenantOptions(response.data?.tenants ?? []);
     } catch {
       setPropertyOptions([]);
+      setTenantOptions(tenants);
     }
-  }, []);
+  }, [tenants]);
 
   const fetchMaintenance = useCallback(async () => {
     try {
@@ -97,8 +100,8 @@ export function useMaintenanceState({
   }, [fetchMaintenance]);
 
   useEffect(() => {
-    void fetchPropertyOptions();
-  }, [fetchPropertyOptions]);
+    void fetchLookupOptions();
+  }, [fetchLookupOptions]);
 
   const filtered = useMemo(
     () =>
@@ -108,7 +111,7 @@ export function useMaintenanceState({
         filterStatus,
         filterPriority,
         [],
-        tenants,
+          tenantOptions,
         locale
       ),
     [
@@ -117,7 +120,7 @@ export function useMaintenanceState({
       locale,
       maintenanceRequests,
       search,
-      tenants,
+      tenantOptions,
     ]
   );
 
@@ -149,7 +152,7 @@ export function useMaintenanceState({
   const resolvePropertyName = (id: string) => propertyNameMap.get(id) || id;
 
   const resolveTenantName = (id: string) => {
-    const fromContext = getTenantName(tenants, id, locale);
+    const fromContext = getTenantName(tenantOptions, id, locale);
     if (fromContext !== id) return fromContext;
     return tenantNameMap.get(id) || id;
   };
@@ -271,6 +274,7 @@ export function useMaintenanceState({
     totalPages,
     fetchMaintenance,
     propertyOptions,
+    tenantOptions,
     resolvePropertyName,
     resolveTenantName,
     resolveUnitId,
