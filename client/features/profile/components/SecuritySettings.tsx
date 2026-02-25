@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Lock, Clock, ShieldCheck, KeyRound } from "lucide-react";
+import { Lock, Clock, ShieldCheck, KeyRound, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { StatusBadge, Modal } from "@/components/ui";
 import { changePassword } from "@/lib/auth-client";
@@ -26,6 +26,9 @@ export default function SecuritySettings({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
@@ -154,30 +157,60 @@ export default function SecuritySettings({
           )}
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("currentPassword")}</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            <div className="relative">
+              <input
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                aria-label={showCurrent ? "Hide password" : "Show password"}
+                onClick={() => setShowCurrent((s) => !s)}
+                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+              >
+                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("newPassword")}</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            <div className="relative">
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                aria-label={showNew ? "Hide password" : "Show password"}
+                onClick={() => setShowNew((s) => !s)}
+                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+              >
+                {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("confirmPassword")}</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            <div className="relative">
+              <input
+                type={showConfirm ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                aria-label={showConfirm ? "Hide password" : "Show password"}
+                onClick={() => setShowConfirm((s) => !s)}
+                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+              >
+                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setPasswordModal(false); resetPasswordForm(); }} className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors">
