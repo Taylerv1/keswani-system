@@ -1,18 +1,14 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireAccess, requireAccessOrClient } from "../middlewares/role.middleware";
+import { requireAccess, requireAccessOrClient } from "../../middlewares/role.middleware";
 import {
     getMaintenanceRequests,
     getMaintenanceById,
     createMaintenance,
     updateMaintenance,
     deleteMaintenance,
-} from "../controllers/maintenance.controller";
+} from "../../controllers/rent/maintenance.controller";
 
 const router = Router();
-
-// All routes require employee auth
-router.use(authenticate);
 
 // Read
 router.get("/", getMaintenanceRequests);

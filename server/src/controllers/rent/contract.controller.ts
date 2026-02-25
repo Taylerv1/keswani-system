@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
-import prisma from "../config/prisma";
+import prisma from "../../config/prisma";
 import {
     createContractSchema,
     updateContractSchema,
     contractQuerySchema,
-} from "../validators/contract.validator";
-import { AuthenticatedRequest, ApiResponse } from "../types";
+} from "../../validators/rent/contract.validator";
+import { AuthenticatedRequest, ApiResponse } from "../../types";
 
 // Shared include for enriched contract responses
 const contractInclude = {

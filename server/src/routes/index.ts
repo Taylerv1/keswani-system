@@ -1,11 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
-import propertyRoutes from "./property.routes";
-import clientRoutes from "./client.routes";
-import contractRoutes from "./contract.routes";
-import maintenanceRoutes from "./maintenance.routes";
-import paymentRoutes from "./payment.routes";
-import rentRoutes from "./rent.routes";
+import rentRoutes from "./rent";
 
 const router = Router();
 
@@ -17,16 +12,10 @@ router.get("/health", (_req, res) => {
 // Auth routes
 router.use("/auth", authRoutes);
 
-// Resource routes
-router.use("/properties", propertyRoutes);
-router.use("/clients", clientRoutes);
-router.use("/contracts", contractRoutes);
-router.use("/maintenance", maintenanceRoutes);
-router.use("/payments", paymentRoutes);
+// Rent module (all rent resources nested)
 router.use("/rent", rentRoutes);
 
 // Future route modules:
-// router.use("/employees", employeeRoutes);
 // router.use("/electricity", electricityRoutes);
 // router.use("/expenses", expenseRoutes);
 

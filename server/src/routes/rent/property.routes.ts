@@ -6,14 +6,10 @@ import {
     createProperty,
     updateProperty,
     deleteProperty,
-} from "../controllers/property.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireAccess } from "../middlewares/role.middleware";
+} from "../../controllers/rent/property.controller";
+import { requireAccess } from "../../middlewares/role.middleware";
 
 const router = Router();
-
-// All property routes require auth + employee verification
-router.use(authenticate);
 
 // Lookup (before /:id to avoid conflict)
 router.get("/lookup", getPropertiesLookup);

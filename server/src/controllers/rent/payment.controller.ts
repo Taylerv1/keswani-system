@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
-import prisma from "../config/prisma";
+import prisma from "../../config/prisma";
 import {
     createPaymentSchema,
     updatePaymentSchema,
     paymentQuerySchema,
-} from "../validators/payment.validator";
-import { AuthenticatedRequest, ApiResponse } from "../types";
+} from "../../validators/rent/payment.validator";
+import { AuthenticatedRequest, ApiResponse } from "../../types";
 
 // Shared include for enriched payment responses
 const paymentInclude = {
