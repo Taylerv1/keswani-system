@@ -1,119 +1,176 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
+import { LoadingLottie, Modal } from "@/components/ui";
+import { resetPassword } from "@/features/auth/api/auth";
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
   const router = useRouter();
-
-  const [token, setToken] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   useEffect(() => {
-    // Parse access_token from URL fragment (#access_token=...&...)
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash || "";
-      if (hash.startsWith("#")) {
-        const params = new URLSearchParams(hash.substring(1));
-        const a = params.get("access_token");
-        if (a) setToken(a);
-      }
-      // Also check query param fallback
-      const urlParams = new URLSearchParams(window.location.search);
-      const q = urlParams.get("access_token");
-      if (q) setToken(q);
-    }
-  }, []);
+    setMounted(true);
+    // Extract access_token from URL hash (Supabase sends it there)
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const params = new URLSearchParams(hash.substring(1)); // Remove '#'
+    const token = params.get("access_token");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    if (token) {
+      setAccessToken(token);
+      setResetModalOpen(true);
+    } else {
+      // No token found, redirect to login
+      setTimeout(() => router.replace("/login"), 2000);
+    }
+  }, [router]);
 
-    if (!token) {
-      setError(t("resetTokenMissing") || "Reset token missing");
-      return;
-    }
-    if (!password || password.length < 6) {
-      setError(t("passwordTooShort") || "Password must be at least 6 characters");
-      return;
-    }
-    if (password !== confirm) {
-      setError(t("passwordsMustMatch") || "Passwords must match");
+  const handleResetPassword = async () => {
+    setResetError("");
+
+    if (!newPassword || newPassword.length < 6) {
+      setResetError("New password must be at least 6 characters");
       return;
     }
 
-    setLoading(true);
+    if (newPassword !== confirmPassword) {
+      setResetError("Passwords do not match");
+      return;
+    }
+
+    setResetLoading(true);
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ access_token: token, new_password: password }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to reset password");
+      const result = await resetPassword(accessToken, newPassword);
+      if (!result.success) {
+        setResetError(result.error || "Failed to reset password");
         return;
       }
 
-      setSuccess(true);
-      // Optionally redirect to login after a short delay
+      setResetSuccess(true);
+      setNewPassword("");
+      setConfirmPassword("");
       setTimeout(() => {
-        router.push("/login");
-      }, 2500);
+        router.replace("/login");
+      }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reset password");
+      setResetError("An error occurred. Please try again.");
     } finally {
-      setLoading(false);
+      setResetLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow">
-        <h1 className="text-lg font-semibold mb-4">{t("resetPassword") || "Reset password"}</h1>
-
-        {success ? (
-          <div className="space-y-4">
-            <div className="p-3 rounded bg-card-green-light text-card-green">{t("passwordReset") || "Password reset successfully"}</div>
-            <p className="text-sm text-text-secondary">{t("redirectingToLogin") || "Redirecting to login..."}</p>
-            <Link href="/login" className="text-primary underline">{t("goToLogin") || "Go to login"}</Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="text-sm text-red-600">{error}</div>}
-
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">{t("resetToken") || "Reset token"}</label>
-              <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste token" className="w-full h-10 rounded border px-3" />
-            </div>
-
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">{t("newPassword") || "New password"}</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full h-10 rounded border px-3" />
-            </div>
-
-            <div>
-              <label className="block text-sm text-text-secondary mb-1">{t("confirmPassword") || "Confirm password"}</label>
-              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full h-10 rounded border px-3" />
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <button type="submit" disabled={loading} className="flex-1 h-10 rounded bg-gradient-to-r from-primary to-primary-hover text-white">
-                {loading ? <LoadingLottie size={20} /> : t("resetPassword") || "Reset password"}
-              </button>
-              <Link href="/login" className="text-sm text-text-secondary">{t("backToLogin") || "Back to login"}</Link>
-            </div>
-          </form>
-        )}
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingLottie size={64} />
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary-hover/10 flex items-center justify-center p-4">
+      {accessToken ? (
+        <Modal
+          open={resetModalOpen}
+          onClose={() => {
+            setResetModalOpen(false);
+            router.replace("/login");
+          }}
+          title={t("resetPassword")}
+          maxWidth="max-w-sm"
+        >
+          <div className="space-y-4">
+            {resetSuccess && (
+              <div className="rounded-lg border border-card-green/20 bg-card-green-light px-3 py-2 text-sm text-card-green font-medium">
+                {t("passwordReset")} {t("redirectingLogin")}
+              </div>
+            )}
+
+            {resetError && (
+              <div className="rounded-lg border border-card-red/20 bg-card-red-light px-3 py-2 text-sm text-card-red">
+                {resetError}
+              </div>
+            )}
+
+            {!resetSuccess && (
+              <>
+                <p className="text-sm text-text-secondary">
+                  {t("enterNewPassword")}
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    {t("newPassword")}
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={t("newPassword")}
+                    className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    {t("confirmPassword")}
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t("confirmPassword")}
+                    className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetModalOpen(false);
+                      router.replace("/login");
+                    }}
+                    className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={handleResetPassword}
+                    className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {resetLoading ? <LoadingLottie size={24} /> : t("resetPassword")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
+      ) : (
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-text-primary mb-2">
+            {t("invalidResetLink")}
+          </h1>
+          <p className="text-text-secondary mb-6">{t("redirectingLogin")}</p>
+          <button
+            onClick={() => router.replace("/login")}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white font-medium cursor-pointer hover:shadow-lg transition-all"
+          >
+            {t("backToLogin")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
