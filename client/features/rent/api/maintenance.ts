@@ -82,21 +82,21 @@ export async function getMaintenanceRequests(
     if (params?.search) query.set("search", params.search);
     if (params?.status) query.set("status", params.status);
     if (params?.priority) query.set("priority", params.priority);
-    return fetchApi(`/rent/maintenance?${query}`, token);
+    return fetchApi(`/maintenance?${query}`, token);
 }
 
 export async function getMaintenanceById(token: string, id: string): Promise<ApiResponse<MaintenanceRequest>> {
-    return fetchApi(`/rent/maintenance/${id}`, token);
+    return fetchApi(`/maintenance/${id}`, token);
 }
 
 export async function createMaintenance(token: string, data: CreateMaintenanceInput): Promise<ApiResponse<MaintenanceRequest>> {
-    return fetchApi("/rent/maintenance", token, { method: "POST", body: JSON.stringify(data) });
+    return fetchApi("/maintenance", token, { method: "POST", body: JSON.stringify(data) });
 }
 
 export async function updateMaintenance(token: string, id: string, data: UpdateMaintenanceInput): Promise<ApiResponse<MaintenanceRequest>> {
-    return fetchApi(`/rent/maintenance/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
+    return fetchApi(`/maintenance/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
 }
 
 export async function deleteMaintenance(token: string, id: string): Promise<ApiResponse> {
-    return fetchApi(`/rent/maintenance/${id}`, token, { method: "DELETE" });
+    return fetchApi(`/maintenance/${id}`, token, { method: "DELETE" });
 }

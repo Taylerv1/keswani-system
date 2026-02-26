@@ -81,21 +81,21 @@ export async function getContracts(
     if (params?.limit) query.set("limit", String(params.limit));
     if (params?.search) query.set("search", params.search);
     if (params?.status) query.set("status", params.status);
-    return fetchApi(`/rent/contracts?${query}`, token);
+    return fetchApi(`/contracts?${query}`, token);
 }
 
 export async function getContractById(token: string, id: string): Promise<ApiResponse<Contract>> {
-    return fetchApi(`/rent/contracts/${id}`, token);
+    return fetchApi(`/contracts/${id}`, token);
 }
 
 export async function createContract(token: string, data: CreateContractInput): Promise<ApiResponse<Contract>> {
-    return fetchApi("/rent/contracts", token, { method: "POST", body: JSON.stringify(data) });
+    return fetchApi("/contracts", token, { method: "POST", body: JSON.stringify(data) });
 }
 
 export async function updateContract(token: string, id: string, data: UpdateContractInput): Promise<ApiResponse<Contract>> {
-    return fetchApi(`/rent/contracts/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
+    return fetchApi(`/contracts/${id}`, token, { method: "PATCH", body: JSON.stringify(data) });
 }
 
 export async function deleteContract(token: string, id: string): Promise<ApiResponse> {
-    return fetchApi(`/rent/contracts/${id}`, token, { method: "DELETE" });
+    return fetchApi(`/contracts/${id}`, token, { method: "DELETE" });
 }
