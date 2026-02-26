@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Bell,
   CreditCard,
@@ -11,8 +11,13 @@ import {
   Check,
 } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { useRent } from "@/features/rent/context/rent-context";
-import { SearchBar, Pagination } from "@/components/ui";
+import { SearchBar, Pagination, LoadingLottie } from "@/components/ui";
+import {
+  fetchNotifications,
+  markNotificationReadApi,
+  markAllNotificationsReadApi,
+  type NotificationItem,
+} from "@/features/rent/api/notifications";
 
 const PAGE_SIZE = 8;
 
@@ -32,37 +37,55 @@ const typeColors: Record<string, { bg: string; text: string }> = {
 
 export default function NotificationsPage() {
   const { t, locale } = useTranslation();
-  const { data, markNotificationRead, markAllNotificationsRead } = useRent();
+
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterRead, setFilterRead] = useState<string>("all");
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    let items = [...data.notifications].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    if (search) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (n) =>
-          n.title.toLowerCase().includes(q) ||
-          n.titleAr.includes(q) ||
-          n.message.toLowerCase().includes(q) ||
-          n.messageAr.includes(q)
-      );
+  const loadNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchNotifications({
+        section: "rent",
+        type: filterType !== "all" ? filterType : undefined,
+        is_read: filterRead === "unread" ? "false" : filterRead === "read" ? "true" : undefined,
+        search: search || undefined,
+        page,
+        limit: PAGE_SIZE,
+      });
+      if (res.success && res.data) {
+        setItems(res.data.items);
+        setTotal(res.data.pagination.total);
+        setTotalPages(res.data.pagination.total_pages);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
     }
-    if (filterType !== "all") items = items.filter((n) => n.type === filterType);
-    if (filterRead === "unread") items = items.filter((n) => !n.read);
-    if (filterRead === "read") items = items.filter((n) => n.read);
-    return items;
-  }, [data.notifications, search, filterType, filterRead]);
+  }, [filterType, filterRead, search, page]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
-  const unreadCount = data.notifications.filter((n) => !n.read).length;
+  const unreadCount = items.filter((n) => !n.read).length;
+
+  const handleMarkRead = async (id: string) => {
+    await markNotificationReadApi(id);
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllNotificationsReadApi("rent");
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
 
   return (
     <div>
@@ -75,7 +98,7 @@ export default function NotificationsPage() {
         </div>
         {unreadCount > 0 && (
           <button
-            onClick={markAllNotificationsRead}
+            onClick={handleMarkAllRead}
             className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
           >
             <CheckCheck size={16} />
@@ -110,64 +133,73 @@ export default function NotificationsPage() {
         </select>
       </div>
 
-      <div className="space-y-3">
-        {paginated.length === 0 ? (
-          <div className="bg-surface rounded-xl border border-surface-border p-8 text-center text-text-muted">
-            {t("noResults")}
-          </div>
-        ) : (
-          paginated.map((n) => {
-            const colors = typeColors[n.type] ?? typeColors.maintenance;
-            return (
-              <div
-                key={n.id}
-                className={`bg-surface rounded-xl border p-4 flex items-start gap-4 transition-all ${
-                  n.read
-                    ? "border-surface-border"
-                    : "border-primary/30 shadow-sm"
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}
-                >
-                  {typeIcons[n.type] ?? <Bell size={16} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-sm font-semibold text-text-primary">
-                      {locale === "ar" ? n.titleAr : n.title}
-                    </h3>
+      {loading ? (
+        <div className="min-h-[30vh] flex items-center justify-center">
+          <LoadingLottie size={80} className="p-4" />
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {items.length === 0 ? (
+              <div className="bg-surface rounded-xl border border-surface-border p-8 text-center text-text-muted">
+                {t("noResults")}
+              </div>
+            ) : (
+              items.map((n) => {
+                const colors = typeColors[n.type] ?? typeColors.maintenance;
+                return (
+                  <div
+                    key={n.id}
+                    className={`bg-surface rounded-xl border p-4 flex items-start gap-4 transition-all ${n.read
+                        ? "border-surface-border"
+                        : "border-primary/30 shadow-sm"
+                      }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}
+                    >
+                      {typeIcons[n.type] ?? <Bell size={16} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="text-sm font-semibold text-text-primary">
+                          {locale === "ar" ? n.titleAr : n.title}
+                        </h3>
+                        {!n.read && (
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary">
+                        {locale === "ar" ? n.messageAr : n.message}
+                      </p>
+                      <p className="text-xs text-text-muted mt-1">
+                        {new Date(n.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
                     {!n.read && (
-                      <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                      <button
+                        onClick={() => handleMarkRead(n.id)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0 shrink-0"
+                        title={t("markAsRead")}
+                      >
+                        <Check size={16} />
+                      </button>
                     )}
                   </div>
-                  <p className="text-sm text-text-secondary">
-                    {locale === "ar" ? n.messageAr : n.message}
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">{n.createdAt}</p>
-                </div>
-                {!n.read && (
-                  <button
-                    onClick={() => markNotificationRead(n.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0 shrink-0"
-                    title={t("markAsRead")}
-                  >
-                    <Check size={16} />
-                  </button>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+                );
+              })
+            )}
+          </div>
 
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        totalItems={filtered.length}
-        pageSize={PAGE_SIZE}
-        onPageChange={setPage}
-      />
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={total}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </div>
   );
 }
