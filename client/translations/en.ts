@@ -491,6 +491,7 @@ const en = {
   themePreview: "Theme",
   themePreviewDesc: "Theme customization coming soon",
   notifications: "Notifications",
+  seeMore: "See more",
   emailNotifications: "Email Notifications",
   smsNotifications: "SMS Notifications",
   pushNotifications: "Push Notifications",

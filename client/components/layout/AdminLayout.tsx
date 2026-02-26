@@ -325,7 +325,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     onClick={handleSeeMoreNotifications}
                     className="w-full border-0 border-t border-surface-border bg-surface hover:bg-background text-primary text-xs font-semibold px-4 py-3 cursor-pointer"
                   >
-                    See more
+                    {t("seeMore")}
                   </button>
                 </div>
               )}

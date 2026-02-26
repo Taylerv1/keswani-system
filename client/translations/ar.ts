@@ -491,6 +491,7 @@ const ar: Record<string, string> = {
   themePreview: "المظهر",
   themePreviewDesc: "تخصيص المظهر قريباً",
   notifications: "الإشعارات",
+  seeMore: "عرض المزيد",
   emailNotifications: "إشعارات البريد الإلكتروني",
   smsNotifications: "إشعارات الرسائل القصيرة",
   pushNotifications: "إشعارات الدفع",
