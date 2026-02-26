@@ -19,27 +19,29 @@ interface SearchableOption {
   label: string;
 }
 
-interface SearchableSelectProps {
+interface SelectMenuProps {
   value: string;
   options: SearchableOption[];
   onChange: (value: string) => void;
   placeholder?: string;
-  searchPlaceholder: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
   noResultsLabel: string;
   addActionLabel?: string;
   onAddAction?: () => void;
 }
 
-function SearchableSelect({
+function SelectMenu({
   value,
   options,
   onChange,
   placeholder = "--",
+  searchable = false,
   searchPlaceholder,
   noResultsLabel,
   addActionLabel,
   onAddAction,
-}: SearchableSelectProps) {
+}: SelectMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -49,17 +51,18 @@ function SearchableSelect({
     options.find((option) => option.value === value)?.label ?? placeholder;
 
   const filteredOptions = useMemo(() => {
+    if (!searchable) return options;
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
     return options.filter((option) =>
       option.label.toLowerCase().includes(normalized)
     );
-  }, [options, query]);
+  }, [options, query, searchable]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !searchable) return;
     searchInputRef.current?.focus();
-  }, [open]);
+  }, [open, searchable]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -87,29 +90,31 @@ function SearchableSelect({
 
       {open && (
         <div className="absolute z-50 mt-1 w-full rounded-lg border border-surface-border bg-surface shadow-lg">
-          <div className="p-2 border-b border-surface-border">
-            <input
-              ref={searchInputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full h-9 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            {onAddAction && addActionLabel && (
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setQuery("");
-                  onAddAction();
-                }}
-                className="mt-2 w-full h-8 rounded-md border border-surface-border bg-surface text-text-secondary hover:bg-background transition-colors text-sm cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Plus size={14} />
-                {addActionLabel}
-              </button>
-            )}
-          </div>
+          {searchable && (
+            <div className="p-2 border-b border-surface-border">
+              <input
+                ref={searchInputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={searchPlaceholder}
+                className="w-full h-9 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              {onAddAction && addActionLabel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setQuery("");
+                    onAddAction();
+                  }}
+                  className="mt-2 w-full h-8 rounded-md border border-surface-border bg-surface text-text-secondary hover:bg-background transition-colors text-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Plus size={14} />
+                  {addActionLabel}
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="max-h-56 overflow-y-auto py-1">
             <button
@@ -119,7 +124,9 @@ function SearchableSelect({
                 setOpen(false);
                 setQuery("");
               }}
-              className="w-full text-start px-3 py-2 text-sm hover:bg-background text-text-secondary cursor-pointer"
+              className={`w-full text-start px-3 py-2 text-sm hover:bg-background cursor-pointer ${
+                value === "" ? "bg-primary/10 text-primary font-medium" : "text-text-secondary"
+              }`}
             >
               {placeholder}
             </button>
@@ -217,12 +224,22 @@ export default function ContractsPage() {
         <div className="flex-1">
           <SearchBar value={state.search} onChange={(v) => { state.setSearch(v); state.setPage(1); }} />
         </div>
-        <select value={state.statusFilter} onChange={(e) => { state.setStatusFilter(e.target.value as "all" | "active" | "expired" | "terminated"); state.setPage(1); }} className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="all">{t("all")} - {t("status")}</option>
-          <option value="active">{t("active")}</option>
-          <option value="expired">{t("expired")}</option>
-          <option value="terminated">{t("terminated")}</option>
-        </select>
+        <div className="sm:w-52">
+          <SelectMenu
+            value={state.statusFilter}
+            onChange={(value) => {
+              state.setStatusFilter(value as "all" | "active" | "expired" | "terminated");
+              state.setPage(1);
+            }}
+            options={[
+              { value: "active", label: t("active") },
+              { value: "expired", label: t("expired") },
+              { value: "terminated", label: t("terminated") },
+            ]}
+            placeholder={`${t("all")} - ${t("status")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
       </div>
 
       {state.loading || state.lookupLoading ? (
@@ -352,11 +369,12 @@ export default function ContractsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("tenant")}</label>
-              <SearchableSelect
+              <SelectMenu
                 value={form.form.client_id}
                 options={tenantOptions}
                 onChange={(value) => form.setForm({ ...form.form, client_id: value })}
                 placeholder="--"
+                searchable
                 searchPlaceholder={`${t("search")}...`}
                 noResultsLabel={t("noResults")}
                 addActionLabel={t("addTenant")}
@@ -365,11 +383,12 @@ export default function ContractsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("property")}</label>
-              <SearchableSelect
+              <SelectMenu
                 value={form.form.property_id}
                 options={propertyOptions}
                 onChange={(value) => form.onPropertyChange(value)}
                 placeholder="--"
+                searchable
                 searchPlaceholder={`${t("search")}...`}
                 noResultsLabel={t("noResults")}
               />
@@ -378,12 +397,16 @@ export default function ContractsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
-              <select value={form.form.unit_id} onChange={(e) => form.setForm({ ...form.form, unit_id: e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="">--</option>
-                {selectedPropertyUnits.map((unit) => (
-                  <option key={unit.id} value={unit.id}>{unit.unit_number}</option>
-                ))}
-              </select>
+              <SelectMenu
+                value={form.form.unit_id}
+                onChange={(value) => form.setForm({ ...form.form, unit_id: value })}
+                options={selectedPropertyUnits.map((unit) => ({
+                  value: unit.id,
+                  label: unit.unit_number,
+                }))}
+                placeholder="--"
+                noResultsLabel={t("noResults")}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("startDate")}</label>
@@ -405,12 +428,23 @@ export default function ContractsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("status")}</label>
-              <select value={form.form.status} onChange={(e) => form.setForm({ ...form.form, status: e.target.value as "pending" | "active" | "expired" | "terminated" })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="pending">{t("pending")}</option>
-                <option value="active">{t("active")}</option>
-                <option value="expired">{t("expired")}</option>
-                <option value="terminated">{t("terminated")}</option>
-              </select>
+              <SelectMenu
+                value={form.form.status}
+                onChange={(value) =>
+                  form.setForm({
+                    ...form.form,
+                    status: value as "pending" | "active" | "expired" | "terminated",
+                  })
+                }
+                options={[
+                  { value: "pending", label: t("pending") },
+                  { value: "active", label: t("active") },
+                  { value: "expired", label: t("expired") },
+                  { value: "terminated", label: t("terminated") },
+                ]}
+                placeholder="--"
+                noResultsLabel={t("noResults")}
+              />
             </div>
           </div>
           <div>
