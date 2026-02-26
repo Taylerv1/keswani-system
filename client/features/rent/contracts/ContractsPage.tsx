@@ -117,20 +117,6 @@ function SelectMenu({
           )}
 
           <div className="max-h-56 overflow-y-auto py-1">
-            <button
-              type="button"
-              onClick={() => {
-                onChange("");
-                setOpen(false);
-                setQuery("");
-              }}
-              className={`w-full text-start px-3 py-2 text-sm hover:bg-background cursor-pointer ${
-                value === "" ? "bg-primary/10 text-primary font-medium" : "text-text-secondary"
-              }`}
-            >
-              {placeholder}
-            </button>
-
             {filteredOptions.length === 0 ? (
               <p className="px-3 py-2 text-sm text-text-muted">{noResultsLabel}</p>
             ) : (
@@ -232,6 +218,7 @@ export default function ContractsPage() {
               state.setPage(1);
             }}
             options={[
+              { value: "all", label: `${t("all")} - ${t("status")}` },
               { value: "active", label: t("active") },
               { value: "expired", label: t("expired") },
               { value: "terminated", label: t("terminated") },
