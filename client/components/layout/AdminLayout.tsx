@@ -8,9 +8,22 @@ import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTranslation } from "@/lib/translation";
 import { getUserData } from "@/lib/helpers/auth-client";
+import { getNotifications, type NotificationDto } from "@/features/shared/notifications/api";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+}
+
+// Helper function to format time ago
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -20,32 +33,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [displayName, setDisplayName] = useState("");
   const [userEmail, setUserEmail] = useState("No email available");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: "notif-1",
-      title: "Rent payment reminder: due in 2 days.",
-      timestamp: "5 min ago",
-      unread: true,
-    },
-    {
-      id: "notif-2",
-      title: "New electricity bill is available.",
-      timestamp: "1 hour ago",
-      unread: true,
-    },
-    {
-      id: "notif-3",
-      title: "Maintenance report status was updated.",
-      timestamp: "Yesterday",
-      unread: false,
-    },
-    {
-      id: "notif-4",
-      title: "Welcome to your admin dashboard.",
-      timestamp: "2 days ago",
-      unread: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notificationRootRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { t, dir, locale, toggleLocale } = useTranslation();
@@ -62,6 +52,28 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     if (isMounted && initialUser?.email) {
       setUserEmail(initialUser.email);
     }
+
+    // Fetch notifications from unified API
+    const fetchNotifications = async () => {
+      try {
+        setNotificationsLoading(true);
+        const res = await getNotifications({ page: 1, limit: 5 });
+        if (res.success && res.data) {
+          if (isMounted) {
+            setNotifications(res.data.items);
+            setUnreadCount(res.data.unread_count);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      } finally {
+        if (isMounted) {
+          setNotificationsLoading(false);
+        }
+      }
+    };
+
+    fetchNotifications();
 
     const loadMe = async () => {
       try {
@@ -153,19 +165,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     () => notifications.slice(0, 3),
     [notifications],
   );
-  const unreadCount = useMemo(
-    () => notifications.filter((notification) => notification.unread).length,
-    [notifications],
-  );
 
   const handleNotificationClick = (id: string) => {
     setNotifications((current) =>
       current.map((notification) =>
         notification.id === id
-          ? { ...notification, unread: false }
+          ? { ...notification, read: true }
           : notification,
       ),
     );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   const handleSeeMoreNotifications = () => {
@@ -304,14 +313,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         >
                           <div className="flex items-center gap-2">
                             <p className="m-0 text-[13px] font-semibold text-text-primary flex-1 leading-5">
-                              {notification.title}
+                              {locale === "ar" ? notification.subjectAr : notification.subject}
                             </p>
-                            {notification.unread && (
+                            {!notification.read && (
                               <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
                             )}
                           </div>
                           <p className="m-0 mt-1 text-[11px] text-text-secondary">
-                            {notification.timestamp}
+                            {timeAgo(notification.created_at)}
                           </p>
                         </button>
                       ))}

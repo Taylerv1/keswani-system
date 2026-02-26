@@ -1,1 +1,1 @@
-export { default } from '@/features/rent/notifications/NotificationsPage';
+export { default } from '@/features/shared/notifications/UnifiedNotificationsPage';

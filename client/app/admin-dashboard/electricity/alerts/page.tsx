@@ -1,1 +1,1 @@
-export { default } from '@/features/electricity/alerts/AlertsPage';
+export { default } from '@/features/shared/notifications/UnifiedNotificationsPage';
