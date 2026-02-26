@@ -8,6 +8,15 @@ import {
 } from "../validators/client.validator";
 import { AuthenticatedRequest, ApiResponse } from "../types";
 
+const normalizeOptionalString = (
+    value: string | null | undefined
+): string | null | undefined => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+};
+
 /**
  * GET /api/clients
  * List clients with search + pagination.
@@ -25,7 +34,7 @@ export const getClients = async (
             return;
         }
 
-        const { page, limit, search } = parsed.data;
+        const { page, limit, search, contract_presence } = parsed.data;
         const skip = (page - 1) * limit;
 
         const where: Prisma.clientsWhereInput = { deleted_at: null };
@@ -35,6 +44,22 @@ export const getClients = async (
                 { email: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
                 { phone: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
             ];
+        }
+
+        if (contract_presence === "with_contract") {
+            where.contracts = {
+                some: {
+                    status: "active",
+                    deleted_at: null,
+                },
+            };
+        } else if (contract_presence === "without_contract") {
+            where.contracts = {
+                none: {
+                    status: "active",
+                    deleted_at: null,
+                },
+            };
         }
 
         const [clients, total] = await Promise.all([
@@ -73,7 +98,6 @@ export const getClients = async (
                 full_name: cli.full_name,
                 email: cli.email,
                 phone: cli.phone,
-                address: cli.address,
                 notes: cli.notes,
                 active_contract: ac
                     ? {
@@ -168,7 +192,9 @@ export const getClientById = async (
             return;
         }
 
-        res.json({ success: true, data: client } as ApiResponse);
+        const { address: _address, ...clientWithoutAddress } = client;
+
+        res.json({ success: true, data: clientWithoutAddress } as ApiResponse);
     } catch (err) {
         next(err);
     }
@@ -190,9 +216,17 @@ export const createClient = async (
             return;
         }
 
-        if (parsed.data.email) {
+        const fullName = parsed.data.full_name.trim();
+        const email = normalizeOptionalString(parsed.data.email)?.toLowerCase() ?? null;
+        const phone = normalizeOptionalString(parsed.data.phone) ?? null;
+        const notes = normalizeOptionalString(parsed.data.notes) ?? null;
+
+        if (email) {
             const emailExists = await prisma.clients.findFirst({
-                where: { email: parsed.data.email, deleted_at: null },
+                where: {
+                    email: { equals: email, mode: "insensitive" as Prisma.QueryMode },
+                    deleted_at: null,
+                },
             });
             if (emailExists) {
                 res.status(409).json({ success: false, error: "A client with this email already exists" });
@@ -202,11 +236,10 @@ export const createClient = async (
 
         const client = await prisma.clients.create({
             data: {
-                full_name: parsed.data.full_name,
-                email: parsed.data.email || null,
-                phone: parsed.data.phone || null,
-                // address: parsed.data.address || null,
-                notes: parsed.data.notes || null,
+                full_name: fullName,
+                email,
+                phone,
+                notes,
             },
         });
 
@@ -246,9 +279,15 @@ export const updateClient = async (
             return;
         }
 
-        if (parsed.data.email && parsed.data.email !== existing.email) {
+        const normalizedEmail = normalizeOptionalString(parsed.data.email)?.toLowerCase();
+
+        if (parsed.data.email !== undefined && normalizedEmail && normalizedEmail !== existing.email) {
             const emailExists = await prisma.clients.findFirst({
-                where: { email: parsed.data.email, deleted_at: null, id: { not: id } },
+                where: {
+                    email: { equals: normalizedEmail, mode: "insensitive" as Prisma.QueryMode },
+                    deleted_at: null,
+                    id: { not: id },
+                },
             });
             if (emailExists) {
                 res.status(409).json({ success: false, error: "A client with this email already exists" });
@@ -256,9 +295,27 @@ export const updateClient = async (
             }
         }
 
+        const normalizedData: Prisma.clientsUpdateInput = {};
+
+        if (parsed.data.full_name !== undefined) {
+            normalizedData.full_name = parsed.data.full_name.trim();
+        }
+
+        if (parsed.data.email !== undefined) {
+            normalizedData.email = normalizedEmail ?? null;
+        }
+
+        if (parsed.data.phone !== undefined) {
+            normalizedData.phone = normalizeOptionalString(parsed.data.phone) ?? null;
+        }
+
+        if (parsed.data.notes !== undefined) {
+            normalizedData.notes = normalizeOptionalString(parsed.data.notes) ?? null;
+        }
+
         const client = await prisma.clients.update({
             where: { id },
-            data: parsed.data,
+            data: normalizedData,
         });
 
         res.json({

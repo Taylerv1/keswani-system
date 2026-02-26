@@ -12,6 +12,7 @@ import {
   Pagination,
   Modal,
   LoadingLottie,
+  SelectMenu,
 } from "@/components/ui";
 import { usePropertyState } from "./hooks";
 import { usePropertyForm } from "./hooks";
@@ -94,36 +95,38 @@ export function PropertyPage() {
             }}
           />
         </div>
-        <select
-          value={state.filterType}
-          onChange={(e) => {
-            state.setFilterType(e.target.value);
-            state.setPage(1);
-          }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="all">
-            {t("all")} - {t("propertyType")}
-          </option>
-          <option value="building">{t("building")}</option>
-          <option value="house">{t("house")}</option>
-          {/* <option value="land">{t("land")}</option> */}
-          {/* <option value="commercial">{t("commercial")}</option> */}
-        </select>
-        <select
-          value={state.filterStatus}
-          onChange={(e) => {
-            state.setFilterStatus(e.target.value);
-            state.setPage(1);
-          }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="all">
-            {t("all")} - {t("status")}
-          </option>
-          <option value="full">{t("full")}</option>
-          <option value="vacant">{t("vacant")}</option>
-        </select>
+        <div className="sm:w-52">
+          <SelectMenu
+            value={state.filterType}
+            onChange={(value) => {
+              state.setFilterType(value);
+              state.setPage(1);
+            }}
+            options={[
+              { value: "all", label: `${t("all")} - ${t("propertyType")}` },
+              { value: "building", label: t("building") },
+              { value: "house", label: t("house") },
+            ]}
+            placeholder={`${t("all")} - ${t("propertyType")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
+        <div className="sm:w-52">
+          <SelectMenu
+            value={state.filterStatus}
+            onChange={(value) => {
+              state.setFilterStatus(value);
+              state.setPage(1);
+            }}
+            options={[
+              { value: "all", label: `${t("all")} - ${t("status")}` },
+              { value: "full", label: t("full") },
+              { value: "vacant", label: t("vacant") },
+            ]}
+            placeholder={`${t("all")} - ${t("status")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
       </div>
 
       {/* Table container */}

@@ -1,1 +1,1 @@
-export { default } from '@/features/rent/tenants/TenantsPage';
+export { TenantsPage as default } from "@/features/rent/tenants";

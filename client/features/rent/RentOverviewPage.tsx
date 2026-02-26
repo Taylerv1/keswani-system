@@ -14,19 +14,7 @@ import {
 import { KpiCard, LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
 import { useRent } from "@/features/rent/context/rent-context";
-
-type RentOverview = {
-  total_properties: number;
-  total_units: number;
-  rented_units: number;
-  vacant_units: number;
-  total_tenants: number;
-  monthly_income: number;
-  late_payments: number;
-  contracts_ending_soon: number;
-  maintenance_notifications: number;
-  occupancy_rate: number;
-};
+import { rentStore, type RentOverview } from "./store";
 
 export default function RentOverviewPage() {
   const { t, locale } = useTranslation();
@@ -40,27 +28,27 @@ export default function RentOverviewPage() {
     let mounted = true;
 
     const loadOverview = async () => {
+      const cached = rentStore.getOverviewSnapshot();
+      if (cached) {
+        setOverview(cached);
+        setLoadingOverview(false);
+        setOverviewError(null);
+        return;
+      }
+
       setLoadingOverview(true);
       setOverviewError(null);
       try {
-        const res = await fetch("/api/rent/overview", {
-          method: "GET",
-          cache: "no-store",
-        });
-        const payload = await res.json();
+        const { data } = await rentStore.loadOverview();
         if (!mounted) return;
 
-        if (!res.ok || !payload?.success || !payload?.data) {
-          setOverview(null);
-          setOverviewError(payload?.error || "Failed to load rent overview.");
-          return;
-        }
-
-        setOverview(payload.data as RentOverview);
-      } catch {
+        setOverview(data as RentOverview);
+      } catch (error) {
         if (!mounted) return;
         setOverview(null);
-        setOverviewError("Failed to load rent overview.");
+        setOverviewError(
+          error instanceof Error ? error.message : "Failed to load rent overview."
+        );
       } finally {
         if (mounted) setLoadingOverview(false);
       }
