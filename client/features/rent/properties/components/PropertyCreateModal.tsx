@@ -2,7 +2,7 @@
 // Property Module — Create Modal (includes unit sub-modal)
 // ============================================================
 
-import { Modal, LoadingLottie } from "@/components/ui";
+import { Modal, LoadingLottie, SelectMenu } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
 import { EMPTY_UNIT, parseOptionalInt, parseOptionalNumber } from "../utils";
@@ -86,16 +86,15 @@ export function PropertyCreateModal({
               <label className="block text-sm font-medium text-text-secondary mb-1">
                 {t("propertyType")}
               </label>
-              <select
+              <SelectMenu
                 value={form.type}
-                onChange={(e) =>
-                  handleUnitTypeChange(e.target.value as PropertyType)
-                }
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                <option value="building">{t("building")}</option>
-                <option value="house">{t("house")}</option>
-              </select>
+                onChange={(value) => handleUnitTypeChange(value as PropertyType)}
+                options={[
+                  { value: "building", label: t("building") },
+                  { value: "house", label: t("house") },
+                ]}
+                noResultsLabel={t("noResults")}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">

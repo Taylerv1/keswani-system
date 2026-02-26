@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Trash2, FileDown, FileText, Download, Eye, ChevronDown } from "lucide-react";
+import { useMemo } from "react";
+import { Plus, Trash2, FileDown, FileText, Download, Eye } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import {
   SearchBar,
@@ -10,139 +10,11 @@ import {
   Modal,
   ConfirmDialog,
   LoadingLottie,
+  SelectMenu,
+  type SelectOption,
 } from "@/components/ui";
 import { useContractForm, useContractState } from "./hooks";
 import { formatDateOnly, getDaysRemaining, toNumber } from "./utils";
-
-interface SearchableOption {
-  value: string;
-  label: string;
-}
-
-interface SelectMenuProps {
-  value: string;
-  options: SearchableOption[];
-  onChange: (value: string) => void;
-  placeholder?: string;
-  searchable?: boolean;
-  searchPlaceholder?: string;
-  noResultsLabel: string;
-  addActionLabel?: string;
-  onAddAction?: () => void;
-}
-
-function SelectMenu({
-  value,
-  options,
-  onChange,
-  placeholder = "--",
-  searchable = false,
-  searchPlaceholder,
-  noResultsLabel,
-  addActionLabel,
-  onAddAction,
-}: SelectMenuProps) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const rootRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const selectedLabel =
-    options.find((option) => option.value === value)?.label ?? placeholder;
-
-  const filteredOptions = useMemo(() => {
-    if (!searchable) return options;
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return options;
-    return options.filter((option) =>
-      option.label.toLowerCase().includes(normalized)
-    );
-  }, [options, query, searchable]);
-
-  useEffect(() => {
-    if (!open || !searchable) return;
-    searchInputRef.current?.focus();
-  }, [open, searchable]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 flex items-center justify-between"
-      >
-        <span className="truncate text-start">{selectedLabel}</span>
-        <ChevronDown size={16} className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-surface-border bg-surface shadow-lg">
-          {searchable && (
-            <div className="p-2 border-b border-surface-border">
-              <input
-                ref={searchInputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={searchPlaceholder}
-                className="w-full h-9 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              {onAddAction && addActionLabel && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    setQuery("");
-                    onAddAction();
-                  }}
-                  className="mt-2 w-full h-8 rounded-md border border-surface-border bg-surface text-text-secondary hover:bg-background transition-colors text-sm cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Plus size={14} />
-                  {addActionLabel}
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="max-h-56 overflow-y-auto py-1">
-            {filteredOptions.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-text-muted">{noResultsLabel}</p>
-            ) : (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                  className={`w-full text-start px-3 py-2 text-sm cursor-pointer hover:bg-background ${
-                    value === option.value ? "bg-primary/10 text-primary font-medium" : "text-text-primary"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function ContractsPage() {
   const { t } = useTranslation();
@@ -181,6 +53,26 @@ export default function ContractsPage() {
     [state.properties]
   );
 
+  const statusFilterOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "all", label: `${t("all")} - ${t("status")}` },
+      { value: "active", label: t("active") },
+      { value: "expired", label: t("expired") },
+      { value: "terminated", label: t("terminated") },
+    ],
+    [t]
+  );
+
+  const contractStatusOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "pending", label: t("pending") },
+      { value: "active", label: t("active") },
+      { value: "expired", label: t("expired") },
+      { value: "terminated", label: t("terminated") },
+    ],
+    [t]
+  );
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -217,12 +109,7 @@ export default function ContractsPage() {
               state.setStatusFilter(value as "all" | "active" | "expired" | "terminated");
               state.setPage(1);
             }}
-            options={[
-              { value: "all", label: `${t("all")} - ${t("status")}` },
-              { value: "active", label: t("active") },
-              { value: "expired", label: t("expired") },
-              { value: "terminated", label: t("terminated") },
-            ]}
+            options={statusFilterOptions}
             placeholder={`${t("all")} - ${t("status")}`}
             noResultsLabel={t("noResults")}
           />
@@ -423,12 +310,7 @@ export default function ContractsPage() {
                     status: value as "pending" | "active" | "expired" | "terminated",
                   })
                 }
-                options={[
-                  { value: "pending", label: t("pending") },
-                  { value: "active", label: t("active") },
-                  { value: "expired", label: t("expired") },
-                  { value: "terminated", label: t("terminated") },
-                ]}
+                options={contractStatusOptions}
                 placeholder="--"
                 noResultsLabel={t("noResults")}
               />

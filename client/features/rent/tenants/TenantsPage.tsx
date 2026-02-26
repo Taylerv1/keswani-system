@@ -7,6 +7,7 @@ import {
   LoadingLottie,
   Pagination,
   SearchBar,
+  SelectMenu,
 } from "@/components/ui";
 import { useTenantForm, useTenantState } from "./hooks";
 import { TenantFormModal } from "./components/TenantFormModal";
@@ -70,18 +71,22 @@ export function TenantsPage() {
             }}
           />
         </div>
-        <select
-          value={state.contractFilter}
-          onChange={(e) => {
-            state.setContractFilter(e.target.value as "all" | "with_contract" | "without_contract");
-            state.setPage(1);
-          }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="all">{t("all")} - {t("contractStatus")}</option>
-          <option value="with_contract">{t("withContract")}</option>
-          <option value="without_contract">{t("withoutContract")}</option>
-        </select>
+        <div className="sm:w-56">
+          <SelectMenu
+            value={state.contractFilter}
+            onChange={(value) => {
+              state.setContractFilter(value as "all" | "with_contract" | "without_contract");
+              state.setPage(1);
+            }}
+            options={[
+              { value: "all", label: `${t("all")} - ${t("contractStatus")}` },
+              { value: "with_contract", label: t("withContract") },
+              { value: "without_contract", label: t("withoutContract") },
+            ]}
+            placeholder={`${t("all")} - ${t("contractStatus")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
       </div>
 
       {state.loading ? (
