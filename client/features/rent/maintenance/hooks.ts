@@ -47,16 +47,21 @@ export function useMaintenanceState({
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState("");
 
   const fetchLookupOptions = useCallback(async () => {
     try {
+      setLookupLoading(true);
       const response = await getMaintenanceLookups();
       setPropertyOptions(response.data?.properties ?? []);
       setTenantOptions(response.data?.tenants ?? []);
     } catch {
       setPropertyOptions([]);
       setTenantOptions(tenants);
+    } finally {
+      setLookupLoading(false);
     }
   }, [tenants]);
 
@@ -92,6 +97,7 @@ export function useMaintenanceState({
       setTotalPages(1);
     } finally {
       setLoading(false);
+      setHasLoadedOnce(true);
     }
   }, [filterPriority, filterStatus, page, search]);
 
@@ -258,6 +264,8 @@ export function useMaintenanceState({
     PAGE_SIZE,
     loading,
     actionLoading,
+    lookupLoading,
+    hasLoadedOnce,
     error,
     setError,
     search,

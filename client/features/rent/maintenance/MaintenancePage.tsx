@@ -10,6 +10,7 @@ import { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
 import { MaintenanceCreateModal } from "./components/MaintenanceCreateModal";
 import { MaintenanceFormModal } from "./components/MaintenanceFormModal";
 import { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";
+import { LoadingLottie } from "@/components/ui";
 
 export default function MaintenancePage() {
   const { t, locale } = useTranslation();
@@ -71,33 +72,39 @@ export default function MaintenancePage() {
         </select>
       </div>
 
-      <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <MaintenanceTable
-          requests={state.paginated}
-          resolvePropertyName={state.resolvePropertyName}
-          resolveTenantName={state.resolveTenantName}
-          onEdit={form.openEdit}
-          onDelete={form.setDeleteId}
-          t={t}
-        />
-
-        <div className="md:hidden space-y-3 p-3">
-          {state.paginated.length === 0 ? (
-            <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
-          ) : (
-            state.paginated.map((request) => (
-              <MaintenanceMobileCard
-                key={request.id}
-                request={request}
-                propertyName={state.resolvePropertyName(request.propertyId)}
-                onEdit={form.openEdit}
-                onDelete={form.setDeleteId}
-                t={t}
-              />
-            ))
-          )}
+      {!state.hasLoadedOnce || state.loading || state.lookupLoading ? (
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center">
+          <LoadingLottie size={150} className="p-6" />
         </div>
-      </div>
+      ) : (
+        <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
+          <MaintenanceTable
+            requests={state.paginated}
+            resolvePropertyName={state.resolvePropertyName}
+            resolveTenantName={state.resolveTenantName}
+            onEdit={form.openEdit}
+            onDelete={form.setDeleteId}
+            t={t}
+          />
+
+          <div className="md:hidden space-y-3 p-3">
+            {state.paginated.length === 0 ? (
+              <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
+            ) : (
+              state.paginated.map((request) => (
+                <MaintenanceMobileCard
+                  key={request.id}
+                  request={request}
+                  propertyName={state.resolvePropertyName(request.propertyId)}
+                  onEdit={form.openEdit}
+                  onDelete={form.setDeleteId}
+                  t={t}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {state.error && (
         <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">

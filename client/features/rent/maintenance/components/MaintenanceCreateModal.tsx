@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { Modal } from "@/components/ui";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant, TranslateFn } from "../types";
+import { useState } from "react";
 
 interface MaintenanceCreateModalProps {
   open: boolean;
@@ -28,6 +29,17 @@ export function MaintenanceCreateModal({
   t,
 }: MaintenanceCreateModalProps) {
   const selectedProperty = properties.find((property) => property.id === form.propertyId);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveClick = async () => {
+    if (isSaving) return;
+    try {
+      setIsSaving(true);
+      await Promise.resolve(onSave());
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <Modal
@@ -164,15 +176,21 @@ export function MaintenanceCreateModal({
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+            disabled={isSaving}
+            className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {t("cancel")}
           </button>
+
           <button
-            onClick={onSave}
-            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
+            onClick={handleSaveClick}
+            disabled={isSaving}
+            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
-            {t("save")}
+            {isSaving && (
+              <span className="inline-block h-4 w-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
+            )}
+            {isSaving ? t("loading") : t("save")}
           </button>
         </div>
       </div>
