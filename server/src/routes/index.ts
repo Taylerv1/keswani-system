@@ -7,6 +7,7 @@ import maintenanceRoutes from "./maintenance.routes";
 import paymentRoutes from "./payment.routes";
 import rentRoutes from "./rent.routes";
 import electricityRoutes from "./electricity.routes";
+import lookupRoutes from "./lookup.routes";
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.use("/maintenance", maintenanceRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/rent", rentRoutes);
 router.use("/electricity", electricityRoutes);
+router.use("/lookups", lookupRoutes);
 
 // Future route modules:
 // router.use("/employees", employeeRoutes);
