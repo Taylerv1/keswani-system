@@ -11,12 +11,12 @@ import {
 
 const router = Router();
 
-// Bulk action (MUST be before /:id to avoid conflict)
-router.patch("/mark-all-read", markAllRead);
-
 // Read
 router.get("/", getNotifications);
 router.get("/:id", getNotificationById);
+
+// Bulk action (before /:id to avoid conflict)
+router.patch("/mark-all-read", markAllRead);
 
 // Write — require 'rent' access
 router.post("/", requireAccess("rent"), createNotification);
