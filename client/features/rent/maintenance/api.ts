@@ -59,7 +59,7 @@ export async function getMaintenanceRequests(params?: {
   const queryString = query.toString();
 
   const response = await fetchApi<PaginatedResponse<BackendMaintenanceItem>>(
-    `/api/rent/maintenance${queryString ? `?${queryString}` : ""}`,
+    `/api/maintenance${queryString ? `?${queryString}` : ""}`,
     { method: "GET" }
   );
 
@@ -67,9 +67,9 @@ export async function getMaintenanceRequests(params?: {
     ...response,
     data: response.data
       ? {
-        ...response.data,
-        items: response.data.items.map(mapBackendMaintenance),
-      }
+          ...response.data,
+          items: response.data.items.map(mapBackendMaintenance),
+        }
       : undefined,
   };
 }
@@ -82,7 +82,7 @@ export async function createMaintenanceRequest(payload: {
   priority: BackendMaintenancePriority;
   estimated_cost?: number;
 }): Promise<ApiResponse> {
-  return fetchApi("/api/rent/maintenance", {
+  return fetchApi("/api/maintenance", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -101,14 +101,14 @@ export async function updateMaintenanceRequest(
     actual_cost?: number;
   }
 ): Promise<ApiResponse> {
-  return fetchApi(`/api/rent/maintenance/${id}`, {
+  return fetchApi(`/api/maintenance/${id}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
 
 export async function deleteMaintenanceRequest(id: string): Promise<ApiResponse> {
-  return fetchApi(`/api/rent/maintenance/${id}`, {
+  return fetchApi(`/api/maintenance/${id}`, {
     method: "DELETE",
   });
 }

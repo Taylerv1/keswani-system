@@ -78,25 +78,25 @@ export async function getProperties(
   if (params?.type) query.set("type", params.type);
   if (params?.status) query.set("status", params.status);
   const queryString = query.toString();
-  return fetchApi(`/api/rent/properties${queryString ? `?${queryString}` : ""}`);
+  return fetchApi(`/api/properties${queryString ? `?${queryString}` : ""}`);
 }
 
 export async function getPropertyById(
   id: string,
 ): Promise<ApiResponse<PropertyDto>> {
-  return fetchApi(`/api/rent/properties/${id}`);
+  return fetchApi(`/api/properties/${id}`);
 }
 
 export async function getPropertiesLookup(): Promise<
   ApiResponse<PropertyLookup[]>
 > {
-  return fetchApi("/api/rent/properties/lookup");
+  return fetchApi("/api/properties/lookup");
 }
 
 export async function createProperty(
   data: CreatePropertyInput,
 ): Promise<ApiResponse<PropertyDto>> {
-  return fetchApi("/api/rent/properties", {
+  return fetchApi("/api/properties", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -106,7 +106,7 @@ export async function updateProperty(
   id: string,
   data: UpdatePropertyInput,
 ): Promise<ApiResponse<PropertyDto>> {
-  return fetchApi(`/api/rent/properties/${id}`, {
+  return fetchApi(`/api/properties/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
@@ -115,5 +115,5 @@ export async function updateProperty(
 export async function deleteProperty(
   id: string,
 ): Promise<ApiResponse> {
-  return fetchApi(`/api/rent/properties/${id}`, { method: "DELETE" });
+  return fetchApi(`/api/properties/${id}`, { method: "DELETE" });
 }

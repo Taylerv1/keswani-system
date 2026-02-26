@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
-import prisma from "../../config/prisma";
+import prisma from "../config/prisma";
 import {
     createPropertySchema,
     updatePropertySchema,
     propertyQuerySchema,
-} from "../../validators/rent/property.validator";
-import { AuthenticatedRequest, ApiResponse } from "../../types";
+} from "../validators/property.validator";
+import { AuthenticatedRequest, ApiResponse } from "../types";
 
 // Helper: compute rented count for a property
 async function computeRentedCount(propertyId: string): Promise<number> {

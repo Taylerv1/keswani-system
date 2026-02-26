@@ -13,15 +13,7 @@ import {
 } from "lucide-react";
 import { KpiCard, LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
-
-type RecentActivityItem = {
-  id: string;
-  type: "payment" | "contract" | "maintenance";
-  title: string;
-  message: string;
-  related_id: string;
-  created_at: string;
-};
+import { useRent } from "@/features/rent/context/rent-context";
 
 type RentOverview = {
   total_properties: number;
@@ -34,11 +26,11 @@ type RentOverview = {
   contracts_ending_soon: number;
   maintenance_notifications: number;
   occupancy_rate: number;
-  recent_activity: RecentActivityItem[];
 };
 
 export default function RentOverviewPage() {
   const { t, locale } = useTranslation();
+  const { data } = useRent();
 
   const [overview, setOverview] = useState<RentOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -140,20 +132,15 @@ export default function RentOverviewPage() {
     },
   ];
 
-  const recentActivity = overview?.recent_activity ?? [];
-
-  const activityTypeConfig: Record<string, { icon: React.ReactNode; bg: string; text: string }> = {
-    payment: { icon: <CreditCard size={14} />, bg: "bg-card-green-light", text: "text-card-green" },
-    contract: { icon: <FileText size={14} />, bg: "bg-card-blue-light", text: "text-card-blue" },
-    maintenance: { icon: <Wrench size={14} />, bg: "bg-card-orange-light", text: "text-card-orange" },
-  };
+  const recentNotifs = [...data.notifications]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   return (
     <div>
       <h1 className="text-xl sm:text-2xl font-bold text-text-primary mb-1">
         {t("rentOverview")}
       </h1>
-      <p className="text-text-secondary text-xs sm:text-sm mb-4 sm:mb-6">{t("welcome")}</p>
 
       {loadingOverview && (
         <div className="min-h-[55vh] flex items-center justify-center">
@@ -177,44 +164,51 @@ export default function RentOverviewPage() {
             <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">
               {t("recentActivity")}
             </h2>
-            {recentActivity.length === 0 ? (
+            {recentNotifs.length === 0 ? (
               <p className="text-text-muted text-sm">{t("noData")}</p>
             ) : (
               <div className="space-y-3">
-                {recentActivity.map((item) => {
-                  const config = activityTypeConfig[item.type] ?? activityTypeConfig.maintenance;
-                  const timeAgo = new Date(item.created_at).toLocaleDateString(
-                    locale === "ar" ? "ar-SA" : "en-US",
-                    { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
-                  );
-
-                  return (
+                {recentNotifs.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
+                      n.read
+                        ? "border-surface-border bg-background"
+                        : "border-primary/20 bg-primary-light"
+                    }`}
+                  >
                     <div
-                      key={item.id}
-                      className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border border-surface-border bg-background transition-colors hover:border-primary/20"
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        n.type === "late_payment"
+                          ? "bg-card-red-light text-card-red"
+                          : n.type === "contract_ending"
+                            ? "bg-card-orange-light text-card-orange"
+                            : n.type === "maintenance"
+                              ? "bg-card-blue-light text-card-blue"
+                              : "bg-card-green-light text-card-green"
+                      }`}
                     >
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${config.bg} ${config.text}`}
-                      >
-                        {config.icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-text-primary">
-                          {item.title}
-                        </p>
-                        <p className="text-xs text-text-secondary mt-0.5">
-                          {item.message}
-                        </p>
-                        <p className="text-xs text-text-muted mt-1">{timeAgo}</p>
-                      </div>
-                      <span
-                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full shrink-0 ${config.bg} ${config.text}`}
-                      >
-                        {item.type}
-                      </span>
+                      {n.type === "late_payment" ? (
+                        <CreditCard size={14} />
+                      ) : n.type === "contract_ending" ? (
+                        <FileText size={14} />
+                      ) : n.type === "maintenance" ? (
+                        <Wrench size={14} />
+                      ) : (
+                        <AlertTriangle size={14} />
+                      )}
                     </div>
-                  );
-                })}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary">
+                        {locale === "ar" ? n.titleAr : n.title}
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        {locale === "ar" ? n.messageAr : n.message}
+                      </p>
+                      <p className="text-xs text-text-muted mt-1">{n.createdAt}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -5,10 +5,14 @@ import {
     createClient,
     updateClient,
     deleteClient,
-} from "../../controllers/rent/client.controller";
-import { requireAccess } from "../../middlewares/role.middleware";
+} from "../controllers/client.controller";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireAccess } from "../middlewares/role.middleware";
 
 const router = Router();
+
+// All client routes require auth
+router.use(authenticate);
 
 // CRUD
 router.get("/", getClients);

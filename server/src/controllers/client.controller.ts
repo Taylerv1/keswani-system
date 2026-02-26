@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
-import prisma from "../../config/prisma";
+import prisma from "../config/prisma";
 import {
     createClientSchema,
     updateClientSchema,
     clientQuerySchema,
-} from "../../validators/rent/client.validator";
-import { AuthenticatedRequest, ApiResponse } from "../../types";
+} from "../validators/client.validator";
+import { AuthenticatedRequest, ApiResponse } from "../types";
 
 /**
  * GET /api/clients

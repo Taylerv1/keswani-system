@@ -1,12 +1,12 @@
 import { Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
-import prisma from "../../config/prisma";
+import prisma from "../config/prisma";
 import {
     createMaintenanceSchema,
     updateMaintenanceSchema,
     maintenanceQuerySchema,
-} from "../../validators/rent/maintenance.validator";
-import { AuthenticatedRequest, ApiResponse } from "../../types";
+} from "../validators/maintenance.validator";
+import { AuthenticatedRequest, ApiResponse } from "../types";
 
 // Shared include for enriched maintenance responses
 const maintenanceInclude = {
