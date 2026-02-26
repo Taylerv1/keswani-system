@@ -5,8 +5,6 @@ import {
   createContractClient,
   createContract,
   deleteContract,
-  getContractLookups,
-  getContracts,
 } from "./api";
 import type {
   ContractClientFormValues,
@@ -26,6 +24,7 @@ import {
   findContractPropertyId,
   PAGE_SIZE,
 } from "./utils";
+import { rentStore } from "../store";
 
 export type TranslateFn = (key: string) => string;
 
@@ -47,24 +46,37 @@ export function useContractState(t: TranslateFn) {
     useState<ContractStatusFilter>("all");
   const [page, setPage] = useState(1);
 
-  const fetchContractList = useCallback(async () => {
+  const fetchContractList = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getContractsSnapshot(query);
+      if (cached) {
+        setError("");
+        setContracts(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await getContracts({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        status: statusFilter === "all" ? undefined : statusFilter,
+      const { data } = await rentStore.loadContracts(query, {
+        force: options?.force,
       });
 
-      const items = response.data?.items ?? [];
-      const pagination = response.data?.pagination;
-
-      setContracts(items);
-      setTotalItems(pagination?.total ?? items.length);
-      setTotalPages(Math.max(1, pagination?.total_pages ?? 1));
+      setContracts(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(extractErrorMessage(err, t("error")));
       setContracts([]);
@@ -75,12 +87,24 @@ export function useContractState(t: TranslateFn) {
     }
   }, [page, search, statusFilter, t]);
 
-  const fetchLookups = useCallback(async () => {
+  const fetchLookups = useCallback(async (options?: { force?: boolean }) => {
+    if (!options?.force) {
+      const cached = rentStore.getContractLookupsSnapshot();
+      if (cached) {
+        setProperties(cached.properties);
+        setClients(cached.clients);
+        setLookupLoading(false);
+        return;
+      }
+    }
+
     try {
       setLookupLoading(true);
-      const response = await getContractLookups();
-      setProperties(response.data?.properties ?? []);
-      setClients(response.data?.clients ?? []);
+      const { data } = await rentStore.loadContractLookups({
+        force: options?.force,
+      });
+      setProperties(data.properties);
+      setClients(data.clients);
     } catch (err) {
       setError(extractErrorMessage(err, t("error")));
       setProperties([]);
@@ -105,8 +129,12 @@ export function useContractState(t: TranslateFn) {
         setError("");
 
         await createContract(buildCreateContractPayload(form));
+        rentStore.invalidateContracts();
+        rentStore.invalidateTenants();
+        rentStore.invalidateProperties();
+        rentStore.invalidateOverview();
         setPage(1);
-        await fetchContractList();
+        await fetchContractList({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -125,7 +153,11 @@ export function useContractState(t: TranslateFn) {
         setError("");
 
         await deleteContract(id);
-        await fetchContractList();
+        rentStore.invalidateContracts();
+        rentStore.invalidateTenants();
+        rentStore.invalidateProperties();
+        rentStore.invalidateOverview();
+        await fetchContractList({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -158,6 +190,9 @@ export function useContractState(t: TranslateFn) {
           if (prev.some((item) => item.id === clientLookup.id)) return prev;
           return [clientLookup, ...prev];
         });
+        rentStore.addContractLookupClient(clientLookup);
+        rentStore.invalidateTenants();
+        rentStore.invalidateOverview();
 
         return clientLookup;
       } catch (err) {

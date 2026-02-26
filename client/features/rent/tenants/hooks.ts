@@ -5,7 +5,6 @@ import {
   createTenant,
   deleteTenant,
   getTenantById,
-  getTenants,
   updateTenant,
 } from "./api";
 import type {
@@ -22,6 +21,7 @@ import {
   hydrateTenantForm,
   PAGE_SIZE,
 } from "./utils";
+import { rentStore } from "../store";
 
 export type TranslateFn = (key: string) => string;
 
@@ -40,25 +40,38 @@ export function useTenantState(t: TranslateFn) {
   const [contractFilter, setContractFilter] =
     useState<TenantContractFilter>("all");
 
-  const fetchTenantList = useCallback(async () => {
+  const fetchTenantList = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      contract_presence:
+        contractFilter === "all" ? undefined : contractFilter,
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getTenantsSnapshot(query);
+      if (cached) {
+        setError("");
+        setTenants(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await getTenants({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        contract_presence:
-          contractFilter === "all" ? undefined : contractFilter,
+      const { data } = await rentStore.loadTenants(query, {
+        force: options?.force,
       });
 
-      const items = response.data?.items ?? [];
-      const pagination = response.data?.pagination;
-
-      setTenants(items);
-      setTotalItems(pagination?.total ?? items.length);
-      setTotalPages(Math.max(1, pagination?.total_pages ?? 1));
+      setTenants(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(extractErrorMessage(err, t("error")));
       setTenants([]);
@@ -84,8 +97,10 @@ export function useTenantState(t: TranslateFn) {
         const payload = buildCreateTenantPayload(form);
         await createTenant(payload);
 
+        rentStore.invalidateTenants();
+        rentStore.invalidateOverview();
         setPage(1);
-        await fetchTenantList();
+        await fetchTenantList({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -106,7 +121,8 @@ export function useTenantState(t: TranslateFn) {
         const payload = buildUpdateTenantPayload(form);
         await updateTenant(id, payload);
 
-        await fetchTenantList();
+        rentStore.invalidateTenants();
+        await fetchTenantList({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -125,7 +141,9 @@ export function useTenantState(t: TranslateFn) {
         setError("");
 
         await deleteTenant(id);
-        await fetchTenantList();
+        rentStore.invalidateTenants();
+        rentStore.invalidateOverview();
+        await fetchTenantList({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
