@@ -340,8 +340,13 @@ CREATE TABLE notifications (
   recipient_type        TEXT NOT NULL,                     -- 'client' or 'employee'
   recipient_id          UUID NOT NULL,                     -- polymorphic FK
   channel               notification_channel NOT NULL DEFAULT 'in_app',
+  section               TEXT,                              -- 'rent' or 'electricity'
+  notification_type     TEXT,                              -- e.g. 'late_payment', 'unpaid_bill'
   subject               TEXT,
+  subject_ar            TEXT,
   body                  TEXT,
+  body_ar               TEXT,
+  is_read               BOOLEAN NOT NULL DEFAULT false,
   status                notification_status NOT NULL DEFAULT 'pending',
   scheduled_at          TIMESTAMPTZ,
   sent_at               TIMESTAMPTZ,

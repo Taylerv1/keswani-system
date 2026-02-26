@@ -11,6 +11,17 @@ import type { Property } from "./properties/types";
 import { getTenants } from "./tenants/api";
 import type { TenantListItem, TenantQueryParams } from "./tenants/types";
 
+export type RecentActivityItem = {
+  id: string;
+  type: "late_payment" | "contract_ending" | "maintenance" | "vacant_property";
+  title: string;
+  title_ar: string;
+  message: string;
+  message_ar: string;
+  related_id: string;
+  created_at: string;
+};
+
 export type RentOverview = {
   total_properties: number;
   total_units: number;
@@ -22,6 +33,7 @@ export type RentOverview = {
   contracts_ending_soon: number;
   maintenance_notifications: number;
   occupancy_rate: number;
+  recent_activity: RecentActivityItem[];
 };
 
 type PaginatedSnapshot<T> = {

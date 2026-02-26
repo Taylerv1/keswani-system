@@ -394,8 +394,13 @@ model notifications {
   recipient_type      String
   recipient_id        String              @db.Uuid
   channel             notification_channel @default(in_app)
+  section             String?             // 'rent' or 'electricity'
+  notification_type   String?             // e.g. 'late_payment','contract_ending','unpaid_bill'
   subject             String?
+  subject_ar          String?
   body                String?
+  body_ar             String?
+  is_read             Boolean             @default(false)
   status              notification_status  @default(pending)
   scheduled_at        DateTime?           @db.Timestamptz(6)
   sent_at             DateTime?           @db.Timestamptz(6)

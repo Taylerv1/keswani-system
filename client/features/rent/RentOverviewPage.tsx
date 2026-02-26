@@ -13,12 +13,10 @@ import {
 } from "lucide-react";
 import { KpiCard, LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
-import { useRent } from "@/features/rent/context/rent-context";
-import { rentStore, type RentOverview } from "./store";
+import { rentStore, type RentOverview, type RecentActivityItem } from "./store";
 
 export default function RentOverviewPage() {
   const { t, locale } = useTranslation();
-  const { data } = useRent();
 
   const [overview, setOverview] = useState<RentOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -120,9 +118,11 @@ export default function RentOverviewPage() {
     },
   ];
 
-  const recentNotifs = [...data.notifications]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
+  const recentActivity = overview
+    ? [...overview.recent_activity].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ).slice(0, 5)
+    : [];
 
   return (
     <div>
@@ -152,18 +152,14 @@ export default function RentOverviewPage() {
             <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 sm:mb-4">
               {t("recentActivity")}
             </h2>
-            {recentNotifs.length === 0 ? (
+            {recentActivity.length === 0 ? (
               <p className="text-text-muted text-sm">{t("noData")}</p>
             ) : (
               <div className="space-y-3">
-                {recentNotifs.map((n) => (
+                {recentActivity.map((n) => (
                   <div
                     key={n.id}
-                    className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors ${
-                      n.read
-                        ? "border-surface-border bg-background"
-                        : "border-primary/20 bg-primary-light"
-                    }`}
+                    className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-colors border-surface-border bg-background"
                   >
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
@@ -188,12 +184,14 @@ export default function RentOverviewPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-text-primary">
-                        {locale === "ar" ? n.titleAr : n.title}
+                        {locale === "ar" ? n.title_ar : n.title}
                       </p>
                       <p className="text-xs text-text-secondary mt-0.5">
-                        {locale === "ar" ? n.messageAr : n.message}
+                        {locale === "ar" ? n.message_ar : n.message}
                       </p>
-                      <p className="text-xs text-text-muted mt-1">{n.createdAt}</p>
+                      <p className="text-xs text-text-muted mt-1">
+                        {new Date(n.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 ))}
