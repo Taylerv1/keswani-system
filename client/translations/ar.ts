@@ -149,6 +149,14 @@ const ar: Record<string, string> = {
   linkedProperty: "العقار المرتبط",
   contractDuration: "مدة العقد",
   maintenanceRequests: "طلبات الصيانة",
+  withContract: "مع عقد",
+  withoutContract: "بدون عقد",
+  noContract: "لا يوجد عقد",
+  contractsSummary: "ملخص العقود",
+  recentPayments: "آخر الدفعات",
+  recentMaintenance: "آخر طلبات الصيانة",
+  noDataYet: "لا توجد بيانات بعد",
+  fullNameRequired: "الاسم الكامل مطلوب",
 
   // Contracts
   contractManagement: "إدارة العقود",

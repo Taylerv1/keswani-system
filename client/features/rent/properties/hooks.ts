@@ -7,7 +7,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  getProperties,
   getPropertyById,
   createProperty,
   updateProperty,
@@ -17,6 +16,7 @@ import {
 } from "./api";
 import type { Property, PropertyDto } from "./types";
 import { type CreateUnitInput, EMPTY_UNIT, sanitizeUnit } from "./utils";
+import { rentStore } from "../store";
 
 // ============================================================
 // usePropertyState — Page-level State Hook
@@ -44,28 +44,41 @@ export function usePropertyState(t: TranslateFn) {
   /* Fetch                                                               */
   /* ------------------------------------------------------------------ */
 
-  const fetchProperties = useCallback(async () => {
+  const fetchProperties = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      type: filterType === "all" ? undefined : filterType,
+      status:
+        filterStatus === "all"
+          ? undefined
+          : (filterStatus as "full" | "vacant"),
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getPropertiesSnapshot(query);
+      if (cached) {
+        setError("");
+        setProperties(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await getProperties({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        type: filterType === "all" ? undefined : filterType,
-        status:
-          filterStatus === "all"
-            ? undefined
-            : (filterStatus as "full" | "vacant"),
+      const { data } = await rentStore.loadProperties(query, {
+        force: options?.force,
       });
 
-      const items = response.data?.items ?? [];
-      const pagination = response.data?.pagination;
-
-      setProperties(items as Property[]);
-      setTotalItems(pagination?.total ?? items.length);
-      setTotalPages(Math.max(1, pagination?.total_pages ?? 1));
+      setProperties(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error"));
       setProperties([]);
@@ -113,7 +126,10 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(true);
         setError("");
         await createProperty(payload);
-        await fetchProperties();
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
+        await fetchProperties({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : t("error"));
@@ -131,6 +147,9 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(true);
         setError("");
         const response = await updateProperty(id, payload);
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
         if (response.data) {
           setProperties((prev) =>
             prev.map((property) =>
@@ -155,6 +174,9 @@ export function usePropertyState(t: TranslateFn) {
         setActionLoading(true);
         setError("");
         await deleteProperty(id);
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
         setProperties((prev) => prev.filter((property) => property.id !== id));
         setTotalItems((prev) => {
           const nextTotal = Math.max(0, prev - 1);

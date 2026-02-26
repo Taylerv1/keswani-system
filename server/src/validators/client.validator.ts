@@ -6,9 +6,8 @@ import { z } from "zod";
 export const createClientSchema = z.object({
     full_name: z.string().min(1, "Full name is required"),
     email: z.string().email("Invalid email").optional().or(z.literal("")),
-    phone: z.string().optional(),
-    // address: z.string().optional(),
-    notes: z.string().optional(),
+    phone: z.string().optional().or(z.literal("")),
+    notes: z.string().optional().or(z.literal("")),
 });
 
 // ===========================
@@ -18,7 +17,6 @@ export const updateClientSchema = z.object({
     full_name: z.string().min(1).optional(),
     email: z.string().email("Invalid email").nullable().optional().or(z.literal("")),
     phone: z.string().nullable().optional(),
-    address: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
 });
 
@@ -29,6 +27,7 @@ export const clientQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(10),
     search: z.string().optional(),
+    contract_presence: z.enum(["with_contract", "without_contract"]).optional(),
 });
 
 export type CreateClientInput = z.infer<typeof createClientSchema>;
