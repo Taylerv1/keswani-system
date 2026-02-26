@@ -163,14 +163,14 @@ export default function NotificationsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h3 className="text-sm font-semibold text-text-primary">
-                          {locale === "ar" ? n.titleAr : n.title}
+                          {n.title}
                         </h3>
                         {!n.read && (
                           <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                         )}
                       </div>
                       <p className="text-sm text-text-secondary">
-                        {locale === "ar" ? n.messageAr : n.message}
+                        {n.message}
                       </p>
                       <p className="text-xs text-text-muted mt-1">
                         {new Date(n.createdAt).toLocaleDateString()}

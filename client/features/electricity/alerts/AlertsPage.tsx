@@ -171,7 +171,7 @@ export default function AlertsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5">
                         <h3 className="text-xs sm:text-sm font-semibold text-text-primary">
-                          {locale === "ar" ? a.titleAr : a.title}
+                          {a.title}
                         </h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
                           {t(typeTranslationMap[a.type] ?? a.type)}
@@ -179,7 +179,7 @@ export default function AlertsPage() {
                         {!a.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                       </div>
                       <p className="text-xs sm:text-sm text-text-secondary">
-                        {locale === "ar" ? a.messageAr : a.message}
+                        {a.message}
                       </p>
                       <p className="text-xs text-text-muted mt-1">
                         {new Date(a.createdAt).toLocaleDateString()}

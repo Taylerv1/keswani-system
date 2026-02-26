@@ -7,9 +7,7 @@ interface NotificationItem {
     type: string;
     section: string;
     title: string;
-    titleAr: string;
     message: string;
-    messageAr: string;
     relatedId: string | null;
     relatedType: string | null;
     read: boolean;

@@ -41,9 +41,7 @@ export const getNotifications = async (
         if (search) {
             where.OR = [
                 { subject: { contains: search, mode: "insensitive" } },
-                { subject_ar: { contains: search, mode: "insensitive" } },
                 { body: { contains: search, mode: "insensitive" } },
-                { body_ar: { contains: search, mode: "insensitive" } },
             ];
         }
 
@@ -62,9 +60,7 @@ export const getNotifications = async (
             type: n.notification_type,
             section: n.section,
             title: n.subject || "",
-            titleAr: n.subject_ar || "",
             message: n.body || "",
-            messageAr: n.body_ar || "",
             relatedId: n.related_entity_id,
             relatedType: n.related_entity_type,
             read: n.is_read,
@@ -151,9 +147,7 @@ export const createNotification = async (
                 section: parsed.data.section,
                 notification_type: parsed.data.notification_type,
                 subject: parsed.data.subject,
-                subject_ar: parsed.data.subject_ar,
                 body: parsed.data.body,
-                body_ar: parsed.data.body_ar,
                 related_entity_type: parsed.data.related_entity_type,
                 related_entity_id: parsed.data.related_entity_id,
                 scheduled_at: parsed.data.scheduled_at
@@ -170,9 +164,7 @@ export const createNotification = async (
                 type: notification.notification_type,
                 section: notification.section,
                 title: notification.subject,
-                titleAr: notification.subject_ar,
                 message: notification.body,
-                messageAr: notification.body_ar,
                 read: notification.is_read,
                 createdAt: notification.created_at.toISOString(),
             },
