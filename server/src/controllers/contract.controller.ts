@@ -186,6 +186,18 @@ export const createContract = async (
             return;
         }
 
+        const clientHasActiveContract = await prisma.contracts.count({
+            where: {
+                client_id: data.client_id,
+                status: "active",
+                deleted_at: null,
+            },
+        });
+        if (clientHasActiveContract > 0) {
+            res.status(409).json({ success: false, error: "This tenant already has an active contract" });
+            return;
+        }
+
         const contract = await prisma.contracts.create({
             data: {
                 unit_id: data.unit_id,

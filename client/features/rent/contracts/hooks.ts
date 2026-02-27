@@ -133,8 +133,10 @@ export function useContractState(t: TranslateFn) {
         rentStore.invalidateTenants();
         rentStore.invalidateProperties();
         rentStore.invalidateOverview();
+        rentStore.invalidateContractLookups();
         setPage(1);
         await fetchContractList({ force: true });
+        await fetchLookups({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -143,7 +145,7 @@ export function useContractState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchContractList, t]
+    [fetchContractList, fetchLookups, t]
   );
 
   const deleteContractItem = useCallback(
@@ -157,7 +159,9 @@ export function useContractState(t: TranslateFn) {
         rentStore.invalidateTenants();
         rentStore.invalidateProperties();
         rentStore.invalidateOverview();
+        rentStore.invalidateContractLookups();
         await fetchContractList({ force: true });
+        await fetchLookups({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -166,7 +170,7 @@ export function useContractState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchContractList, t]
+    [fetchContractList, fetchLookups, t]
   );
 
   const createClientItem = useCallback(
