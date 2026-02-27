@@ -38,7 +38,6 @@ interface RentPayment {
     payment_date: string;
     period_start: string | null;
     period_end: string | null;
-    payment_method: "cash" | "bank_transfer" | "other";
     status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     received_by: string | null;
     receiver_name: string | null;
@@ -54,7 +53,6 @@ interface CreatePaymentInput {
     payment_date: string;
     period_start?: string;
     period_end?: string;
-    payment_method?: "cash" | "bank_transfer" | "other";
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string;
     currency?: string;
@@ -66,7 +64,6 @@ interface UpdatePaymentInput {
     payment_date?: string;
     period_start?: string | null;
     period_end?: string | null;
-    payment_method?: "cash" | "bank_transfer" | "other";
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string | null;
     currency?: string;

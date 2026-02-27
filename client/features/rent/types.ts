@@ -1,5 +1,5 @@
 // Property types — canonical definitions live in ./properties/types.ts
-import type { Property, PropertyType } from "./properties/types";
+import type { Property } from "./properties/types";
 export type { Property, PropertyType } from "./properties/types";
 
 export interface Tenant {
@@ -35,7 +35,6 @@ export interface Payment {
   contractId: string;
   amount: number;
   date: string | null;
-  method: "cash" | "bank_transfer" | null;
   status: "paid" | "overdue" | "pending";
   month: string;
   receiptNumber: string | null;

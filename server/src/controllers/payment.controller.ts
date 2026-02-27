@@ -101,7 +101,6 @@ export const getPayments = async (
             payment_date: p.payment_date,
             period_start: p.period_start,
             period_end: p.period_end,
-            payment_method: p.payment_method,
             status: p.status,
             received_by: p.received_by,
             receiver_name: p.receiver?.full_name || null,
@@ -199,7 +198,7 @@ export const createPayment = async (
                 payment_date: new Date(data.payment_date),
                 period_start: data.period_start ? new Date(data.period_start) : null,
                 period_end: data.period_end ? new Date(data.period_end) : null,
-                payment_method: data.payment_method,
+                payment_method: "cash",
                 status: data.status,
                 received_by: receivedBy,
                 receipt_number: data.receipt_number,
@@ -251,7 +250,6 @@ export const updatePayment = async (
         if (data.payment_date !== undefined) updateData.payment_date = new Date(data.payment_date);
         if (data.period_start !== undefined) updateData.period_start = data.period_start ? new Date(data.period_start) : null;
         if (data.period_end !== undefined) updateData.period_end = data.period_end ? new Date(data.period_end) : null;
-        if (data.payment_method !== undefined) updateData.payment_method = data.payment_method;
         if (data.status !== undefined) updateData.status = data.status;
         if (data.receipt_number !== undefined) updateData.receipt_number = data.receipt_number;
         if (data.notes !== undefined) updateData.notes = data.notes;

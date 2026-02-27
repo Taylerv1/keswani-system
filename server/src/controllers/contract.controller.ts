@@ -121,7 +121,6 @@ export const getContractById = async (
                         payment_date: true,
                         period_start: true,
                         period_end: true,
-                        payment_method: true,
                         status: true,
                         receipt_number: true,
                         notes: true,

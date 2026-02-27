@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, CreditCard, FileDown } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useElectricity } from "@/features/electricity/context/electricity-context";
@@ -13,7 +13,6 @@ export default function ElecPaymentsPage() {
   const { data, addPayment, updateBill } = useElectricity();
 
   const [search, setSearch] = useState("");
-  const [filterMethod, setFilterMethod] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -21,16 +20,15 @@ export default function ElecPaymentsPage() {
     subscriberId: "",
     billId: "",
     amount: 0,
-    method: "cash" as "cash" | "bank_transfer",
     collectedBy: "",
   });
 
-  const resetForm = () => setForm({ subscriberId: "", billId: "", amount: 0, method: "cash", collectedBy: "" });
+  const resetForm = () => setForm({ subscriberId: "", billId: "", amount: 0, collectedBy: "" });
 
-  const getSubscriberName = (id: string) => {
+  const getSubscriberName = useCallback((id: string) => {
     const s = data.subscribers.find((x) => x.id === id);
     return s ? (locale === "ar" ? s.nameAr : s.name) : id;
-  };
+  }, [data.subscribers, locale]);
 
   const getEmployeeName = (id: string) => {
     if (!id) return "—";
@@ -49,7 +47,6 @@ export default function ElecPaymentsPage() {
       subscriberId: form.subscriberId,
       amount: form.amount,
       date: new Date().toISOString().split("T")[0],
-      method: form.method,
       collectedBy: form.collectedBy || null,
       receiptNumber,
     });
@@ -80,9 +77,8 @@ export default function ElecPaymentsPage() {
         (p) => getSubscriberName(p.subscriberId).toLowerCase().includes(q) || p.receiptNumber.toLowerCase().includes(q)
       );
     }
-    if (filterMethod !== "all") items = items.filter((p) => p.method === filterMethod);
     return items;
-  }, [data.payments, search, filterMethod, data.subscribers, locale]);
+  }, [data.payments, search, getSubscriberName]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -115,11 +111,6 @@ export default function ElecPaymentsPage() {
         <div className="flex-1">
           <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
         </div>
-        <select value={filterMethod} onChange={(e) => { setFilterMethod(e.target.value); setPage(1); }} className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="all">{t("all")} - {t("paymentMethod")}</option>
-          <option value="cash">{t("cash")}</option>
-          <option value="bank_transfer">{t("bankTransfer")}</option>
-        </select>
       </div>
 
       <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
@@ -131,21 +122,19 @@ export default function ElecPaymentsPage() {
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriber")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("date")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentAmount")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentMethod")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("collectedBy")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("receiptNumber")}</th>
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
               ) : (
                 paginated.map((p) => (
                   <tr key={p.id} className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-text-primary">{getSubscriberName(p.subscriberId)}</td>
                     <td className="px-4 py-3 text-text-secondary">{p.date}</td>
                     <td className="px-4 py-3 font-medium text-card-green">${p.amount.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</td>
                     <td className="px-4 py-3 text-text-secondary">{getEmployeeName(p.collectedBy ?? "")}</td>
                     <td className="px-4 py-3 text-text-muted text-xs">{p.receiptNumber}</td>
                   </tr>
@@ -167,10 +156,9 @@ export default function ElecPaymentsPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-muted">{p.date}</span>
-                  <span className="text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
                   <span className="text-text-muted">{getEmployeeName(p.collectedBy ?? "")}</span>
+                </div>
+                <div className="flex items-center justify-end text-xs">
                   <span className="text-text-muted font-mono">{p.receiptNumber}</span>
                 </div>
               </div>
@@ -208,18 +196,9 @@ export default function ElecPaymentsPage() {
               </select>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">{t("paymentAmount")}</label>
-              <input type="number" min={0} step={0.01} value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">{t("paymentMethod")}</label>
-              <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value as "cash" | "bank_transfer" })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="cash">{t("cash")}</option>
-                <option value="bank_transfer">{t("bankTransfer")}</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{t("paymentAmount")}</label>
+            <input type="number" min={0} step={0.01} value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
           </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("collectedBy")}</label>

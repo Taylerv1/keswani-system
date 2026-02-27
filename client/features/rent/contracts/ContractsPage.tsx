@@ -88,10 +88,6 @@ export default function ContractsPage() {
           <p className="text-text-secondary text-sm mt-1">{state.totalItems} {t("rentContracts")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button disabled className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium flex items-center gap-2 opacity-60 cursor-not-allowed">
-            <FileDown size={16} />
-            {t("comingSoon")}
-          </button>
           <button onClick={form.openAdd} className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
             <Plus size={16} />
             {t("addContract")}

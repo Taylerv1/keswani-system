@@ -1,28 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, FileDown, CreditCard, TrendingUp, AlertTriangle, Receipt } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { FileDown, CreditCard, TrendingUp, AlertTriangle, Receipt } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useRent } from "@/features/rent/context/rent-context";
 import { SearchBar, StatusBadge, Pagination, Modal, KpiCard } from "@/components/ui";
-import type { Payment } from "@/features/rent/types";
 
 const PAGE_SIZE = 8;
 
 export default function PaymentsPage() {
   const { t, locale } = useTranslation();
-  const { data, addPayment, updatePayment } = useRent();
+  const { data, updatePayment } = useRent();
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
   const [payForm, setPayForm] = useState<string | null>(null); // payment id to record
 
-  const getTenantName = (id: string) => {
+  const getTenantName = useCallback((id: string) => {
     const ten = data.tenants.find((x) => x.id === id);
     return ten ? (locale === "ar" ? ten.nameAr : ten.name) : id;
-  };
+  }, [data.tenants, locale]);
 
   const totalCollected = data.payments.filter((p) => p.status === "paid").reduce((s, p) => s + p.amount, 0);
   const totalOutstanding = data.payments.filter((p) => p.status === "overdue").length;
@@ -42,7 +40,7 @@ export default function PaymentsPage() {
     }
     if (filterStatus !== "all") items = items.filter((p) => p.status === filterStatus);
     return items;
-  }, [data.payments, search, filterStatus, data.tenants, locale]);
+  }, [data.payments, search, filterStatus, getTenantName]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -55,8 +53,7 @@ export default function PaymentsPage() {
       status: "paid",
       amount: contract?.monthlyRent ?? 0,
       date: new Date().toISOString().split("T")[0],
-      method: "cash",
-      receiptNumber: `REC-${Date.now()}`,
+      receiptNumber: payment.receiptNumber ?? `REC-${payment.id}`,
     });
     setPayForm(null);
   };
@@ -109,7 +106,6 @@ export default function PaymentsPage() {
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("month")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("amount")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentDate")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentMethod")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("receiptNumber")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("status")}</th>
                 <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("actions")}</th>
@@ -117,7 +113,7 @@ export default function PaymentsPage() {
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
               ) : (
                 paginated.map((p) => (
                   <tr key={p.id} className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors">
@@ -127,7 +123,6 @@ export default function PaymentsPage() {
                       {p.amount > 0 ? `$${p.amount.toLocaleString()}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{p.date ?? "—"}</td>
-                    <td className="px-4 py-3 text-text-secondary">{p.method ? t(p.method === "bank_transfer" ? "bankTransfer" : "cash") : "—"}</td>
                     <td className="px-4 py-3 text-text-muted text-xs">{p.receiptNumber ?? "—"}</td>
                     <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
                     <td className="px-4 py-3">
@@ -168,10 +163,6 @@ export default function PaymentsPage() {
                 <div>
                   <span className="text-text-muted">{t("paymentDate")}: </span>
                   <span className="text-text-secondary">{p.date ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted">{t("paymentMethod")}: </span>
-                  <span className="text-text-secondary">{p.method ? t(p.method === "bank_transfer" ? "bankTransfer" : "cash") : "—"}</span>
                 </div>
               </div>
               {p.receiptNumber && (
