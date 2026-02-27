@@ -35,6 +35,13 @@ export default function ContractsPage() {
     return property?.units ?? [];
   }, [form.form.property_id, state.propertyById]);
 
+  const selectedProperty = useMemo(() => {
+    if (!form.form.property_id) return null;
+    return state.propertyById.get(form.form.property_id) ?? null;
+  }, [form.form.property_id, state.propertyById]);
+
+  const isHouseProperty = selectedProperty?.type === "house";
+
   const tenantOptions = useMemo(
     () =>
       state.clients.map((tenant) => ({
@@ -268,20 +275,22 @@ export default function ContractsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
-              <SelectMenu
-                value={form.form.unit_id}
-                onChange={(value) => form.setForm({ ...form.form, unit_id: value })}
-                options={selectedPropertyUnits.map((unit) => ({
-                  value: unit.id,
-                  label: unit.unit_number,
-                }))}
-                placeholder="--"
-                noResultsLabel={t("noResults")}
-              />
-            </div>
+          <div className={`grid grid-cols-1 ${isHouseProperty ? "sm:grid-cols-2" : "sm:grid-cols-3"} gap-4`}>
+            {!isHouseProperty && (
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
+                <SelectMenu
+                  value={form.form.unit_id}
+                  onChange={(value) => form.setForm({ ...form.form, unit_id: value })}
+                  options={selectedPropertyUnits.map((unit) => ({
+                    value: unit.id,
+                    label: unit.unit_number,
+                  }))}
+                  placeholder="--"
+                  noResultsLabel={t("noResults")}
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("startDate")}</label>
               <input type="date" value={form.form.start_date} onChange={(e) => form.setForm({ ...form.form, start_date: e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />

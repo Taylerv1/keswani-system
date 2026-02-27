@@ -307,12 +307,14 @@ export function useContractForm({
   const onPropertyChange = useCallback((propertyId: string) => {
     setForm((prev) => {
       const property = properties.find((item) => item.id === propertyId);
+      const isHouseProperty = property?.type === "house";
+      const houseUnitId = property?.units[0]?.id ?? "";
       const hasUnit = property?.units.some((unit) => unit.id === prev.unit_id) ?? false;
 
       return {
         ...prev,
         property_id: propertyId,
-        unit_id: hasUnit ? prev.unit_id : "",
+        unit_id: isHouseProperty ? houseUnitId : hasUnit ? prev.unit_id : "",
       };
     });
   }, [properties]);
