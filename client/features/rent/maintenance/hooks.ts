@@ -328,6 +328,7 @@ export function useMaintenanceForm({
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<MaintenanceRequest | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [form, setForm] = useState<MaintenanceFormData>(createEmptyForm());
 
   const resetForm = () => {
@@ -406,10 +407,16 @@ export function useMaintenanceForm({
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const success = await removeMaintenanceItem(deleteId);
-    if (!success) return;
-    setDeleteId(null);
+    if (!deleteId || deleteLoading) return;
+
+    try {
+      setDeleteLoading(true);
+      const success = await removeMaintenanceItem(deleteId);
+      if (!success) return;
+      setDeleteId(null);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return {
@@ -417,6 +424,7 @@ export function useMaintenanceForm({
     setModalOpen,
     editItem,
     deleteId,
+    deleteLoading,
     setDeleteId,
     form,
     setForm,

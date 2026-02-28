@@ -153,6 +153,7 @@ export default function MaintenancePage() {
         open={!!form.deleteId}
         onClose={() => form.setDeleteId(null)}
         onConfirm={form.handleDelete}
+        loading={form.deleteLoading}
       />
     </div>
   );
