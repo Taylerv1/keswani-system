@@ -3,7 +3,7 @@
 import { Plus, FileDown } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useRent } from "@/features/rent/context/rent-context";
-import { SearchBar, Pagination } from "@/components/ui";
+import { SearchBar, Pagination, SelectMenu } from "@/components/ui";
 import { useMaintenanceForm, useMaintenanceState } from "./hooks";
 import { MaintenanceTable } from "./components/MaintenanceTable";
 import { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
@@ -57,19 +57,35 @@ export default function MaintenancePage() {
         <div className="flex-1">
           <SearchBar value={state.search} onChange={(value) => { state.setSearch(value); state.setPage(1); }} />
         </div>
-        <select value={state.filterStatus} onChange={(event) => { state.setFilterStatus(event.target.value); state.setPage(1); }} className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="all">{t("all")} - {t("status")}</option>
-          <option value="open">{t("open")}</option>
-          <option value="in_progress">{t("inProgress")}</option>
-          <option value="completed">{t("completed")}</option>
-          <option value="closed">{t("closed")}</option>
-        </select>
-        <select value={state.filterPriority} onChange={(event) => { state.setFilterPriority(event.target.value); state.setPage(1); }} className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="all">{t("all")} - {t("priority")}</option>
-          <option value="high">{t("high")}</option>
-          <option value="medium">{t("medium")}</option>
-          <option value="low">{t("low")}</option>
-        </select>
+        <div className="sm:w-48">
+          <SelectMenu
+            value={state.filterStatus}
+            onChange={(value) => { state.setFilterStatus(value); state.setPage(1); }}
+            options={[
+              { value: "all", label: `${t("all")} - ${t("status")}` },
+              { value: "open", label: t("open") },
+              { value: "in_progress", label: t("inProgress") },
+              { value: "completed", label: t("completed") },
+              { value: "closed", label: t("closed") },
+            ]}
+            placeholder={`${t("all")} - ${t("status")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
+        <div className="sm:w-48">
+          <SelectMenu
+            value={state.filterPriority}
+            onChange={(value) => { state.setFilterPriority(value); state.setPage(1); }}
+            options={[
+              { value: "all", label: `${t("all")} - ${t("priority")}` },
+              { value: "high", label: t("high") },
+              { value: "medium", label: t("medium") },
+              { value: "low", label: t("low") },
+            ]}
+            placeholder={`${t("all")} - ${t("priority")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
       </div>
 
       {!state.hasLoadedOnce || state.loading || state.lookupLoading ? (
