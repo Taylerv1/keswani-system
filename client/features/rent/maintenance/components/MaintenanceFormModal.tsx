@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { Modal } from "@/components/ui";
+import { LoadingLottie, Modal } from "@/components/ui";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant, TranslateFn } from "../types";
 import { useState } from "react";
 
@@ -187,12 +187,9 @@ export function MaintenanceFormModal({
           <button
             onClick={handleSaveClick}
             disabled={isSaving}
-            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center"
           >
-            {isSaving && (
-              <span className="inline-block h-4 w-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
-            )}
-            {isSaving ? t("loading") : t("save")}
+            {isSaving ? <LoadingLottie size={28} /> : t("save")}
           </button>
         </div>
       </div>
