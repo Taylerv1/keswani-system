@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export interface SelectOption {
   value: string;
@@ -33,7 +34,15 @@ export default function SelectMenu({
 }: SelectMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [menuStyle, setMenuStyle] = useState<{
+    left: number;
+    width: number;
+    top?: number;
+    bottom?: number;
+    maxHeight: number;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedLabel =
@@ -55,9 +64,73 @@ export default function SelectMenu({
     searchInputRef.current?.focus();
   }, [open, searchable]);
 
+  const updateMenuPosition = useCallback(() => {
+    if (!rootRef.current) return;
+
+    const rect = rootRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const horizontalPadding = 8;
+    const verticalGap = 4;
+    const minVisibleHeight = 140;
+    const preferredHeight = 224;
+
+    const width = Math.min(rect.width, viewportWidth - horizontalPadding * 2);
+    const left = Math.max(
+      horizontalPadding,
+      Math.min(rect.left, viewportWidth - width - horizontalPadding)
+    );
+
+    const spaceBelow = viewportHeight - rect.bottom - horizontalPadding;
+    const spaceAbove = rect.top - horizontalPadding;
+    const shouldOpenUp = spaceBelow < minVisibleHeight && spaceAbove > spaceBelow;
+
+    const availableHeight = shouldOpenUp ? spaceAbove - verticalGap : spaceBelow - verticalGap;
+    const maxHeight = Math.max(minVisibleHeight, Math.min(preferredHeight, availableHeight));
+
+    if (shouldOpenUp) {
+      setMenuStyle({
+        left,
+        width,
+        bottom: viewportHeight - rect.top + verticalGap,
+        maxHeight,
+      });
+      return;
+    }
+
+    setMenuStyle({
+      left,
+      width,
+      top: rect.bottom + verticalGap,
+      maxHeight,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    updateMenuPosition();
+
+    const handleWindowChange = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener("resize", handleWindowChange);
+    window.addEventListener("scroll", handleWindowChange, true);
+
+    return () => {
+      window.removeEventListener("resize", handleWindowChange);
+      window.removeEventListener("scroll", handleWindowChange, true);
+    };
+  }, [open, updateMenuPosition]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const targetNode = event.target as Node;
+      if (
+        !rootRef.current?.contains(targetNode) &&
+        !panelRef.current?.contains(targetNode)
+      ) {
         setOpen(false);
       }
     }
@@ -82,8 +155,17 @@ export default function SelectMenu({
         />
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-surface-border bg-surface shadow-lg">
+      {open && menuStyle && createPortal(
+        <div
+          ref={panelRef}
+          style={{
+            left: menuStyle.left,
+            width: menuStyle.width,
+            top: menuStyle.top,
+            bottom: menuStyle.bottom,
+          }}
+          className="fixed z-[70] rounded-lg border border-surface-border bg-surface shadow-lg"
+        >
           {searchable && (
             <div className="p-2 border-b border-surface-border">
               <input
@@ -110,7 +192,7 @@ export default function SelectMenu({
             </div>
           )}
 
-          <div className="max-h-56 overflow-y-auto py-1">
+          <div style={{ maxHeight: menuStyle.maxHeight }} className="overflow-y-auto py-1 scrollbar-primary">
             {filteredOptions.length === 0 ? (
               <p className="px-3 py-2 text-sm text-text-muted">{noResultsLabel}</p>
             ) : (
@@ -134,7 +216,8 @@ export default function SelectMenu({
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

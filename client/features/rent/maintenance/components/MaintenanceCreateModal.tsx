@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { LoadingLottie, Modal } from "@/components/ui";
+import { LoadingLottie, Modal, SelectMenu } from "@/components/ui";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant, TranslateFn } from "../types";
 import { useState } from "react";
 
@@ -77,86 +77,85 @@ export function MaintenanceCreateModal({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("property")}</label>
-            <select
+            <SelectMenu
               value={form.propertyId}
-              onChange={(event) =>
-                setForm({ ...form, propertyId: event.target.value, unitNumber: "" })
+              onChange={(value) =>
+                setForm({ ...form, propertyId: value, unitNumber: "" })
               }
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">--</option>
-              {properties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
-            </select>
+              options={properties.map((property) => ({
+                value: property.id,
+                label: property.name,
+              }))}
+              placeholder="--"
+              noResultsLabel={t("noResults")}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
-            <select
+            <SelectMenu
               value={form.unitNumber}
-              onChange={(event) => setForm({ ...form, unitNumber: event.target.value })}
-              disabled={!selectedProperty}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <option value="">--</option>
-              {selectedProperty?.units.map((unit) => (
-                <option key={unit.id} value={unit.unit_number}>
-                  {unit.unit_number}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setForm({ ...form, unitNumber: value })}
+              options={
+                selectedProperty?.units.map((unit) => ({
+                  value: unit.unit_number,
+                  label: unit.unit_number,
+                })) ?? []
+              }
+              placeholder="--"
+              noResultsLabel={t("noResults")}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("tenant")}</label>
-            <select
+            <SelectMenu
               value={form.tenantId}
-              onChange={(event) => setForm({ ...form, tenantId: event.target.value })}
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">--</option>
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {locale === "ar" ? tenant.nameAr : tenant.name}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setForm({ ...form, tenantId: value })}
+              options={tenants.map((tenant) => ({
+                value: tenant.id,
+                label: locale === "ar" ? tenant.nameAr : tenant.name,
+              }))}
+              placeholder="--"
+              noResultsLabel={t("noResults")}
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("priority")}</label>
-            <select
+            <SelectMenu
               value={form.priority}
-              onChange={(event) =>
-                setForm({ ...form, priority: event.target.value as MaintenanceRequest["priority"] })
+              onChange={(value) =>
+                setForm({ ...form, priority: value as MaintenanceRequest["priority"] })
               }
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="high">{t("high")}</option>
-              <option value="medium">{t("medium")}</option>
-              <option value="low">{t("low")}</option>
-            </select>
+              options={[
+                { value: "high", label: t("high") },
+                { value: "medium", label: t("medium") },
+                { value: "low", label: t("low") },
+              ]}
+              placeholder="--"
+              noResultsLabel={t("noResults")}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("status")}</label>
-            <select
+            <SelectMenu
               value={form.status}
-              onChange={(event) =>
-                setForm({ ...form, status: event.target.value as MaintenanceRequest["status"] })
+              onChange={(value) =>
+                setForm({ ...form, status: value as MaintenanceRequest["status"] })
               }
-              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="open">{t("open")}</option>
-              <option value="in_progress">{t("inProgress")}</option>
-              <option value="completed">{t("completed")}</option>
-              <option value="closed">{t("closed")}</option>
-            </select>
+              options={[
+                { value: "open", label: t("open") },
+                { value: "in_progress", label: t("inProgress") },
+                { value: "completed", label: t("completed") },
+                { value: "closed", label: t("closed") },
+              ]}
+              placeholder="--"
+              noResultsLabel={t("noResults")}
+            />
           </div>
 
           <div>
