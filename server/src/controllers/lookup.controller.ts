@@ -4,25 +4,51 @@ import { AuthenticatedRequest, ApiResponse } from "../types";
 import { lookupQuerySchema, lookupResourceEnum, LookupResource } from "../validators/lookup.validator";
 
 async function getPropertiesLookupData() {
-    return prisma.properties.findMany({
-        where: { deleted_at: null },
-        orderBy: { name: "asc" },
-        select: {
-            id: true,
-            name: true,
-            type: true,
-            units: {
-                where: { deleted_at: null },
-                orderBy: { unit_number: "asc" },
-                select: { id: true, unit_number: true, floor: true },
+    const [properties, activeContracts] = await Promise.all([
+        prisma.properties.findMany({
+            where: { deleted_at: null },
+            orderBy: { name: "asc" },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                units: {
+                    where: { deleted_at: null },
+                    orderBy: { unit_number: "asc" },
+                    select: { id: true, unit_number: true, floor: true },
+                },
             },
-        },
-    });
+        }),
+        prisma.contracts.findMany({
+            where: {
+                status: "active",
+                deleted_at: null,
+            },
+            select: { unit_id: true },
+        }),
+    ]);
+
+    const occupiedUnitIds = new Set(activeContracts.map((contract) => contract.unit_id));
+
+    return properties
+        .map((property) => ({
+            ...property,
+            units: property.units.filter((unit) => !occupiedUnitIds.has(unit.id)),
+        }))
+        .filter((property) => property.units.length > 0);
 }
 
 async function getClientsLookupData() {
     return prisma.clients.findMany({
-        where: { deleted_at: null },
+        where: {
+            deleted_at: null,
+            contracts: {
+                none: {
+                    status: "active",
+                    deleted_at: null,
+                },
+            },
+        },
         orderBy: { full_name: "asc" },
         select: {
             id: true,

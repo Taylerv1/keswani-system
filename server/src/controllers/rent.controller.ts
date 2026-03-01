@@ -1,6 +1,10 @@
 import { Response, NextFunction } from "express";
 import prisma from "../config/prisma";
 import { AuthenticatedRequest, ApiResponse } from "../types";
+import {
+    ensurePaymentSchedulesForActiveContracts,
+    markOverdueRentPayments,
+} from "../services/payment-schedule.service";
 
 const CONTRACT_ENDING_SOON_DAYS = 60;
 const RECENT_ACTIVITY_LIMIT = 10;
@@ -144,6 +148,9 @@ export const getRentOverview = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        await ensurePaymentSchedulesForActiveContracts();
+        await markOverdueRentPayments();
+
         const now = new Date();
         const endingCutoff = new Date(now);
         endingCutoff.setDate(endingCutoff.getDate() + CONTRACT_ENDING_SOON_DAYS);

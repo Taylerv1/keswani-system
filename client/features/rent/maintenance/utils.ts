@@ -24,16 +24,36 @@ export function uiStatusToBackend(status: MaintenanceStatus): BackendMaintenance
   return status;
 }
 
-export function backendPriorityToUi(priority: BackendMaintenancePriority): MaintenancePriority {
-  if (priority === "urgent" || priority === "critical") return "high";
-  if (priority === "medium") return "medium";
-  return "low";
+export function backendPriorityToUi(priority: BackendMaintenancePriority | string): MaintenancePriority {
+  const normalized = String(priority ?? "").trim().toLowerCase();
+
+  if (normalized === "critical" || normalized === "urgent" || normalized === "high") {
+    return "high";
+  }
+  if (normalized === "medium") {
+    return "medium";
+  }
+  if (normalized === "low") {
+    return "low";
+  }
+
+  return "medium";
 }
 
-export function uiPriorityToBackend(priority: MaintenancePriority): BackendMaintenancePriority {
-  if (priority === "high") return "high";
-  if (priority === "medium") return "medium";
-  return "low";
+export function uiPriorityToBackend(priority: MaintenancePriority | string): BackendMaintenancePriority {
+  const normalized = String(priority ?? "").trim().toLowerCase();
+
+  if (normalized === "critical" || normalized === "urgent" || normalized === "high") {
+    return "high";
+  }
+  if (normalized === "medium") {
+    return "medium";
+  }
+  if (normalized === "low") {
+    return "low";
+  }
+
+  return "medium";
 }
 
 function toNumber(value: string | number | null): number | null {
@@ -55,9 +75,7 @@ export function mapBackendMaintenance(item: BackendMaintenanceItem): Maintenance
     tenantId: item.requested_by ?? "",
     tenantName: item.requester_name ?? "",
     title: item.title,
-    titleAr: item.title,
     description: item.description,
-    descriptionAr: item.description,
     priority: backendPriorityToUi(item.priority),
     status: backendStatusToUi(item.status),
     createdAt,
@@ -73,9 +91,7 @@ export function createEmptyForm(): MaintenanceFormData {
     unitNumber: "",
     tenantId: "",
     title: "",
-    titleAr: "",
     description: "",
-    descriptionAr: "",
     priority: "medium",
     status: "open",
     createdAt: today,
@@ -121,7 +137,6 @@ export function filterMaintenanceRequests(
     items = items.filter(
       (request) =>
         request.title.toLowerCase().includes(query) ||
-        request.titleAr.includes(query) ||
         request.propertyName.toLowerCase().includes(query) ||
         request.tenantName.toLowerCase().includes(query) ||
         getPropertyName(properties, request.propertyId)

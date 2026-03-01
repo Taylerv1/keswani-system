@@ -267,7 +267,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 type="button"
                 onClick={() => setNotificationsOpen((prev) => !prev)}
                 className="relative w-9 h-9 rounded-lg border border-surface-border bg-background flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer"
-                aria-label="Notifications"
+                aria-label={t("notifications")}
                 aria-expanded={notificationsOpen}
                 aria-haspopup="menu"
               >
@@ -283,10 +283,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div
                   className={`absolute top-[calc(100%+10px)] z-[80] w-[min(350px,88vw)] rounded-xl border border-surface-border bg-surface shadow-lg overflow-hidden animate-fade-in-up ${dir === "rtl" ? "left-0" : "right-0"}`}
                   role="menu"
-                  aria-label="Notifications menu"
+                  aria-label={`${t("notifications")} menu`}
                 >
                   <div className="px-4 py-3 text-sm font-bold text-text-primary border-b border-surface-border">
-                    Notifications
+                    {t("notifications")}
                   </div>
 
                   {latestNotifications.length === 0 ? (
@@ -303,7 +303,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           onClick={() => handleNotificationClick(notification.id)}
                         >
                           <div className="flex items-center gap-2">
-                            <p className="m-0 text-[13px] font-semibold text-text-primary flex-1 leading-5">
+                            <p
+                              className={`m-0 text-[13px] ${notification.unread ? "font-semibold" : "font-normal"} text-text-primary flex-1 leading-5`}
+                            >
                               {notification.title}
                             </p>
                             {notification.unread && (
@@ -323,7 +325,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     onClick={handleSeeMoreNotifications}
                     className="w-full border-0 border-t border-surface-border bg-surface hover:bg-background text-primary text-xs font-semibold px-4 py-3 cursor-pointer"
                   >
-                    See more
+                    {t("seeMore")}
                   </button>
                 </div>
               )}
@@ -352,7 +354,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 />
 
                 <div className="px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-wide text-primary font-semibold">Email</p>
+                  <p className="text-[11px] uppercase tracking-wide text-primary font-semibold">{t("email")}</p>
                   <p className="mt-1 text-sm font-medium text-white truncate" title={userEmail}>
                     {userEmail}
                   </p>

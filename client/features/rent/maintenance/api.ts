@@ -2,6 +2,8 @@ import type {
   BackendMaintenanceItem,
   BackendMaintenancePriority,
   BackendMaintenanceStatus,
+  PropertyLookup,
+  Tenant,
   MaintenanceRequest,
 } from "./types";
 import {
@@ -25,6 +27,18 @@ export interface PaginatedResponse<T> {
   };
 }
 
+interface LookupClientsItem {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+}
+
+interface LookupResponse {
+  properties?: PropertyLookup[];
+  clients?: LookupClientsItem[];
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -37,7 +51,9 @@ async function fetchApi<T>(
 
   const data: ApiResponse<T> = await response.json();
   if (!response.ok || !data.success) {
-    throw new Error(data.error || `Request failed: ${response.status}`);
+    const details = (data as { details?: unknown }).details;
+    const detailsText = details ? ` | ${JSON.stringify(details)}` : "";
+    throw new Error((data.error || `Request failed: ${response.status}`) + detailsText);
   }
 
   return data;
@@ -86,6 +102,38 @@ export async function createMaintenanceRequest(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getMaintenanceLookups(): Promise<
+  ApiResponse<{ properties: PropertyLookup[]; tenants: Tenant[] }>
+> {
+  const response = await fetchApi<LookupResponse>(
+    "/api/lookups?resources=properties,clients",
+    { method: "GET" }
+  );
+
+  const properties = response.data?.properties ?? [];
+  const tenants: Tenant[] = (response.data?.clients ?? []).map((client) => ({
+    id: client.id,
+    name: client.full_name,
+    nameAr: client.full_name,
+    email: client.email ?? "",
+    phone: client.phone ?? "",
+    propertyId: "",
+    unitNumber: "",
+    contractId: "",
+    paymentStatus: "pending",
+    balance: 0,
+    joinDate: "",
+  }));
+
+  return {
+    ...response,
+    data: {
+      properties,
+      tenants,
+    },
+  };
 }
 
 export async function updateMaintenanceRequest(

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui";
 import type { TenantListItem } from "../types";
 import { formatNullable } from "../utils";
@@ -9,7 +9,6 @@ interface TenantMobileCardProps {
   tenant: TenantListItem;
   onView: (item: TenantListItem) => void;
   onEdit: (item: TenantListItem) => void;
-  onDelete: (id: string) => void;
   actionLoading: boolean;
   t: (key: string) => string;
 }
@@ -18,7 +17,6 @@ export function TenantMobileCard({
   tenant,
   onView,
   onEdit,
-  onDelete,
   actionLoading,
   t,
 }: TenantMobileCardProps) {
@@ -69,14 +67,6 @@ export function TenantMobileCard({
         >
           <Pencil size={14} />
           {t("edit")}
-        </button>
-        <button
-          onClick={() => onDelete(tenant.id)}
-          disabled={actionLoading}
-          className="h-9 px-3 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-sm font-medium cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Trash2 size={14} />
-          {t("delete")}
         </button>
       </div>
     </div>

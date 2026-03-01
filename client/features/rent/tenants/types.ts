@@ -44,6 +44,7 @@ export interface TenantPayment {
   amount: number | string;
   currency: string;
   payment_date: string;
+  paid_at: string | null;
   status: string;
   period_start: string | null;
   period_end: string | null;

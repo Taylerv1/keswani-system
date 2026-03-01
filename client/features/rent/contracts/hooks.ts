@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createContractClient,
   createContract,
-  deleteContract,
+  terminateContract,
 } from "./api";
 import type {
   ContractClientFormValues,
@@ -133,8 +133,10 @@ export function useContractState(t: TranslateFn) {
         rentStore.invalidateTenants();
         rentStore.invalidateProperties();
         rentStore.invalidateOverview();
+        rentStore.invalidateContractLookups();
         setPage(1);
         await fetchContractList({ force: true });
+        await fetchLookups({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -143,21 +145,23 @@ export function useContractState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchContractList, t]
+    [fetchContractList, fetchLookups, t]
   );
 
-  const deleteContractItem = useCallback(
+  const terminateContractItem = useCallback(
     async (id: string) => {
       try {
         setActionLoading(true);
         setError("");
 
-        await deleteContract(id);
+        await terminateContract(id);
         rentStore.invalidateContracts();
         rentStore.invalidateTenants();
         rentStore.invalidateProperties();
         rentStore.invalidateOverview();
+        rentStore.invalidateContractLookups();
         await fetchContractList({ force: true });
+        await fetchLookups({ force: true });
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -166,7 +170,7 @@ export function useContractState(t: TranslateFn) {
         setActionLoading(false);
       }
     },
-    [fetchContractList, t]
+    [fetchContractList, fetchLookups, t]
   );
 
   const createClientItem = useCallback(
@@ -231,7 +235,7 @@ export function useContractState(t: TranslateFn) {
     fetchContractList,
     fetchLookups,
     createContractItem,
-    deleteContractItem,
+    terminateContractItem,
     createClientItem,
   };
 }
@@ -239,7 +243,7 @@ export function useContractState(t: TranslateFn) {
 interface UseContractFormDeps {
   t: TranslateFn;
   createContractItem: (form: ContractFormValues) => Promise<boolean>;
-  deleteContractItem: (id: string) => Promise<boolean>;
+  terminateContractItem: (id: string) => Promise<boolean>;
   createClientItem: (
     payload: CreateContractClientInput
   ) => Promise<ClientLookupItem | null>;
@@ -250,7 +254,7 @@ interface UseContractFormDeps {
 export function useContractForm({
   t,
   createContractItem,
-  deleteContractItem,
+  terminateContractItem,
   createClientItem,
   properties,
   setError,
@@ -258,7 +262,7 @@ export function useContractForm({
   const [modalOpen, setModalOpen] = useState(false);
   const [createClientModalOpen, setCreateClientModalOpen] = useState(false);
   const [detailItem, setDetailItem] = useState<ContractListItem | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [terminateId, setTerminateId] = useState<string | null>(null);
   const [form, setForm] = useState<ContractFormValues>(EMPTY_CONTRACT_FORM);
   const [createClientForm, setCreateClientForm] = useState<ContractClientFormValues>(
     EMPTY_CONTRACT_CLIENT_FORM
@@ -303,12 +307,14 @@ export function useContractForm({
   const onPropertyChange = useCallback((propertyId: string) => {
     setForm((prev) => {
       const property = properties.find((item) => item.id === propertyId);
+      const isHouseProperty = property?.type === "house";
+      const houseUnitId = property?.units[0]?.id ?? "";
       const hasUnit = property?.units.some((unit) => unit.id === prev.unit_id) ?? false;
 
       return {
         ...prev,
         property_id: propertyId,
-        unit_id: hasUnit ? prev.unit_id : "",
+        unit_id: isHouseProperty ? houseUnitId : hasUnit ? prev.unit_id : "",
       };
     });
   }, [properties]);
@@ -356,19 +362,19 @@ export function useContractForm({
     return true;
   }, [createClientForm, createClientItem, setError, t]);
 
-  const handleDelete = useCallback(async () => {
-    if (!deleteId) return false;
+  const handleTerminate = useCallback(async () => {
+    if (!terminateId) return false;
 
-    const success = await deleteContractItem(deleteId);
+    const success = await terminateContractItem(terminateId);
     if (success) {
-      setDeleteId(null);
-      if (detailItem?.id === deleteId) {
+      setTerminateId(null);
+      if (detailItem?.id === terminateId) {
         setDetailItem(null);
       }
     }
 
     return success;
-  }, [deleteContractItem, deleteId, detailItem?.id]);
+  }, [detailItem?.id, terminateContractItem, terminateId]);
 
   const hydratePropertyFromDetail = useCallback(() => {
     if (!detailItem) return;
@@ -390,8 +396,8 @@ export function useContractForm({
     setCreateClientModalOpen,
     detailItem,
     setDetailItem,
-    deleteId,
-    setDeleteId,
+    terminateId,
+    setTerminateId,
     form,
     setForm,
     createClientForm,
@@ -407,7 +413,7 @@ export function useContractForm({
     availableUnits,
     handleSave,
     handleCreateClient,
-    handleDelete,
+    handleTerminate,
     hydratePropertyFromDetail,
   };
 }

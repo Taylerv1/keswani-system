@@ -3,7 +3,6 @@ import { MaintenanceTableRow } from "./MaintenanceTableRow";
 
 interface MaintenanceTableProps {
   requests: MaintenanceRequest[];
-  locale: string;
   resolvePropertyName: (id: string) => string;
   resolveTenantName: (id: string) => string;
   onEdit: (request: MaintenanceRequest) => void;
@@ -13,7 +12,6 @@ interface MaintenanceTableProps {
 
 export function MaintenanceTable({
   requests,
-  locale,
   resolvePropertyName,
   resolveTenantName,
   onEdit,
@@ -47,7 +45,6 @@ export function MaintenanceTable({
               <MaintenanceTableRow
                 key={request.id}
                 request={request}
-                locale={locale}
                 propertyName={resolvePropertyName(request.propertyId)}
                 tenantName={resolveTenantName(request.tenantId)}
                 onEdit={onEdit}

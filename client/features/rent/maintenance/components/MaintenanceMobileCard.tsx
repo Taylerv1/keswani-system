@@ -3,7 +3,6 @@ import type { MaintenanceRequest, TranslateFn } from "../types";
 
 interface MaintenanceMobileCardProps {
   request: MaintenanceRequest;
-  locale: string;
   propertyName: string;
   onEdit: (request: MaintenanceRequest) => void;
   onDelete: (id: string) => void;
@@ -12,7 +11,6 @@ interface MaintenanceMobileCardProps {
 
 export function MaintenanceMobileCard({
   request,
-  locale,
   propertyName,
   onEdit,
   onDelete,
@@ -26,12 +24,8 @@ export function MaintenanceMobileCard({
             <Wrench size={16} />
           </div>
           <div className="min-w-0">
-            <div className="font-medium text-text-primary">
-              {locale === "ar" ? request.titleAr : request.title}
-            </div>
-            <div className="text-xs text-text-secondary truncate">
-              {locale === "ar" ? request.descriptionAr : request.description}
-            </div>
+            <div className="font-medium text-text-primary">{request.title}</div>
+            <div className="text-xs text-text-secondary truncate">{request.description}</div>
           </div>
         </div>
         <div className="text-xs text-text-secondary">{request.createdAt}</div>

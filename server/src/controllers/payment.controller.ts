@@ -7,6 +7,11 @@ import {
     paymentQuerySchema,
 } from "../validators/payment.validator";
 import { AuthenticatedRequest, ApiResponse } from "../types";
+import {
+    createNextInstallmentIfNeeded,
+    ensurePaymentSchedulesForActiveContracts,
+    markOverdueRentPayments,
+} from "../services/payment-schedule.service";
 
 // Shared include for enriched payment responses
 const paymentInclude = {
@@ -34,6 +39,73 @@ const paymentInclude = {
     },
 } as const;
 
+const SETTLED_PAYMENT_STATUSES = new Set(["paid", "partial"]);
+const QUEUE_PAYMENT_STATUSES = ["pending", "overdue", "partial"] as const;
+const HISTORY_PAYMENT_STATUSES = ["paid", "cancelled"] as const;
+
+function isSettledStatus(status: string): status is "paid" | "partial" {
+    return SETTLED_PAYMENT_STATUSES.has(status);
+}
+
+function parseDateOnly(value: string): Date {
+    return new Date(`${value}T00:00:00.000Z`);
+}
+
+function getTodayDateOnly(): Date {
+    return parseDateOnly(new Date().toISOString().slice(0, 10));
+}
+
+function pad2(value: number): string {
+    return String(value).padStart(2, "0");
+}
+
+function buildReceiptNumberCandidate(now = new Date()): string {
+    const year = now.getUTCFullYear();
+    const month = pad2(now.getUTCMonth() + 1);
+    const day = pad2(now.getUTCDate());
+    const hours = pad2(now.getUTCHours());
+    const minutes = pad2(now.getUTCMinutes());
+    const seconds = pad2(now.getUTCSeconds());
+    const randomSuffix = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+
+    return `RCPT-${year}${month}${day}-${hours}${minutes}${seconds}-${randomSuffix}`;
+}
+
+function normalizeOptionalText(
+    value: string | undefined | null
+): string | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+}
+
+async function ensureUniqueReceiptNumber(
+    receiptNumber: string,
+    excludePaymentId?: string
+): Promise<boolean> {
+    const existing = await prisma.rent_payments.findFirst({
+        where: {
+            deleted_at: null,
+            receipt_number: receiptNumber,
+            ...(excludePaymentId ? { id: { not: excludePaymentId } } : {}),
+        },
+        select: { id: true },
+    });
+
+    return !existing;
+}
+
+async function generateUniqueReceiptNumber(excludePaymentId?: string): Promise<string> {
+    for (let attempt = 0; attempt < 25; attempt += 1) {
+        const candidate = buildReceiptNumberCandidate();
+        const isUnique = await ensureUniqueReceiptNumber(candidate, excludePaymentId);
+        if (isUnique) return candidate;
+    }
+
+    throw new Error("Failed to generate a unique receipt number");
+}
+
 /**
  * GET /api/payments
  * List rent payments with status filter, search, pagination.
@@ -45,21 +117,40 @@ export const getPayments = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        await ensurePaymentSchedulesForActiveContracts();
+        await markOverdueRentPayments();
+
         const parsed = paymentQuerySchema.safeParse(req.query);
         if (!parsed.success) {
             res.status(400).json({ success: false, error: "Invalid query params", details: parsed.error.flatten().fieldErrors });
             return;
         }
 
-        const { page, limit, search, status } = parsed.data;
+        const { page, limit, search, status, view } = parsed.data;
         const skip = (page - 1) * limit;
 
         const where: Prisma.rent_paymentsWhereInput = { deleted_at: null };
-        if (status) where.status = status;
+        const scopedStatuses =
+            view === "queue"
+                ? QUEUE_PAYMENT_STATUSES
+                : view === "history"
+                    ? HISTORY_PAYMENT_STATUSES
+                    : null;
+
+        if (status && scopedStatuses) {
+            where.AND = [{ status: { in: [...scopedStatuses] } }, { status }];
+        } else if (status) {
+            where.status = status;
+        } else if (scopedStatuses) {
+            where.status = { in: [...scopedStatuses] };
+        }
         if (search) {
             where.OR = [
                 { contract: { client: { full_name: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } },
                 { receipt_number: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { manual_receipt_ref: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { contract: { unit: { property: { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } } },
+                { contract: { unit: { unit_number: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } },
             ];
         }
 
@@ -68,7 +159,7 @@ export const getPayments = async (
                 where,
                 skip,
                 take: limit,
-                orderBy: { payment_date: "desc" },
+                orderBy: [{ period_start: "desc" }, { payment_date: "desc" }],
                 include: paymentInclude,
             }),
             prisma.rent_payments.count({ where }),
@@ -77,7 +168,7 @@ export const getPayments = async (
         // Compute KPI summary (across all payments, not just current page)
         const [paidAgg, overdueCount, activeRentAgg] = await Promise.all([
             prisma.rent_payments.aggregate({
-                where: { status: "paid", deleted_at: null },
+                where: { status: { in: ["paid", "partial"] }, deleted_at: null },
                 _sum: { amount: true },
             }),
             prisma.rent_payments.count({
@@ -96,16 +187,19 @@ export const getPayments = async (
             client_name: p.contract.client.full_name,
             property_name: p.contract.unit.property.name,
             unit_number: p.contract.unit.unit_number,
-            amount: p.amount,
+            amount: Number(p.amount),
             currency: p.currency,
+            // payment_date is due date (installment due date)
             payment_date: p.payment_date,
+            // paid_at is the actual collected date
+            paid_at: p.paid_at,
             period_start: p.period_start,
             period_end: p.period_end,
-            payment_method: p.payment_method,
             status: p.status,
             received_by: p.received_by,
             receiver_name: p.receiver?.full_name || null,
             receipt_number: p.receipt_number,
+            manual_receipt_ref: p.manual_receipt_ref,
             notes: p.notes,
             created_at: p.created_at,
             updated_at: p.updated_at,
@@ -138,6 +232,8 @@ export const getPaymentById = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        await markOverdueRentPayments();
+
         const id = req.params.id as string;
 
         const payment = await prisma.rent_payments.findFirst({
@@ -188,25 +284,67 @@ export const createPayment = async (
             return;
         }
 
-        // Auto-set the receiver to the logged-in employee
-        const receivedBy = req.user?.user_type === "employee" ? req.user.profile_id : null;
+        const status = data.status;
+        const manualReceiptRef = normalizeOptionalText(data.manual_receipt_ref) ?? null;
+        let receiptNumber = normalizeOptionalText(data.receipt_number) ?? null;
+
+        if (receiptNumber) {
+            const isUnique = await ensureUniqueReceiptNumber(receiptNumber);
+            if (!isUnique) {
+                res.status(409).json({ success: false, error: "Receipt number already exists" });
+                return;
+            }
+        }
+        if (isSettledStatus(status) && !receiptNumber) {
+            receiptNumber = await generateUniqueReceiptNumber();
+        }
+
+        const periodStart = data.period_start ? parseDateOnly(data.period_start) : null;
+        const periodEnd = data.period_end ? parseDateOnly(data.period_end) : null;
+        if (periodStart && periodEnd && periodStart > periodEnd) {
+            res.status(400).json({ success: false, error: "period_start must be before or equal to period_end" });
+            return;
+        }
+
+        const dueDate = data.payment_date
+            ? parseDateOnly(data.payment_date)
+            : periodEnd || getTodayDateOnly();
+        const parsedPaidAt = data.paid_at ? parseDateOnly(data.paid_at) : null;
+        const paidAt = isSettledStatus(status)
+            ? parsedPaidAt || getTodayDateOnly()
+            : null;
+
+        // Auto-set the receiver to the logged-in employee for settled cash payments
+        const receivedBy = isSettledStatus(status) && req.user?.user_type === "employee"
+            ? req.user.profile_id
+            : null;
 
         const payment = await prisma.rent_payments.create({
             data: {
                 contract_id: data.contract_id,
                 amount: data.amount,
                 currency: data.currency,
-                payment_date: new Date(data.payment_date),
-                period_start: data.period_start ? new Date(data.period_start) : null,
-                period_end: data.period_end ? new Date(data.period_end) : null,
-                payment_method: data.payment_method,
-                status: data.status,
+                payment_date: dueDate,
+                paid_at: paidAt,
+                period_start: periodStart,
+                period_end: periodEnd,
+                payment_method: "cash",
+                status,
                 received_by: receivedBy,
-                receipt_number: data.receipt_number,
+                receipt_number: receiptNumber,
+                manual_receipt_ref: manualReceiptRef,
                 notes: data.notes,
             },
             include: paymentInclude,
         });
+
+        if (status === "paid") {
+            await createNextInstallmentIfNeeded(contract.id, {
+                period_start: payment.period_start,
+                period_end: payment.period_end,
+                payment_date: payment.payment_date,
+            });
+        }
 
         res.status(201).json({
             success: true,
@@ -232,6 +370,17 @@ export const updatePayment = async (
 
         const existing = await prisma.rent_payments.findFirst({
             where: { id, deleted_at: null },
+            select: {
+                id: true,
+                contract_id: true,
+                status: true,
+                receipt_number: true,
+                manual_receipt_ref: true,
+                payment_date: true,
+                paid_at: true,
+                period_start: true,
+                period_end: true,
+            },
         });
         if (!existing) {
             res.status(404).json({ success: false, error: "Payment not found" });
@@ -245,22 +394,74 @@ export const updatePayment = async (
         }
 
         const data = parsed.data;
-        const updateData: Record<string, unknown> = {};
+        const nextStatus = data.status ?? existing.status;
+        const normalizedReceiptInput = data.receipt_number !== undefined
+            ? normalizeOptionalText(data.receipt_number)
+            : undefined;
+        const normalizedManualReceiptInput = data.manual_receipt_ref !== undefined
+            ? normalizeOptionalText(data.manual_receipt_ref)
+            : undefined;
+
+        let nextReceiptNumber = normalizedReceiptInput !== undefined
+            ? normalizedReceiptInput
+            : existing.receipt_number;
+
+        if (isSettledStatus(nextStatus) && !nextReceiptNumber) {
+            nextReceiptNumber = await generateUniqueReceiptNumber(existing.id);
+        }
+
+        if (
+            nextReceiptNumber &&
+            nextReceiptNumber !== existing.receipt_number
+        ) {
+            const isUnique = await ensureUniqueReceiptNumber(nextReceiptNumber, existing.id);
+            if (!isUnique) {
+                res.status(409).json({ success: false, error: "Receipt number already exists" });
+                return;
+            }
+        }
+
+        const updateData: Prisma.rent_paymentsUncheckedUpdateInput = {};
         if (data.amount !== undefined) updateData.amount = data.amount;
         if (data.currency !== undefined) updateData.currency = data.currency;
-        if (data.payment_date !== undefined) updateData.payment_date = new Date(data.payment_date);
-        if (data.period_start !== undefined) updateData.period_start = data.period_start ? new Date(data.period_start) : null;
-        if (data.period_end !== undefined) updateData.period_end = data.period_end ? new Date(data.period_end) : null;
-        if (data.payment_method !== undefined) updateData.payment_method = data.payment_method;
+        // payment_date is due date
+        if (data.payment_date !== undefined) updateData.payment_date = parseDateOnly(data.payment_date);
+        if (data.paid_at !== undefined) updateData.paid_at = data.paid_at ? parseDateOnly(data.paid_at) : null;
+        if (data.period_start !== undefined) updateData.period_start = data.period_start ? parseDateOnly(data.period_start) : null;
+        if (data.period_end !== undefined) updateData.period_end = data.period_end ? parseDateOnly(data.period_end) : null;
         if (data.status !== undefined) updateData.status = data.status;
-        if (data.receipt_number !== undefined) updateData.receipt_number = data.receipt_number;
+        if (nextReceiptNumber !== existing.receipt_number) updateData.receipt_number = nextReceiptNumber;
+        if (normalizedManualReceiptInput !== undefined) updateData.manual_receipt_ref = normalizedManualReceiptInput;
         if (data.notes !== undefined) updateData.notes = data.notes;
+        updateData.payment_method = "cash";
+
+        const transitionedToPaid = existing.status !== "paid" && nextStatus === "paid";
+        if (transitionedToPaid && data.paid_at === undefined) {
+            updateData.paid_at = getTodayDateOnly();
+        }
+        if (transitionedToPaid && req.user?.user_type === "employee") {
+            updateData.received_by = req.user.profile_id;
+        }
+
+        // If payment status is moved back to unsettled, clear actual paid date.
+        if (!isSettledStatus(nextStatus)) {
+            updateData.paid_at = null;
+            updateData.received_by = null;
+        }
 
         const payment = await prisma.rent_payments.update({
             where: { id },
             data: updateData,
             include: paymentInclude,
         });
+
+        if (transitionedToPaid) {
+            await createNextInstallmentIfNeeded(existing.contract_id, {
+                period_start: payment.period_start,
+                period_end: payment.period_end,
+                payment_date: payment.payment_date,
+            });
+        }
 
         res.json({
             success: true,

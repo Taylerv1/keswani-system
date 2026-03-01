@@ -68,7 +68,6 @@ export interface ElecPayment {
   subscriberId: string;
   amount: number;
   date: string;
-  method: "cash" | "bank_transfer";
   collectedBy: string | null;
   receiptNumber: string;
 }

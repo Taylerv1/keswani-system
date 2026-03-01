@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { FileDown, Eye, Receipt } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useElectricity } from "@/features/electricity/context/electricity-context";
@@ -19,12 +19,15 @@ export default function BillsPage() {
   const [page, setPage] = useState(1);
   const [detailBill, setDetailBill] = useState<ElecBill | null>(null);
 
-  const getSubscriberName = (id: string) => {
+  const getSubscriberName = useCallback((id: string) => {
     const s = data.subscribers.find((x) => x.id === id);
     return s ? (locale === "ar" ? s.nameAr : s.name) : id;
-  };
+  }, [data.subscribers, locale]);
 
-  const getMeterNumber = (id: string) => data.meters.find((m) => m.id === id)?.meterNumber ?? id;
+  const getMeterNumber = useCallback(
+    (id: string) => data.meters.find((m) => m.id === id)?.meterNumber ?? id,
+    [data.meters]
+  );
 
   const months = useMemo(() => {
     const ms = new Set(data.bills.map((b) => b.month));
@@ -42,7 +45,7 @@ export default function BillsPage() {
     if (filterStatus !== "all") items = items.filter((b) => b.status === filterStatus);
     if (filterMonth !== "all") items = items.filter((b) => b.month === filterMonth);
     return items;
-  }, [data.bills, search, filterStatus, filterMonth, data.subscribers, data.meters, locale]);
+  }, [data.bills, search, filterStatus, filterMonth, getSubscriberName, getMeterNumber]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -200,7 +203,7 @@ export default function BillsPage() {
                   {payments.map((p) => (
                     <div key={p.id} className="flex items-center justify-between bg-card-green-light rounded-lg px-3 py-2 mb-1">
                       <span className="text-sm text-text-primary">${p.amount.toFixed(2)}</span>
-                      <span className="text-xs text-text-muted">{p.date} - {t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</span>
+                      <span className="text-xs text-text-muted">{p.date}</span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-surface-border">

@@ -17,17 +17,13 @@ import {
 export default function ElectricityHistoryPage() {
     const { t } = useTranslation();
     const { data } = useCustomer();
-
-    if (!data.electricity) {
-        return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <p className="text-text-secondary">{t("noData")}</p>
-            </div>
-        );
-    }
-
-    const { readings, bills, payments, currentPricePerKwh, meterId, meterType } =
-        data.electricity;
+    const electricity = data.electricity;
+    const readings = useMemo(() => electricity?.readings ?? [], [electricity]);
+    const bills = useMemo(() => electricity?.bills ?? [], [electricity]);
+    const payments = useMemo(() => electricity?.payments ?? [], [electricity]);
+    const currentPricePerKwh = electricity?.currentPricePerKwh ?? 0;
+    const meterId = electricity?.meterId ?? "";
+    const meterType = electricity?.meterType ?? "";
 
     const totalOutstanding = bills
         .filter((b) => b.status === "unpaid" || b.status === "partial")
@@ -43,6 +39,14 @@ export default function ElectricityHistoryPage() {
         [readings]
     );
     const maxConsumption = Math.max(...consumptionData.map((c) => c.value), 1);
+
+    if (!electricity) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <p className="text-text-secondary">{t("noData")}</p>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -209,9 +213,6 @@ export default function ElectricityHistoryPage() {
                                         {t("date")}
                                     </th>
                                     <th className="text-start px-4 py-3 font-semibold text-text-secondary">
-                                        {t("paymentMethod")}
-                                    </th>
-                                    <th className="text-start px-4 py-3 font-semibold text-text-secondary">
                                         {t("collectedBy")}
                                     </th>
                                 </tr>
@@ -229,9 +230,6 @@ export default function ElectricityHistoryPage() {
                                             ${p.amount.toFixed(2)}
                                         </td>
                                         <td className="px-4 py-3 text-text-secondary">{p.date}</td>
-                                        <td className="px-4 py-3 text-text-secondary">
-                                            {t(p.method === "bank_transfer" ? "bankTransfer" : p.method)}
-                                        </td>
                                         <td className="px-4 py-3 text-text-secondary">
                                             {p.collectedBy}
                                         </td>
@@ -256,9 +254,8 @@ export default function ElectricityHistoryPage() {
                                     </div>
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-text-muted font-mono truncate mr-2">{p.billId}</span>
-                                        <span className="text-text-secondary whitespace-nowrap">{t(p.method === "bank_transfer" ? "bankTransfer" : p.method)}</span>
+                                        <span className="text-text-secondary whitespace-nowrap">{p.collectedBy}</span>
                                     </div>
-                                    <div className="text-xs text-text-muted">{p.collectedBy}</div>
                                 </div>
                             ))
                         )}

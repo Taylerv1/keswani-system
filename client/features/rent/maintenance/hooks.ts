@@ -4,32 +4,40 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createMaintenanceRequest,
   deleteMaintenanceRequest,
-  getMaintenanceRequests,
   updateMaintenanceRequest,
 } from "./api";
-import type { MaintenanceFormData, MaintenanceRequest, Property, Tenant } from "./types";
+import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant } from "./types";
+import { rentStore } from "../store";
 import {
   PAGE_SIZE,
   createEmptyForm,
   filterMaintenanceRequests,
-  getPropertyName,
   getTenantName,
   uiPriorityToBackend,
   uiStatusToBackend,
 } from "./utils";
 
 interface UseMaintenanceStateInput {
-  properties: Property[];
   tenants: Tenant[];
   locale: string;
 }
 
+const UUID_V4_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function asUuid(value?: string): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return UUID_V4_REGEX.test(trimmed) ? trimmed : undefined;
+}
+
 export function useMaintenanceState({
-  properties,
   tenants,
   locale,
 }: UseMaintenanceStateInput) {
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [propertyOptions, setPropertyOptions] = useState<PropertyLookup[]>([]);
+  const [tenantOptions, setTenantOptions] = useState<Tenant[]>(tenants);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
@@ -38,33 +46,75 @@ export function useMaintenanceState({
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchMaintenance = useCallback(async () => {
+  const fetchLookupOptions = useCallback(async (options?: { force?: boolean }) => {
+    if (!options?.force) {
+      const cached = rentStore.getMaintenanceLookupsSnapshot();
+      if (cached) {
+        setPropertyOptions(cached.properties);
+        setTenantOptions(cached.tenants);
+        setLookupLoading(false);
+        return;
+      }
+    }
+
+    try {
+      setLookupLoading(true);
+      const { data } = await rentStore.loadMaintenanceLookups({
+        force: options?.force,
+      });
+      setPropertyOptions(data.properties);
+      setTenantOptions(data.tenants);
+    } catch {
+      setPropertyOptions([]);
+      setTenantOptions(tenants);
+    } finally {
+      setLookupLoading(false);
+    }
+  }, [tenants]);
+
+  const fetchMaintenance = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      status:
+        filterStatus === "all"
+          ? undefined
+          : uiStatusToBackend(filterStatus as "open" | "in_progress" | "completed" | "closed"),
+      priority:
+        filterPriority === "all"
+          ? undefined
+          : uiPriorityToBackend(filterPriority as "high" | "medium" | "low"),
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getMaintenanceSnapshot(query);
+      if (cached) {
+        setError("");
+        setMaintenanceRequests(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        setHasLoadedOnce(true);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await getMaintenanceRequests({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        status:
-          filterStatus === "all"
-            ? undefined
-            : uiStatusToBackend(filterStatus as "open" | "in_progress" | "completed" | "closed"),
-        priority:
-          filterPriority === "all"
-            ? undefined
-            : uiPriorityToBackend(filterPriority as "high" | "medium" | "low"),
+      const { data } = await rentStore.loadMaintenance(query, {
+        force: options?.force,
       });
 
-      const items = response.data?.items ?? [];
-      const pagination = response.data?.pagination;
-
-      setMaintenanceRequests(items);
-      setTotalItems(pagination?.total ?? items.length);
-      setTotalPages(Math.max(1, pagination?.total_pages ?? 1));
+      setMaintenanceRequests(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch maintenance requests");
       setMaintenanceRequests([]);
@@ -72,12 +122,17 @@ export function useMaintenanceState({
       setTotalPages(1);
     } finally {
       setLoading(false);
+      setHasLoadedOnce(true);
     }
   }, [filterPriority, filterStatus, page, search]);
 
   useEffect(() => {
     void fetchMaintenance();
   }, [fetchMaintenance]);
+
+  useEffect(() => {
+    void fetchLookupOptions();
+  }, [fetchLookupOptions]);
 
   const filtered = useMemo(
     () =>
@@ -86,8 +141,8 @@ export function useMaintenanceState({
         search,
         filterStatus,
         filterPriority,
-        properties,
-        tenants,
+        [],
+          tenantOptions,
         locale
       ),
     [
@@ -95,9 +150,8 @@ export function useMaintenanceState({
       filterStatus,
       locale,
       maintenanceRequests,
-      properties,
       search,
-      tenants,
+      tenantOptions,
     ]
   );
 
@@ -110,8 +164,11 @@ export function useMaintenanceState({
         next.set(item.propertyId, item.propertyName);
       }
     });
+    propertyOptions.forEach((item) => {
+      next.set(item.id, item.name);
+    });
     return next;
-  }, [maintenanceRequests]);
+  }, [maintenanceRequests, propertyOptions]);
 
   const tenantNameMap = useMemo(() => {
     const next = new Map<string, string>();
@@ -123,16 +180,26 @@ export function useMaintenanceState({
     return next;
   }, [maintenanceRequests]);
 
-  const resolvePropertyName = (id: string) => {
-    const fromContext = getPropertyName(properties, id);
-    if (fromContext !== id) return fromContext;
-    return propertyNameMap.get(id) || id;
-  };
+  const resolvePropertyName = (id: string) => propertyNameMap.get(id) || id;
 
   const resolveTenantName = (id: string) => {
-    const fromContext = getTenantName(tenants, id, locale);
+    const fromContext = getTenantName(tenantOptions, id, locale);
     if (fromContext !== id) return fromContext;
     return tenantNameMap.get(id) || id;
+  };
+
+  const resolveUnitId = (propertyId: string, unitNumber: string) => {
+    const property = propertyOptions.find((item) => item.id === propertyId);
+    if (!property) return null;
+    if (property.type === "house") {
+      return property.units[0]?.id ?? null;
+    }
+    const normalized = unitNumber.trim().toLowerCase();
+    if (!normalized) return null;
+    const unit = property.units.find(
+      (item) => item.unit_number.trim().toLowerCase() === normalized
+    );
+    return unit?.id ?? null;
   };
 
   const createMaintenanceItem = useCallback(
@@ -149,13 +216,15 @@ export function useMaintenanceState({
         setError("");
         await createMaintenanceRequest({
           unit_id: payload.unitId,
-          requested_by: payload.tenantId || undefined,
+          requested_by: asUuid(payload.tenantId),
           title: payload.title,
           description: payload.description,
           priority: uiPriorityToBackend(payload.priority),
           estimated_cost: payload.cost ?? undefined,
         });
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create maintenance request");
@@ -185,14 +254,16 @@ export function useMaintenanceState({
         setError("");
         await updateMaintenanceRequest(id, {
           unit_id: payload.unitId,
-          requested_by: payload.tenantId ?? null,
+          requested_by: asUuid(payload.tenantId) ?? null,
           title: payload.title,
           description: payload.description,
           priority: payload.priority ? uiPriorityToBackend(payload.priority) : undefined,
           status: payload.status ? uiStatusToBackend(payload.status) : undefined,
           actual_cost: payload.cost ?? undefined,
         });
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to update maintenance request");
@@ -210,7 +281,9 @@ export function useMaintenanceState({
         setActionLoading(true);
         setError("");
         await deleteMaintenanceRequest(id);
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to delete maintenance request");
@@ -226,6 +299,8 @@ export function useMaintenanceState({
     PAGE_SIZE,
     loading,
     actionLoading,
+    lookupLoading,
+    hasLoadedOnce,
     error,
     setError,
     search,
@@ -241,8 +316,11 @@ export function useMaintenanceState({
     totalItems,
     totalPages,
     fetchMaintenance,
+    propertyOptions,
+    tenantOptions,
     resolvePropertyName,
     resolveTenantName,
+    resolveUnitId,
     createMaintenanceItem,
     updateMaintenanceItem,
     removeMaintenanceItem,
@@ -285,6 +363,7 @@ export function useMaintenanceForm({
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<MaintenanceRequest | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [form, setForm] = useState<MaintenanceFormData>(createEmptyForm());
 
   const resetForm = () => {
@@ -304,9 +383,7 @@ export function useMaintenanceForm({
       unitNumber: request.unitNumber,
       tenantId: request.tenantId,
       title: request.title,
-      titleAr: request.titleAr,
       description: request.description,
-      descriptionAr: request.descriptionAr,
       priority: request.priority,
       status: request.status,
       createdAt: request.createdAt,
@@ -317,7 +394,11 @@ export function useMaintenanceForm({
   };
 
   const handleSave = async () => {
-    const unitId = resolveUnitId(form.propertyId, form.unitNumber);
+    setError("");
+
+    const resolvedUnitId = resolveUnitId(form.propertyId, form.unitNumber);
+    const unitId = resolvedUnitId ?? (editItem ? editItem.unitId : null);
+
     if (!unitId) {
       setError("Unit not found for selected property and unit number");
       return;
@@ -361,10 +442,16 @@ export function useMaintenanceForm({
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const success = await removeMaintenanceItem(deleteId);
-    if (!success) return;
-    setDeleteId(null);
+    if (!deleteId || deleteLoading) return;
+
+    try {
+      setDeleteLoading(true);
+      const success = await removeMaintenanceItem(deleteId);
+      if (!success) return;
+      setDeleteId(null);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return {
@@ -372,6 +459,7 @@ export function useMaintenanceForm({
     setModalOpen,
     editItem,
     deleteId,
+    deleteLoading,
     setDeleteId,
     form,
     setForm,

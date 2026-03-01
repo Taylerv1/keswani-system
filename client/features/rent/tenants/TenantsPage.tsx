@@ -3,7 +3,6 @@
 import { FileDown, Plus } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import {
-  ConfirmDialog,
   LoadingLottie,
   Pagination,
   SearchBar,
@@ -101,7 +100,6 @@ export function TenantsPage() {
             actionLoading={state.actionLoading}
             onView={(tenant) => void form.openView(tenant)}
             onEdit={form.openEdit}
-            onDelete={form.setDeleteId}
             t={t}
           />
 
@@ -117,7 +115,6 @@ export function TenantsPage() {
                   tenant={tenant}
                   onView={(item) => void form.openView(item)}
                   onEdit={form.openEdit}
-                  onDelete={form.setDeleteId}
                   actionLoading={state.actionLoading}
                   t={t}
                 />
@@ -153,16 +150,6 @@ export function TenantsPage() {
         tenant={form.detailData}
         onClose={form.closeView}
         t={t}
-      />
-
-      <ConfirmDialog
-        open={Boolean(form.deleteId)}
-        onClose={() => form.setDeleteId(null)}
-        onConfirm={async () => {
-          await form.handleDelete();
-        }}
-        loading={state.actionLoading}
-        confirmWord="DELETE"
       />
     </div>
   );
