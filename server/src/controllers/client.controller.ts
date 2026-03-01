@@ -165,6 +165,7 @@ export const getClientById = async (
                                 amount: true,
                                 currency: true,
                                 payment_date: true,
+                                paid_at: true,
                                 status: true,
                                 period_start: true,
                                 period_end: true,
@@ -330,7 +331,8 @@ export const updateClient = async (
 
 /**
  * DELETE /api/clients/:id
- * Soft delete — only if no active contracts.
+ * Soft delete — only if the client has no contract history.
+ * Legal/accounting history must remain intact once contracts exist.
  */
 export const deleteClient = async (
     req: AuthenticatedRequest,
@@ -348,14 +350,15 @@ export const deleteClient = async (
             return;
         }
 
-        const activeContracts = await prisma.contracts.count({
-            where: { client_id: id, status: "active", deleted_at: null },
+        const contractHistoryCount = await prisma.contracts.count({
+            where: { client_id: id, deleted_at: null },
         });
 
-        if (activeContracts > 0) {
+        if (contractHistoryCount > 0) {
             res.status(409).json({
                 success: false,
-                error: `Cannot delete: client has ${activeContracts} active contract(s). Terminate or expire them first.`,
+                error:
+                    "Cannot delete tenant: contract history exists. Keep tenant record for legal/accounting tracking.",
             });
             return;
         }
