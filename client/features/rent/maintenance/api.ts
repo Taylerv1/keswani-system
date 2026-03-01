@@ -32,6 +32,9 @@ interface LookupClientsItem {
   full_name: string;
   email: string | null;
   phone: string | null;
+  contract_id?: string | null;
+  property_id?: string | null;
+  unit_number?: string | null;
 }
 
 interface LookupResponse {
@@ -108,7 +111,7 @@ export async function getMaintenanceLookups(): Promise<
   ApiResponse<{ properties: PropertyLookup[]; tenants: Tenant[] }>
 > {
   const response = await fetchApi<LookupResponse>(
-    "/api/lookups?resources=properties,clients",
+    "/api/lookups?resources=properties,clients&context=maintenance",
     { method: "GET" }
   );
 
@@ -119,9 +122,9 @@ export async function getMaintenanceLookups(): Promise<
     nameAr: client.full_name,
     email: client.email ?? "",
     phone: client.phone ?? "",
-    propertyId: "",
-    unitNumber: "",
-    contractId: "",
+    propertyId: client.property_id ?? "",
+    unitNumber: client.unit_number ?? "",
+    contractId: client.contract_id ?? "",
     paymentStatus: "pending",
     balance: 0,
     joinDate: "",

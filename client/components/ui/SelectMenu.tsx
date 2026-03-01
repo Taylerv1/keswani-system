@@ -19,6 +19,7 @@ interface SelectMenuProps {
   noResultsLabel: string;
   addActionLabel?: string;
   onAddAction?: () => void;
+  menuMaxHeight?: number;
 }
 
 export default function SelectMenu({
@@ -31,6 +32,7 @@ export default function SelectMenu({
   noResultsLabel,
   addActionLabel,
   onAddAction,
+  menuMaxHeight = 224,
 }: SelectMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -73,7 +75,7 @@ export default function SelectMenu({
     const horizontalPadding = 8;
     const verticalGap = 4;
     const minVisibleHeight = 140;
-    const preferredHeight = 224;
+    const preferredHeight = menuMaxHeight;
 
     const width = Math.min(rect.width, viewportWidth - horizontalPadding * 2);
     const left = Math.max(
@@ -104,7 +106,7 @@ export default function SelectMenu({
       top: rect.bottom + verticalGap,
       maxHeight,
     });
-  }, []);
+  }, [menuMaxHeight]);
 
   useEffect(() => {
     if (!open) return;

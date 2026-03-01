@@ -39,6 +39,77 @@ export function MaintenanceFormModal({
   );
   const [isSaving, setIsSaving] = useState(false);
 
+  const findTenantByPropertyAndUnit = (propertyId: string, unitNumber: string) => {
+    const normalizedUnit = unitNumber.trim().toLowerCase();
+    if (!propertyId || !normalizedUnit) return undefined;
+    return tenants.find(
+      (tenant) =>
+        tenant.propertyId === propertyId &&
+        tenant.unitNumber.trim().toLowerCase() === normalizedUnit
+    );
+  };
+
+  const handleTenantChange = (tenantId: string) => {
+    setForm((prev) => {
+      const selectedTenant = tenants.find((tenant) => tenant.id === tenantId);
+      if (!selectedTenant || !selectedTenant.propertyId) {
+        return { ...prev, tenantId };
+      }
+
+      const tenantProperty = properties.find(
+        (property) => property.id === selectedTenant.propertyId
+      );
+
+      const nextUnitNumber =
+        tenantProperty?.type === "house"
+          ? tenantProperty.units[0]?.unit_number ?? selectedTenant.unitNumber
+          : selectedTenant.unitNumber;
+
+      return {
+        ...prev,
+        tenantId,
+        propertyId: selectedTenant.propertyId,
+        unitNumber: nextUnitNumber ?? "",
+      };
+    });
+  };
+
+  const handlePropertyChange = (propertyId: string) => {
+    setForm((prev) => {
+      const property = properties.find((item) => item.id === propertyId);
+      if (!property) {
+        return { ...prev, propertyId, unitNumber: "", tenantId: "" };
+      }
+
+      if (property.type === "house") {
+        const houseUnitNumber = property.units[0]?.unit_number ?? "";
+        const matchedTenant =
+          findTenantByPropertyAndUnit(propertyId, houseUnitNumber) ??
+          tenants.find((tenant) => tenant.propertyId === propertyId);
+
+        return {
+          ...prev,
+          propertyId,
+          unitNumber: houseUnitNumber,
+          tenantId: matchedTenant?.id ?? "",
+        };
+      }
+
+      return { ...prev, propertyId, unitNumber: "", tenantId: "" };
+    });
+  };
+
+  const handleUnitChange = (unitNumber: string) => {
+    setForm((prev) => {
+      const matchedTenant = findTenantByPropertyAndUnit(prev.propertyId, unitNumber);
+      return {
+        ...prev,
+        unitNumber,
+        tenantId: matchedTenant?.id ?? "",
+      };
+    });
+  };
+
   const handleSaveClick = async () => {
     if (isSaving) return;
     try {
@@ -87,9 +158,7 @@ export function MaintenanceFormModal({
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("property")}</label>
             <SelectMenu
               value={form.propertyId}
-              onChange={(value) =>
-                setForm({ ...form, propertyId: value, unitNumber: "" })
-              }
+              onChange={handlePropertyChange}
               options={properties.map((property) => ({
                 value: property.id,
                 label: property.name,
@@ -106,7 +175,7 @@ export function MaintenanceFormModal({
               <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
               <SelectMenu
                 value={form.unitNumber}
-                onChange={(value) => setForm({ ...form, unitNumber: value })}
+                onChange={handleUnitChange}
                 options={
                   selectedProperty?.units.map((unit) => ({
                     value: unit.unit_number,
@@ -123,7 +192,7 @@ export function MaintenanceFormModal({
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("tenant")}</label>
             <SelectMenu
               value={form.tenantId}
-              onChange={(value) => setForm({ ...form, tenantId: value })}
+              onChange={handleTenantChange}
               options={tenants.map((tenant) => ({
                 value: tenant.id,
                 label: locale === "ar" ? tenant.nameAr : tenant.name,

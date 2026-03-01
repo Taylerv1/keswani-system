@@ -1,9 +1,14 @@
 import { Response, NextFunction } from "express";
 import prisma from "../config/prisma";
 import { AuthenticatedRequest, ApiResponse } from "../types";
-import { lookupQuerySchema, lookupResourceEnum, LookupResource } from "../validators/lookup.validator";
+import {
+    lookupQuerySchema,
+    lookupResourceEnum,
+    LookupContext,
+    LookupResource,
+} from "../validators/lookup.validator";
 
-async function getPropertiesLookupData() {
+async function getPropertiesLookupData(context: LookupContext) {
     const [properties, activeContracts] = await Promise.all([
         prisma.properties.findMany({
             where: { deleted_at: null },
@@ -30,23 +35,40 @@ async function getPropertiesLookupData() {
 
     const occupiedUnitIds = new Set(activeContracts.map((contract) => contract.unit_id));
 
+    const includeUnit = (unitId: string) => {
+        if (context === "maintenance") {
+            return occupiedUnitIds.has(unitId);
+        }
+
+        return !occupiedUnitIds.has(unitId);
+    };
+
     return properties
         .map((property) => ({
             ...property,
-            units: property.units.filter((unit) => !occupiedUnitIds.has(unit.id)),
+            units: property.units.filter((unit) => includeUnit(unit.id)),
         }))
         .filter((property) => property.units.length > 0);
 }
 
-async function getClientsLookupData() {
-    return prisma.clients.findMany({
+async function getClientsLookupData(context: LookupContext) {
+    const clients = await prisma.clients.findMany({
         where: {
             deleted_at: null,
             contracts: {
-                none: {
-                    status: "active",
-                    deleted_at: null,
-                },
+                ...(context === "maintenance"
+                    ? {
+                        some: {
+                            status: "active",
+                            deleted_at: null,
+                        },
+                    }
+                    : {
+                        none: {
+                            status: "active",
+                            deleted_at: null,
+                        },
+                    }),
             },
         },
         orderBy: { full_name: "asc" },
@@ -55,7 +77,39 @@ async function getClientsLookupData() {
             full_name: true,
             email: true,
             phone: true,
+            contracts: {
+                where: {
+                    status: "active",
+                    deleted_at: null,
+                },
+                orderBy: {
+                    updated_at: "desc",
+                },
+                take: 1,
+                select: {
+                    id: true,
+                    unit: {
+                        select: {
+                            property_id: true,
+                            unit_number: true,
+                        },
+                    },
+                },
+            },
         },
+    });
+
+    return clients.map((client) => {
+        const activeContract = client.contracts[0];
+        return {
+            id: client.id,
+            full_name: client.full_name,
+            email: client.email,
+            phone: client.phone,
+            contract_id: activeContract?.id ?? null,
+            property_id: activeContract?.unit.property_id ?? null,
+            unit_number: activeContract?.unit.unit_number ?? null,
+        };
     });
 }
 
@@ -115,17 +169,18 @@ export const getLookups = async (
             return;
         }
 
+        const context: LookupContext = parsed.data.context ?? "contract";
         const uniqueResources = Array.from(new Set(resources));
         const data: Record<string, unknown> = {};
 
         await Promise.all(
             uniqueResources.map(async (resource) => {
                 if (resource === "properties") {
-                    data.properties = await getPropertiesLookupData();
+                    data.properties = await getPropertiesLookupData(context);
                 }
 
                 if (resource === "clients") {
-                    data.clients = await getClientsLookupData();
+                    data.clients = await getClientsLookupData(context);
                 }
             })
         );
