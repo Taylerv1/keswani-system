@@ -26,7 +26,7 @@ export function PropertyDeleteModal({
       onClose={onClose}
       onConfirm={onConfirm}
       loading={loading}
-      confirmWord={t("cancel")}
+      confirmWord={t("delete")}
     />
   );
 }
