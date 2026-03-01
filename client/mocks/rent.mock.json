@@ -242,7 +242,6 @@
       "contractId": "con-1",
       "amount": 1200,
       "date": "2026-02-01",
-      "method": "cash",
       "status": "paid",
       "month": "2026-02",
       "receiptNumber": "REC-20260201-001"
@@ -253,7 +252,6 @@
       "contractId": "con-1",
       "amount": 1200,
       "date": "2026-01-03",
-      "method": "cash",
       "status": "paid",
       "month": "2026-01",
       "receiptNumber": "REC-20260103-002"
@@ -264,7 +262,6 @@
       "contractId": "con-2",
       "amount": 1400,
       "date": "2026-01-05",
-      "method": "cash",
       "status": "paid",
       "month": "2026-01",
       "receiptNumber": "REC-20260105-003"
@@ -275,7 +272,6 @@
       "contractId": "con-2",
       "amount": 0,
       "date": null,
-      "method": null,
       "status": "overdue",
       "month": "2026-02",
       "receiptNumber": null
@@ -286,7 +282,6 @@
       "contractId": "con-3",
       "amount": 900,
       "date": "2026-01-02",
-      "method": "cash",
       "status": "paid",
       "month": "2026-01",
       "receiptNumber": "REC-20260102-005"
@@ -297,7 +292,6 @@
       "contractId": "con-4",
       "amount": 3500,
       "date": "2026-02-01",
-      "method": "bank_transfer",
       "status": "paid",
       "month": "2026-02",
       "receiptNumber": "REC-20260201-006"
@@ -308,7 +302,6 @@
       "contractId": "con-5",
       "amount": 0,
       "date": null,
-      "method": null,
       "status": "overdue",
       "month": "2026-01",
       "receiptNumber": null
@@ -319,7 +312,6 @@
       "contractId": "con-5",
       "amount": 0,
       "date": null,
-      "method": null,
       "status": "overdue",
       "month": "2026-02",
       "receiptNumber": null
@@ -330,7 +322,6 @@
       "contractId": "con-6",
       "amount": 2000,
       "date": "2026-02-02",
-      "method": "cash",
       "status": "paid",
       "month": "2026-02",
       "receiptNumber": "REC-20260202-009"
@@ -341,7 +332,6 @@
       "contractId": "con-6",
       "amount": 2000,
       "date": "2026-01-01",
-      "method": "cash",
       "status": "paid",
       "month": "2026-01",
       "receiptNumber": "REC-20260101-010"

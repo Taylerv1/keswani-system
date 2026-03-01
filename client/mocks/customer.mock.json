@@ -1,341 +1,330 @@
 {
-    "user": {
-        "id": "cust-1",
-        "name": "Ahmad Khalil",
-        "nameAr": "أحمد خليل",
-        "email": "ahmad@example.com",
-        "phone": "+961 71 123 456",
-        "address": "Hamra Street, Beirut",
-        "addressAr": "شارع الحمرا، بيروت",
-        "subscriptionType": "rent_electricity",
-        "languagePreference": "en",
-        "accountCreated": "2024-07-01",
-        "avatar": null
+  "user": {
+    "id": "cust-1",
+    "name": "Ahmad Khalil",
+    "nameAr": "أحمد خليل",
+    "email": "ahmad@example.com",
+    "phone": "+961 71 123 456",
+    "address": "Hamra Street, Beirut",
+    "addressAr": "شارع الحمرا، بيروت",
+    "subscriptionType": "rent_electricity",
+    "languagePreference": "en",
+    "accountCreated": "2024-07-01",
+    "avatar": null
+  },
+  "rent": {
+    "property": {
+      "id": "prop-1",
+      "name": "Beirut Tower",
+      "nameAr": "برج بيروت",
+      "address": "Hamra Street, Beirut",
+      "addressAr": "شارع الحمرا، بيروت",
+      "unitNumber": "3A",
+      "type": "building"
     },
-    "rent": {
-        "property": {
-            "id": "prop-1",
-            "name": "Beirut Tower",
-            "nameAr": "برج بيروت",
-            "address": "Hamra Street, Beirut",
-            "addressAr": "شارع الحمرا، بيروت",
-            "unitNumber": "3A",
-            "type": "building"
-        },
-        "contract": {
-            "id": "con-1",
-            "startDate": "2024-07-01",
-            "endDate": "2026-07-01",
-            "monthlyRent": 1200,
-            "deposit": 2400,
-            "status": "active",
-            "autoRenew": false
-        },
-        "payments": [
-            {
-                "id": "cpay-1",
-                "amount": 1200,
-                "date": "2026-02-01",
-                "method": "cash",
-                "status": "paid",
-                "month": "2026-02",
-                "receiptNumber": "REC-20260201-001"
-            },
-            {
-                "id": "cpay-2",
-                "amount": 1200,
-                "date": "2026-01-03",
-                "method": "cash",
-                "status": "paid",
-                "month": "2026-01",
-                "receiptNumber": "REC-20260103-002"
-            },
-            {
-                "id": "cpay-3",
-                "amount": 1200,
-                "date": "2025-12-01",
-                "method": "bank_transfer",
-                "status": "paid",
-                "month": "2025-12",
-                "receiptNumber": "REC-20251201-003"
-            },
-            {
-                "id": "cpay-4",
-                "amount": 1200,
-                "date": "2025-11-02",
-                "method": "cash",
-                "status": "paid",
-                "month": "2025-11",
-                "receiptNumber": "REC-20251102-004"
-            },
-            {
-                "id": "cpay-5",
-                "amount": 1200,
-                "date": "2025-10-01",
-                "method": "cash",
-                "status": "paid",
-                "month": "2025-10",
-                "receiptNumber": "REC-20251001-005"
-            },
-            {
-                "id": "cpay-6",
-                "amount": 0,
-                "date": null,
-                "method": null,
-                "status": "pending",
-                "month": "2026-03",
-                "receiptNumber": null
-            }
-        ],
-        "maintenanceRequests": [
-            {
-                "id": "cmaint-1",
-                "title": "Leaking faucet",
-                "titleAr": "صنبور يسرب",
-                "description": "Kitchen faucet is leaking badly",
-                "descriptionAr": "صنبور المطبخ يسرب بشكل سيء",
-                "priority": "medium",
-                "status": "in_progress",
-                "createdAt": "2026-02-10",
-                "updatedAt": "2026-02-12"
-            },
-            {
-                "id": "cmaint-2",
-                "title": "Door lock issue",
-                "titleAr": "مشكلة في قفل الباب",
-                "description": "Front door lock is jammed",
-                "descriptionAr": "قفل الباب الأمامي معطل",
-                "priority": "high",
-                "status": "completed",
-                "createdAt": "2025-11-05",
-                "updatedAt": "2025-11-08"
-            },
-            {
-                "id": "cmaint-3",
-                "title": "Water heater replacement",
-                "titleAr": "استبدال سخان المياه",
-                "description": "Water heater needs replacement",
-                "descriptionAr": "سخان المياه بحاجة للاستبدال",
-                "priority": "low",
-                "status": "open",
-                "createdAt": "2026-02-15",
-                "updatedAt": "2026-02-15"
-            }
-        ]
+    "contract": {
+      "id": "con-1",
+      "startDate": "2024-07-01",
+      "endDate": "2026-07-01",
+      "monthlyRent": 1200,
+      "deposit": 2400,
+      "status": "active",
+      "autoRenew": false
     },
-    "electricity": {
-        "meterId": "MTR-1001",
-        "meterType": "digital",
-        "readings": [
-            {
-                "id": "crd-1",
-                "month": "2026-02",
-                "previousReading": 4520,
-                "currentReading": 4780,
-                "consumption": 260,
-                "readingDate": "2026-02-01",
-                "readBy": "System"
-            },
-            {
-                "id": "crd-2",
-                "month": "2026-01",
-                "previousReading": 4250,
-                "currentReading": 4520,
-                "consumption": 270,
-                "readingDate": "2026-01-01",
-                "readBy": "Ali Hassan"
-            },
-            {
-                "id": "crd-3",
-                "month": "2025-12",
-                "previousReading": 4010,
-                "currentReading": 4250,
-                "consumption": 240,
-                "readingDate": "2025-12-01",
-                "readBy": "Ali Hassan"
-            },
-            {
-                "id": "crd-4",
-                "month": "2025-11",
-                "previousReading": 3800,
-                "currentReading": 4010,
-                "consumption": 210,
-                "readingDate": "2025-11-01",
-                "readBy": "System"
-            },
-            {
-                "id": "crd-5",
-                "month": "2025-10",
-                "previousReading": 3560,
-                "currentReading": 3800,
-                "consumption": 240,
-                "readingDate": "2025-10-01",
-                "readBy": "Ali Hassan"
-            },
-            {
-                "id": "crd-6",
-                "month": "2025-09",
-                "previousReading": 3340,
-                "currentReading": 3560,
-                "consumption": 220,
-                "readingDate": "2025-09-01",
-                "readBy": "System"
-            }
-        ],
-        "bills": [
-            {
-                "id": "cbill-1",
-                "month": "2026-02",
-                "consumption": 260,
-                "pricePerKwh": 0.12,
-                "baseAmount": 31.20,
-                "additionalFees": 3.00,
-                "totalAmount": 34.20,
-                "status": "unpaid",
-                "dueDate": "2026-03-01",
-                "createdAt": "2026-02-05"
-            },
-            {
-                "id": "cbill-2",
-                "month": "2026-01",
-                "consumption": 270,
-                "pricePerKwh": 0.12,
-                "baseAmount": 32.40,
-                "additionalFees": 3.00,
-                "totalAmount": 35.40,
-                "status": "paid",
-                "dueDate": "2026-02-01",
-                "createdAt": "2026-01-05"
-            },
-            {
-                "id": "cbill-3",
-                "month": "2025-12",
-                "consumption": 240,
-                "pricePerKwh": 0.10,
-                "baseAmount": 24.00,
-                "additionalFees": 3.00,
-                "totalAmount": 27.00,
-                "status": "paid",
-                "dueDate": "2026-01-01",
-                "createdAt": "2025-12-05"
-            },
-            {
-                "id": "cbill-4",
-                "month": "2025-11",
-                "consumption": 210,
-                "pricePerKwh": 0.10,
-                "baseAmount": 21.00,
-                "additionalFees": 3.00,
-                "totalAmount": 24.00,
-                "status": "paid",
-                "dueDate": "2025-12-01",
-                "createdAt": "2025-11-05"
-            },
-            {
-                "id": "cbill-5",
-                "month": "2025-10",
-                "consumption": 240,
-                "pricePerKwh": 0.10,
-                "baseAmount": 24.00,
-                "additionalFees": 3.00,
-                "totalAmount": 27.00,
-                "status": "paid",
-                "dueDate": "2025-11-01",
-                "createdAt": "2025-10-05"
-            },
-            {
-                "id": "cbill-6",
-                "month": "2025-09",
-                "consumption": 220,
-                "pricePerKwh": 0.10,
-                "baseAmount": 22.00,
-                "additionalFees": 3.00,
-                "totalAmount": 25.00,
-                "status": "paid",
-                "dueDate": "2025-10-01",
-                "createdAt": "2025-09-05"
-            }
-        ],
-        "payments": [
-            {
-                "id": "cepay-1",
-                "billId": "cbill-2",
-                "amount": 35.40,
-                "date": "2026-01-28",
-                "method": "cash",
-                "collectedBy": "Office"
-            },
-            {
-                "id": "cepay-2",
-                "billId": "cbill-3",
-                "amount": 27.00,
-                "date": "2025-12-20",
-                "method": "cash",
-                "collectedBy": "Ali Hassan"
-            },
-            {
-                "id": "cepay-3",
-                "billId": "cbill-4",
-                "amount": 24.00,
-                "date": "2025-11-25",
-                "method": "bank_transfer",
-                "collectedBy": "Office"
-            },
-            {
-                "id": "cepay-4",
-                "billId": "cbill-5",
-                "amount": 27.00,
-                "date": "2025-10-28",
-                "method": "cash",
-                "collectedBy": "Ali Hassan"
-            },
-            {
-                "id": "cepay-5",
-                "billId": "cbill-6",
-                "amount": 25.00,
-                "date": "2025-09-29",
-                "method": "cash",
-                "collectedBy": "Office"
-            }
-        ],
-        "currentPricePerKwh": 0.12
-    },
-    "reports": [
-        {
-            "id": "rep-1",
-            "type": "rent",
-            "title": "Water damage in bathroom",
-            "titleAr": "تسرب مياه في الحمام",
-            "description": "There is water damage on the ceiling of the bathroom, possibly from the unit above.",
-            "descriptionAr": "يوجد تسرب مياه في سقف الحمام، ربما من الوحدة أعلاه.",
-            "note": "Noticed after heavy rain",
-            "noteAr": "لوحظ بعد أمطار غزيرة",
-            "status": "in_review",
-            "createdAt": "2026-02-10"
-        },
-        {
-            "id": "rep-2",
-            "type": "electricity",
-            "title": "Meter reading seems incorrect",
-            "titleAr": "قراءة العداد تبدو غير صحيحة",
-            "description": "The meter reading for January seems much higher than expected given my usage patterns.",
-            "descriptionAr": "قراءة العداد لشهر يناير تبدو أعلى بكثير من المتوقع بناءً على أنماط استخدامي.",
-            "note": null,
-            "noteAr": null,
-            "status": "resolved",
-            "createdAt": "2026-01-15"
-        },
-        {
-            "id": "rep-3",
-            "type": "rent",
-            "title": "Noisy neighbors complaint",
-            "titleAr": "شكوى من إزعاج الجيران",
-            "description": "Loud noise from unit 4A late at night, happening frequently.",
-            "descriptionAr": "ضوضاء عالية من الوحدة 4A في وقت متأخر من الليل، تحدث بشكل متكرر.",
-            "note": "Mostly on weekends",
-            "noteAr": "غالباً في عطلة نهاية الأسبوع",
-            "status": "pending",
-            "createdAt": "2026-02-14"
-        }
+    "payments": [
+      {
+        "id": "cpay-1",
+        "amount": 1200,
+        "date": "2026-02-01",
+        "status": "paid",
+        "month": "2026-02",
+        "receiptNumber": "REC-20260201-001"
+      },
+      {
+        "id": "cpay-2",
+        "amount": 1200,
+        "date": "2026-01-03",
+        "status": "paid",
+        "month": "2026-01",
+        "receiptNumber": "REC-20260103-002"
+      },
+      {
+        "id": "cpay-3",
+        "amount": 1200,
+        "date": "2025-12-01",
+        "status": "paid",
+        "month": "2025-12",
+        "receiptNumber": "REC-20251201-003"
+      },
+      {
+        "id": "cpay-4",
+        "amount": 1200,
+        "date": "2025-11-02",
+        "status": "paid",
+        "month": "2025-11",
+        "receiptNumber": "REC-20251102-004"
+      },
+      {
+        "id": "cpay-5",
+        "amount": 1200,
+        "date": "2025-10-01",
+        "status": "paid",
+        "month": "2025-10",
+        "receiptNumber": "REC-20251001-005"
+      },
+      {
+        "id": "cpay-6",
+        "amount": 0,
+        "date": null,
+        "status": "pending",
+        "month": "2026-03",
+        "receiptNumber": null
+      }
+    ],
+    "maintenanceRequests": [
+      {
+        "id": "cmaint-1",
+        "title": "Leaking faucet",
+        "titleAr": "صنبور يسرب",
+        "description": "Kitchen faucet is leaking badly",
+        "descriptionAr": "صنبور المطبخ يسرب بشكل سيء",
+        "priority": "medium",
+        "status": "in_progress",
+        "createdAt": "2026-02-10",
+        "updatedAt": "2026-02-12"
+      },
+      {
+        "id": "cmaint-2",
+        "title": "Door lock issue",
+        "titleAr": "مشكلة في قفل الباب",
+        "description": "Front door lock is jammed",
+        "descriptionAr": "قفل الباب الأمامي معطل",
+        "priority": "high",
+        "status": "completed",
+        "createdAt": "2025-11-05",
+        "updatedAt": "2025-11-08"
+      },
+      {
+        "id": "cmaint-3",
+        "title": "Water heater replacement",
+        "titleAr": "استبدال سخان المياه",
+        "description": "Water heater needs replacement",
+        "descriptionAr": "سخان المياه بحاجة للاستبدال",
+        "priority": "low",
+        "status": "open",
+        "createdAt": "2026-02-15",
+        "updatedAt": "2026-02-15"
+      }
     ]
+  },
+  "electricity": {
+    "meterId": "MTR-1001",
+    "meterType": "digital",
+    "readings": [
+      {
+        "id": "crd-1",
+        "month": "2026-02",
+        "previousReading": 4520,
+        "currentReading": 4780,
+        "consumption": 260,
+        "readingDate": "2026-02-01",
+        "readBy": "System"
+      },
+      {
+        "id": "crd-2",
+        "month": "2026-01",
+        "previousReading": 4250,
+        "currentReading": 4520,
+        "consumption": 270,
+        "readingDate": "2026-01-01",
+        "readBy": "Ali Hassan"
+      },
+      {
+        "id": "crd-3",
+        "month": "2025-12",
+        "previousReading": 4010,
+        "currentReading": 4250,
+        "consumption": 240,
+        "readingDate": "2025-12-01",
+        "readBy": "Ali Hassan"
+      },
+      {
+        "id": "crd-4",
+        "month": "2025-11",
+        "previousReading": 3800,
+        "currentReading": 4010,
+        "consumption": 210,
+        "readingDate": "2025-11-01",
+        "readBy": "System"
+      },
+      {
+        "id": "crd-5",
+        "month": "2025-10",
+        "previousReading": 3560,
+        "currentReading": 3800,
+        "consumption": 240,
+        "readingDate": "2025-10-01",
+        "readBy": "Ali Hassan"
+      },
+      {
+        "id": "crd-6",
+        "month": "2025-09",
+        "previousReading": 3340,
+        "currentReading": 3560,
+        "consumption": 220,
+        "readingDate": "2025-09-01",
+        "readBy": "System"
+      }
+    ],
+    "bills": [
+      {
+        "id": "cbill-1",
+        "month": "2026-02",
+        "consumption": 260,
+        "pricePerKwh": 0.12,
+        "baseAmount": 31.2,
+        "additionalFees": 3,
+        "totalAmount": 34.2,
+        "status": "unpaid",
+        "dueDate": "2026-03-01",
+        "createdAt": "2026-02-05"
+      },
+      {
+        "id": "cbill-2",
+        "month": "2026-01",
+        "consumption": 270,
+        "pricePerKwh": 0.12,
+        "baseAmount": 32.4,
+        "additionalFees": 3,
+        "totalAmount": 35.4,
+        "status": "paid",
+        "dueDate": "2026-02-01",
+        "createdAt": "2026-01-05"
+      },
+      {
+        "id": "cbill-3",
+        "month": "2025-12",
+        "consumption": 240,
+        "pricePerKwh": 0.1,
+        "baseAmount": 24,
+        "additionalFees": 3,
+        "totalAmount": 27,
+        "status": "paid",
+        "dueDate": "2026-01-01",
+        "createdAt": "2025-12-05"
+      },
+      {
+        "id": "cbill-4",
+        "month": "2025-11",
+        "consumption": 210,
+        "pricePerKwh": 0.1,
+        "baseAmount": 21,
+        "additionalFees": 3,
+        "totalAmount": 24,
+        "status": "paid",
+        "dueDate": "2025-12-01",
+        "createdAt": "2025-11-05"
+      },
+      {
+        "id": "cbill-5",
+        "month": "2025-10",
+        "consumption": 240,
+        "pricePerKwh": 0.1,
+        "baseAmount": 24,
+        "additionalFees": 3,
+        "totalAmount": 27,
+        "status": "paid",
+        "dueDate": "2025-11-01",
+        "createdAt": "2025-10-05"
+      },
+      {
+        "id": "cbill-6",
+        "month": "2025-09",
+        "consumption": 220,
+        "pricePerKwh": 0.1,
+        "baseAmount": 22,
+        "additionalFees": 3,
+        "totalAmount": 25,
+        "status": "paid",
+        "dueDate": "2025-10-01",
+        "createdAt": "2025-09-05"
+      }
+    ],
+    "payments": [
+      {
+        "id": "cepay-1",
+        "billId": "cbill-2",
+        "amount": 35.4,
+        "date": "2026-01-28",
+        "collectedBy": "Office"
+      },
+      {
+        "id": "cepay-2",
+        "billId": "cbill-3",
+        "amount": 27,
+        "date": "2025-12-20",
+        "collectedBy": "Ali Hassan"
+      },
+      {
+        "id": "cepay-3",
+        "billId": "cbill-4",
+        "amount": 24,
+        "date": "2025-11-25",
+        "collectedBy": "Office"
+      },
+      {
+        "id": "cepay-4",
+        "billId": "cbill-5",
+        "amount": 27,
+        "date": "2025-10-28",
+        "collectedBy": "Ali Hassan"
+      },
+      {
+        "id": "cepay-5",
+        "billId": "cbill-6",
+        "amount": 25,
+        "date": "2025-09-29",
+        "collectedBy": "Office"
+      }
+    ],
+    "currentPricePerKwh": 0.12
+  },
+  "reports": [
+    {
+      "id": "rep-1",
+      "type": "rent",
+      "title": "Water damage in bathroom",
+      "titleAr": "تسرب مياه في الحمام",
+      "description": "There is water damage on the ceiling of the bathroom, possibly from the unit above.",
+      "descriptionAr": "يوجد تسرب مياه في سقف الحمام، ربما من الوحدة أعلاه.",
+      "note": "Noticed after heavy rain",
+      "noteAr": "لوحظ بعد أمطار غزيرة",
+      "status": "in_review",
+      "createdAt": "2026-02-10"
+    },
+    {
+      "id": "rep-2",
+      "type": "electricity",
+      "title": "Meter reading seems incorrect",
+      "titleAr": "قراءة العداد تبدو غير صحيحة",
+      "description": "The meter reading for January seems much higher than expected given my usage patterns.",
+      "descriptionAr": "قراءة العداد لشهر يناير تبدو أعلى بكثير من المتوقع بناءً على أنماط استخدامي.",
+      "note": null,
+      "noteAr": null,
+      "status": "resolved",
+      "createdAt": "2026-01-15"
+    },
+    {
+      "id": "rep-3",
+      "type": "rent",
+      "title": "Noisy neighbors complaint",
+      "titleAr": "شكوى من إزعاج الجيران",
+      "description": "Loud noise from unit 4A late at night, happening frequently.",
+      "descriptionAr": "ضوضاء عالية من الوحدة 4A في وقت متأخر من الليل، تحدث بشكل متكرر.",
+      "note": "Mostly on weekends",
+      "noteAr": "غالباً في عطلة نهاية الأسبوع",
+      "status": "pending",
+      "createdAt": "2026-02-14"
+    }
+  ]
 }

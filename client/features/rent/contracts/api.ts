@@ -72,7 +72,7 @@ export async function createContractClient(
   });
 }
 
-export async function deleteContract(id: string): Promise<ApiResponse> {
+export async function terminateContract(id: string): Promise<ApiResponse> {
   return fetchApi(`/api/contracts/${id}`, {
     method: "DELETE",
   });

@@ -37,17 +37,6 @@ export default function RentHistoryCard({ payment }: RentHistoryCardProps) {
                     </div>
                 )}
 
-                {payment.method && (
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs text-text-muted">
-                            {t("paymentMethod")}
-                        </span>
-                        <span className="text-sm text-text-secondary">
-                            {t(payment.method === "bank_transfer" ? "bankTransfer" : payment.method)}
-                        </span>
-                    </div>
-                )}
-
                 {payment.receiptNumber && (
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-text-muted">

@@ -412,7 +412,6 @@ export default function SubscribersPage() {
                           <tr className="border-b border-surface-border">
                             <th className="text-start px-3 py-2 text-text-secondary">{t("date")}</th>
                             <th className="text-start px-3 py-2 text-text-secondary">{t("amount")}</th>
-                            <th className="text-start px-3 py-2 text-text-secondary">{t("paymentMethod")}</th>
                             <th className="text-start px-3 py-2 text-text-secondary">{t("receiptNumber")}</th>
                           </tr>
                         </thead>
@@ -421,7 +420,6 @@ export default function SubscribersPage() {
                             <tr key={p.id} className="border-b border-surface-border last:border-0">
                               <td className="px-3 py-2 text-text-primary">{p.date}</td>
                               <td className="px-3 py-2 font-medium text-card-green">${p.amount.toFixed(2)}</td>
-                              <td className="px-3 py-2 text-text-secondary">{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</td>
                               <td className="px-3 py-2 text-text-muted text-xs">{p.receiptNumber}</td>
                             </tr>
                           ))}
@@ -437,7 +435,6 @@ export default function SubscribersPage() {
                             <span className="text-sm font-semibold text-card-green">${p.amount.toFixed(2)}</span>
                           </div>
                           <div className="flex items-center justify-between text-xs text-text-muted">
-                            <span>{t(p.method === "bank_transfer" ? "bankTransfer" : "cash")}</span>
                             <span>{p.receiptNumber}</span>
                           </div>
                         </div>
@@ -451,7 +448,7 @@ export default function SubscribersPage() {
         )}
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeSubscriber(deleteId); setDeleteId(null); }} confirmWord="DELETE" />
+      <ConfirmDialog open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={() => { if (deleteId) removeSubscriber(deleteId); setDeleteId(null); }} confirmWord={t("cancel")} />
     </div>
   );
 }

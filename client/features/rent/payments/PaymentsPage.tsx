@@ -1,222 +1,237 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, FileDown, CreditCard, TrendingUp, AlertTriangle, Receipt } from "lucide-react";
+import { useMemo } from "react";
+import {
+  AlertTriangle,
+  CreditCard,
+  FileDown,
+  Receipt,
+  TrendingUp,
+} from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { useRent } from "@/features/rent/context/rent-context";
-import { SearchBar, StatusBadge, Pagination, Modal, KpiCard } from "@/components/ui";
-import type { Payment } from "@/features/rent/types";
+import {
+  KpiCard,
+  LoadingLottie,
+  Pagination,
+  SearchBar,
+  SelectMenu,
+  type SelectOption,
+} from "@/components/ui";
+import { usePaymentForm, usePaymentState } from "./hooks";
+import { toNumber } from "./utils";
+import { PaymentTable } from "./components/PaymentTable";
+import { PaymentMobileCard } from "./components/PaymentMobileCard";
+import { PaymentRecordModal } from "./components/PaymentRecordModal";
 
-const PAGE_SIZE = 8;
+export function PaymentsPage() {
+  const { t } = useTranslation();
 
-export default function PaymentsPage() {
-  const { t, locale } = useTranslation();
-  const { data, addPayment, updatePayment } = useRent();
+  const state = usePaymentState(t);
+  const form = usePaymentForm({
+    recordCashPayment: state.recordCashPayment,
+  });
 
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [payForm, setPayForm] = useState<string | null>(null); // payment id to record
+  const selectedPayment = useMemo(() => {
+    if (!form.selectedPaymentId) return null;
+    return state.payments.find((item) => item.id === form.selectedPaymentId) ?? null;
+  }, [form.selectedPaymentId, state.payments]);
 
-  const getTenantName = (id: string) => {
-    const ten = data.tenants.find((x) => x.id === id);
-    return ten ? (locale === "ar" ? ten.nameAr : ten.name) : id;
-  };
+  const isQueueView = state.viewFilter === "queue";
+  const currentViewLabel = isQueueView ? t("paymentQueue") : t("paymentArchive");
 
-  const totalCollected = data.payments.filter((p) => p.status === "paid").reduce((s, p) => s + p.amount, 0);
-  const totalOutstanding = data.payments.filter((p) => p.status === "overdue").length;
-  const totalIncome = data.contracts.filter((c) => c.status === "active").reduce((s, c) => s + c.monthlyRent, 0);
+  const statusFilterOptions = useMemo<SelectOption[]>(() => {
+    const baseOption = { value: "all", label: `${t("all")} - ${t("status")}` };
 
-  const filtered = useMemo(() => {
-    let items = data.payments;
-    if (search) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (p) =>
-          getTenantName(p.tenantId).toLowerCase().includes(q) ||
-          p.contractId.toLowerCase().includes(q) ||
-          (p.receiptNumber?.toLowerCase().includes(q) ?? false) ||
-          p.month.includes(q)
-      );
+    if (isQueueView) {
+      return [
+        baseOption,
+        { value: "pending", label: t("pending") },
+        { value: "overdue", label: t("overdue") },
+        { value: "partial", label: t("partial") },
+      ];
     }
-    if (filterStatus !== "all") items = items.filter((p) => p.status === filterStatus);
-    return items;
-  }, [data.payments, search, filterStatus, data.tenants, locale]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  const handleRecordPayment = (paymentId: string) => {
-    const payment = data.payments.find((p) => p.id === paymentId);
-    if (!payment) return;
-    const contract = data.contracts.find((c) => c.id === payment.contractId);
-    updatePayment(paymentId, {
-      status: "paid",
-      amount: contract?.monthlyRent ?? 0,
-      date: new Date().toISOString().split("T")[0],
-      method: "cash",
-      receiptNumber: `REC-${Date.now()}`,
-    });
-    setPayForm(null);
-  };
+    return [
+      baseOption,
+      { value: "paid", label: t("paid") },
+      { value: "cancelled", label: t("cancelled") },
+    ];
+  }, [isQueueView, t]);
 
   return (
     <div className="@container">
       <div className="flex flex-col @md:flex-row @md:items-center @md:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-xl @md:text-2xl font-bold text-text-primary">{t("paymentManagement")}</h1>
-          <p className="text-text-secondary text-xs @md:text-sm mt-1">{t("paymentHistory")}</p>
+          <h1 className="text-xl @md:text-2xl font-bold text-text-primary">
+            {t("paymentManagement")}
+          </h1>
+          <p className="text-text-secondary text-xs @md:text-sm mt-1">
+            {state.totalItems} {currentViewLabel}
+          </p>
         </div>
+
         <div className="flex items-center gap-2">
-          <button onClick={() => alert("PDF export mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2">
+          <button
+            type="button"
+            disabled
+            className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-xs @md:text-sm font-medium flex items-center gap-1.5 @md:gap-2 opacity-60 cursor-not-allowed"
+          >
             <FileDown size={16} />
-            {t("exportPdf")}
+            {t("comingSoon")}
           </button>
-          <button onClick={() => alert("Invoice generation mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+          <button
+            type="button"
+            disabled
+            className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium flex items-center gap-1.5 @md:gap-2 border-0 opacity-60 cursor-not-allowed"
+          >
             <Receipt size={16} />
             {t("generateInvoice")}
           </button>
         </div>
       </div>
 
-      {/* KPI cards */}
+      {state.error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {state.error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 @sm:grid-cols-2 @2xl:grid-cols-3 gap-3 @md:gap-5 mb-6">
-        <KpiCard label={t("totalIncome")} value={`$${totalIncome.toLocaleString()}`} icon={<TrendingUp size={22} />} color="text-card-green" bgColor="bg-card-green-light" trend={t("monthlyRent")} />
-        <KpiCard label={t("totalCollected")} value={`$${totalCollected.toLocaleString()}`} icon={<CreditCard size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" />
-        <KpiCard label={t("totalOutstanding")} value={totalOutstanding} icon={<AlertTriangle size={22} />} color="text-card-red" bgColor="bg-card-red-light" />
+        <KpiCard
+          label={t("totalIncome")}
+          value={`$${toNumber(state.summary.total_income).toLocaleString()}`}
+          icon={<TrendingUp size={22} />}
+          color="text-card-green"
+          bgColor="bg-card-green-light"
+          trend={t("monthlyRent")}
+        />
+        <KpiCard
+          label={t("totalCollected")}
+          value={`$${toNumber(state.summary.total_collected).toLocaleString()}`}
+          icon={<CreditCard size={22} />}
+          color="text-card-blue"
+          bgColor="bg-card-blue-light"
+        />
+        <KpiCard
+          label={t("totalOutstanding")}
+          value={toNumber(state.summary.total_outstanding)}
+          icon={<AlertTriangle size={22} />}
+          color="text-card-red"
+          bgColor="bg-card-red-light"
+        />
       </div>
 
-      <div className="flex flex-col @xs:flex-row gap-3 mb-5">
+      <div className="flex flex-col @md:flex-row @md:items-center gap-3 mb-5">
+        <div className="inline-flex w-full @md:w-auto items-center rounded-lg border border-surface-border bg-surface p-1 @md:shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              state.setViewFilter("queue");
+              state.setStatusFilter("all");
+              state.setPage(1);
+            }}
+            className={`h-8 flex-1 @md:flex-none px-3 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              isQueueView
+                ? "bg-primary text-white"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {t("paymentQueue")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              state.setViewFilter("history");
+              state.setStatusFilter("all");
+              state.setPage(1);
+            }}
+            className={`h-8 flex-1 @md:flex-none px-3 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+              !isQueueView
+                ? "bg-primary text-white"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {t("paymentArchive")}
+          </button>
+        </div>
+
+        <div className="@md:w-52 @md:shrink-0">
+          <SelectMenu
+            value={state.statusFilter}
+            onChange={(value) => {
+              state.setStatusFilter(
+                value as "all" | "pending" | "paid" | "partial" | "overdue" | "cancelled"
+              );
+              state.setPage(1);
+            }}
+            options={statusFilterOptions}
+            placeholder={`${t("all")} - ${t("status")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
+
         <div className="flex-1">
-          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
-        </div>
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }} className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="all">{t("all")} - {t("status")}</option>
-          <option value="paid">{t("paid")}</option>
-          <option value="overdue">{t("overdue")}</option>
-          <option value="pending">{t("pending")}</option>
-        </select>
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden @3xl:block bg-surface rounded-xl border border-surface-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-surface-border bg-background">
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("tenant")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("month")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("amount")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentDate")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentMethod")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("receiptNumber")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("status")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
-              ) : (
-                paginated.map((p) => (
-                  <tr key={p.id} className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-text-primary">{getTenantName(p.tenantId)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{p.month}</td>
-                    <td className="px-4 py-3 font-medium text-text-primary">
-                      {p.amount > 0 ? `$${p.amount.toLocaleString()}` : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{p.date ?? "—"}</td>
-                    <td className="px-4 py-3 text-text-secondary">{p.method ? t(p.method === "bank_transfer" ? "bankTransfer" : "cash") : "—"}</td>
-                    <td className="px-4 py-3 text-text-muted text-xs">{p.receiptNumber ?? "—"}</td>
-                    <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
-                    <td className="px-4 py-3">
-                      {p.status === "overdue" && (
-                        <button onClick={() => setPayForm(p.id)} className="h-8 px-3 rounded-lg bg-card-green text-white text-xs font-medium cursor-pointer border-0 hover:bg-card-green/90 transition-colors">
-                          {t("addPayment")}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <SearchBar
+            value={state.search}
+            onChange={(value) => {
+              state.setSearch(value);
+              state.setPage(1);
+            }}
+          />
         </div>
       </div>
 
-      {/* Mobile cards */}
-      <div className="@3xl:hidden space-y-3">
-        {paginated.length === 0 ? (
-          <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">{t("noResults")}</div>
-        ) : (
-          paginated.map((p) => (
-            <div key={p.id} className="bg-surface rounded-xl border border-surface-border p-3.5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-sm text-text-primary">{getTenantName(p.tenantId)}</span>
-                <StatusBadge status={p.status} />
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-2">
-                <div>
-                  <span className="text-text-muted">{t("month")}: </span>
-                  <span className="text-text-secondary">{p.month}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted">{t("amount")}: </span>
-                  <span className="font-medium text-text-primary">{p.amount > 0 ? `$${p.amount.toLocaleString()}` : "—"}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted">{t("paymentDate")}: </span>
-                  <span className="text-text-secondary">{p.date ?? "—"}</span>
-                </div>
-                <div>
-                  <span className="text-text-muted">{t("paymentMethod")}: </span>
-                  <span className="text-text-secondary">{p.method ? t(p.method === "bank_transfer" ? "bankTransfer" : "cash") : "—"}</span>
-                </div>
-              </div>
-              {p.receiptNumber && (
-                <p className="text-[11px] text-text-muted mb-2">{t("receiptNumber")}: {p.receiptNumber}</p>
-              )}
-              {p.status === "overdue" && (
-                <button onClick={() => setPayForm(p.id)} className="w-full h-8 mt-1 rounded-lg bg-card-green text-white text-xs font-medium cursor-pointer border-0 hover:bg-card-green/90 transition-colors">
-                  {t("addPayment")}
-                </button>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+      {state.loading ? (
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center">
+          <LoadingLottie size={150} className="p-6" />
+        </div>
+      ) : (
+        <>
+          <PaymentTable
+            payments={state.payments}
+            onRecordPayment={form.openRecordForm}
+            t={t}
+          />
 
-      <Pagination currentPage={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+          <div className="@3xl:hidden space-y-3">
+            {state.payments.length === 0 ? (
+              <div className="bg-surface rounded-xl border border-surface-border p-6 text-center text-text-muted text-sm">
+                {t("noResults")}
+              </div>
+            ) : (
+              state.payments.map((payment) => (
+                <PaymentMobileCard
+                  key={payment.id}
+                  payment={payment}
+                  onRecordPayment={form.openRecordForm}
+                  t={t}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
 
-      {/* Record Payment Modal */}
-      <Modal open={!!payForm} onClose={() => setPayForm(null)} title={t("addPayment")} maxWidth="max-w-sm">
-        {payForm && (() => {
-          const payment = data.payments.find((p) => p.id === payForm);
-          if (!payment) return null;
-          const contract = data.contracts.find((c) => c.id === payment.contractId);
-          return (
-            <div className="space-y-4">
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-text-muted">{t("tenant")}</p>
-                <p className="text-sm font-medium text-text-primary">{getTenantName(payment.tenantId)}</p>
-              </div>
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-text-muted">{t("amount")}</p>
-                <p className="text-lg font-bold text-card-green">${contract?.monthlyRent.toLocaleString() ?? 0}</p>
-              </div>
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-text-muted">{t("month")}</p>
-                <p className="text-sm font-medium text-text-primary">{payment.month}</p>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setPayForm(null)} className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors">{t("cancel")}</button>
-                <button onClick={() => handleRecordPayment(payForm)} className="flex-1 h-10 rounded-lg bg-card-green text-white text-sm font-medium cursor-pointer border-0 hover:bg-card-green/90 transition-colors">{t("confirm")}</button>
-              </div>
-            </div>
-          );
-        })()}
-      </Modal>
+      <Pagination
+        currentPage={state.page}
+        totalPages={state.totalPages}
+        totalItems={state.totalItems}
+        pageSize={state.PAGE_SIZE}
+        onPageChange={state.setPage}
+      />
+
+      <PaymentRecordModal
+        open={Boolean(form.recordForm)}
+        t={t}
+        form={form.recordForm}
+        selectedPayment={selectedPayment}
+        actionLoading={state.actionLoading}
+        onClose={form.closeRecordForm}
+        onSubmit={() => {
+          void form.submitRecordForm();
+        }}
+        onChangeNotes={(notes) => form.updateRecordForm({ notes })}
+      />
     </div>
   );
 }

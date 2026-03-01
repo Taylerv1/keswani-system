@@ -10,6 +10,12 @@ import { getProperties } from "./properties/api";
 import type { Property } from "./properties/types";
 import { getTenants } from "./tenants/api";
 import type { TenantListItem, TenantQueryParams } from "./tenants/types";
+import { getPayments } from "./payments/api";
+import type {
+  PaymentQueryParams,
+  PaymentSummary,
+  RentPaymentItem,
+} from "./payments/types";
 
 export type RentOverview = {
   total_properties: number;
@@ -35,6 +41,10 @@ type LookupSnapshot = {
   clients: ClientLookupItem[];
 };
 
+type PaymentSnapshot = PaginatedSnapshot<RentPaymentItem> & {
+  summary: PaymentSummary;
+};
+
 function stableKey(input: Record<string, unknown>): string {
   return JSON.stringify(input);
 }
@@ -44,6 +54,7 @@ class RentStore {
   private propertyPages = new Map<string, PaginatedSnapshot<Property>>();
   private tenantPages = new Map<string, PaginatedSnapshot<TenantListItem>>();
   private contractPages = new Map<string, PaginatedSnapshot<ContractListItem>>();
+  private paymentPages = new Map<string, PaymentSnapshot>();
   private contractLookups: LookupSnapshot | null = null;
 
   constructor() {
@@ -213,6 +224,54 @@ class RentStore {
     return { data: snapshot, fromCache: false };
   }
 
+  private paymentKey(params: PaymentQueryParams) {
+    return stableKey({
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      search: params.search ?? "",
+      status: params.status ?? "",
+      view: params.view ?? "",
+    });
+  }
+
+  getPaymentsSnapshot(params: PaymentQueryParams) {
+    return this.paymentPages.get(this.paymentKey(params)) ?? null;
+  }
+
+  async loadPayments(
+    params: PaymentQueryParams,
+    options?: { force?: boolean }
+  ) {
+    const key = this.paymentKey(params);
+    const cached = this.paymentPages.get(key);
+
+    if (!options?.force && cached) {
+      return { data: cached, fromCache: true };
+    }
+
+    const response = await getPayments(params);
+    const items = response.data?.items ?? [];
+    const pagination = response.data?.pagination;
+    const summary = response.data?.summary;
+
+    const snapshot: PaymentSnapshot = {
+      items,
+      totalItems: pagination?.total ?? items.length,
+      totalPages: Math.max(1, pagination?.total_pages ?? 1),
+      summary: {
+        total_income: summary?.total_income ?? 0,
+        total_collected: summary?.total_collected ?? 0,
+        total_outstanding: summary?.total_outstanding ?? 0,
+      },
+    };
+
+    runInAction(() => {
+      this.paymentPages.set(key, snapshot);
+    });
+
+    return { data: snapshot, fromCache: false };
+  }
+
   getContractLookupsSnapshot() {
     return this.contractLookups;
   }
@@ -265,6 +324,10 @@ class RentStore {
 
   invalidateContracts() {
     this.contractPages.clear();
+  }
+
+  invalidatePayments() {
+    this.paymentPages.clear();
   }
 
   invalidateContractLookups() {

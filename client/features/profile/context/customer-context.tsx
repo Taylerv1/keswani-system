@@ -48,7 +48,6 @@ export interface RentPayment {
     id: string;
     amount: number;
     date: string | null;
-    method: string | null;
     status: string;
     month: string;
     receiptNumber: string | null;
@@ -94,7 +93,6 @@ export interface ElectricityPayment {
     billId: string;
     amount: number;
     date: string;
-    method: string;
     collectedBy: string;
 }
 

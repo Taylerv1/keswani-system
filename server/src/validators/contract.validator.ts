@@ -2,7 +2,6 @@ import { z } from "zod";
 
 // Enums matching Prisma schema
 const contractStatusEnum = z.enum(["pending", "active", "expired", "terminated"]);
-const paymentMethodEnum = z.enum(["cash", "bank_transfer", "other"]);
 
 // -------------------------------------------
 // Create Contract

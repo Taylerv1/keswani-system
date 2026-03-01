@@ -19,7 +19,7 @@ export default function SecuritySettings({
   twoFactorEnabled,
   onToggle2FA,
 }: SecuritySettingsProps) {
-  const { t } = useTranslation();
+  const { t, dir } = useTranslation();
   const [passwordModal, setPasswordModal] = useState(false);
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -160,15 +160,22 @@ export default function SecuritySettings({
             <div className="relative">
               <input
                 type={showCurrent ? "text" : "password"}
+                dir={dir}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full h-10 rounded-lg border border-surface-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{
+                  textAlign: dir === "rtl" ? "right" : "left",
+                  [dir === "rtl" ? "paddingLeft" : "paddingRight"]: "40px",
+                  [dir === "rtl" ? "paddingRight" : "paddingLeft"]: "12px",
+                }}
               />
               <button
                 type="button"
                 aria-label={showCurrent ? "Hide password" : "Show password"}
                 onClick={() => setShowCurrent((s) => !s)}
-                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+                className="absolute inset-y-0 flex items-center px-2 text-text-muted hover:text-text-primary border-0 bg-transparent"
+                style={{ [dir === "rtl" ? "left" : "right"]: "8px" }}
               >
                 {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -179,15 +186,22 @@ export default function SecuritySettings({
             <div className="relative">
               <input
                 type={showNew ? "text" : "password"}
+                dir={dir}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full h-10 rounded-lg border border-surface-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{
+                  textAlign: dir === "rtl" ? "right" : "left",
+                  [dir === "rtl" ? "paddingLeft" : "paddingRight"]: "40px",
+                  [dir === "rtl" ? "paddingRight" : "paddingLeft"]: "12px",
+                }}
               />
               <button
                 type="button"
                 aria-label={showNew ? "Hide password" : "Show password"}
                 onClick={() => setShowNew((s) => !s)}
-                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+                className="absolute inset-y-0 flex items-center px-2 text-text-muted hover:text-text-primary border-0 bg-transparent"
+                style={{ [dir === "rtl" ? "left" : "right"]: "8px" }}
               >
                 {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -198,15 +212,22 @@ export default function SecuritySettings({
             <div className="relative">
               <input
                 type={showConfirm ? "text" : "password"}
+                dir={dir}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full h-10 rounded-lg border border-surface-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{
+                  textAlign: dir === "rtl" ? "right" : "left",
+                  [dir === "rtl" ? "paddingLeft" : "paddingRight"]: "40px",
+                  [dir === "rtl" ? "paddingRight" : "paddingLeft"]: "12px",
+                }}
               />
               <button
                 type="button"
                 aria-label={showConfirm ? "Hide password" : "Show password"}
                 onClick={() => setShowConfirm((s) => !s)}
-                className="absolute inset-y-0 end-2 flex items-center px-2 text-text-muted hover:text-text-primary"
+                className="absolute inset-y-0 flex items-center px-2 text-text-muted hover:text-text-primary border-0 bg-transparent"
+                style={{ [dir === "rtl" ? "left" : "right"]: "8px" }}
               >
                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>

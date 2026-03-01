@@ -119,9 +119,9 @@ export const getContractById = async (
                         amount: true,
                         currency: true,
                         payment_date: true,
+                        paid_at: true,
                         period_start: true,
                         period_end: true,
-                        payment_method: true,
                         status: true,
                         receipt_number: true,
                         notes: true,
@@ -183,6 +183,18 @@ export const createContract = async (
         });
         if (!client) {
             res.status(404).json({ success: false, error: "Client not found" });
+            return;
+        }
+
+        const clientHasActiveContract = await prisma.contracts.count({
+            where: {
+                client_id: data.client_id,
+                status: "active",
+                deleted_at: null,
+            },
+        });
+        if (clientHasActiveContract > 0) {
+            res.status(409).json({ success: false, error: "This tenant already has an active contract" });
             return;
         }
 
@@ -269,7 +281,8 @@ export const updateContract = async (
 
 /**
  * DELETE /api/contracts/:id
- * Soft delete.
+ * Terminate contract (no hard/soft deletion of the record).
+ * Keeps legal history and payments intact.
  */
 export const deleteContract = async (
     req: AuthenticatedRequest,
@@ -287,24 +300,54 @@ export const deleteContract = async (
             return;
         }
 
-        // Check for payments
-        const paymentCount = await prisma.rent_payments.count({
-            where: { contract_id: id, deleted_at: null },
-        });
-        if (paymentCount > 0) {
+        if (existing.status === "terminated") {
             res.status(409).json({
                 success: false,
-                error: `Cannot delete: contract has ${paymentCount} payment(s). Remove them first.`,
+                error: "Contract is already terminated",
             });
             return;
         }
 
-        await prisma.contracts.update({
-            where: { id },
-            data: { deleted_at: new Date() },
+        const today = new Date();
+        const effectiveEndDate = existing.end_date && existing.end_date < today
+            ? existing.end_date
+            : today;
+
+        await prisma.$transaction([
+            prisma.contracts.update({
+                where: { id },
+                data: {
+                    status: "terminated",
+                    end_date: effectiveEndDate,
+                },
+            }),
+            // Cancel only future unpaid placeholders that are no longer applicable
+            prisma.rent_payments.updateMany({
+                where: {
+                    contract_id: id,
+                    deleted_at: null,
+                    status: { in: ["pending", "overdue"] },
+                    OR: [
+                        { period_start: { gt: effectiveEndDate } },
+                        { period_start: null, payment_date: { gt: effectiveEndDate } },
+                    ],
+                },
+                data: {
+                    status: "cancelled",
+                },
+            }),
+        ]);
+
+        const terminated = await prisma.contracts.findFirst({
+            where: { id, deleted_at: null },
+            include: contractInclude,
         });
 
-        res.json({ success: true, message: "Contract has been soft-deleted" } as ApiResponse);
+        res.json({
+            success: true,
+            data: terminated,
+            message: "Contract terminated successfully. Historical records were preserved.",
+        } as ApiResponse);
     } catch (err) {
         next(err);
     }
