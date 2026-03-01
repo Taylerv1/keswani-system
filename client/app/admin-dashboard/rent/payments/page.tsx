@@ -1,1 +1,1 @@
-export { default } from '@/features/rent/payments/PaymentsPage';
+export { PaymentsPage as default } from "@/features/rent/payments";

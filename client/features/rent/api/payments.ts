@@ -36,12 +36,14 @@ interface RentPayment {
     amount: number;
     currency: string;
     payment_date: string;
+    paid_at: string | null;
     period_start: string | null;
     period_end: string | null;
     status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     received_by: string | null;
     receiver_name: string | null;
     receipt_number: string | null;
+    manual_receipt_ref: string | null;
     notes: string | null;
     created_at: string;
     updated_at: string;
@@ -50,11 +52,13 @@ interface RentPayment {
 interface CreatePaymentInput {
     contract_id: string;
     amount: number;
-    payment_date: string;
+    payment_date?: string;
+    paid_at?: string;
     period_start?: string;
     period_end?: string;
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string;
+    manual_receipt_ref?: string;
     currency?: string;
     notes?: string;
 }
@@ -62,10 +66,12 @@ interface CreatePaymentInput {
 interface UpdatePaymentInput {
     amount?: number;
     payment_date?: string;
+    paid_at?: string | null;
     period_start?: string | null;
     period_end?: string | null;
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string | null;
+    manual_receipt_ref?: string | null;
     currency?: string;
     notes?: string | null;
 }
