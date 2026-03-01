@@ -16,9 +16,10 @@ interface ConfirmDialogProps {
   /**
    * When provided, the user must type this exact word before the confirm
    * button becomes enabled. Defaults to undefined (no typed confirmation).
-   * Example: confirmWord="DELETE"
+   * Example: confirmWord="Cancel"
    */
   confirmWord?: string;
+  confirmLabel?: string;
 }
 
 export default function ConfirmDialog({
@@ -29,6 +30,7 @@ export default function ConfirmDialog({
   title,
   message,
   confirmWord,
+  confirmLabel,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
   const [typed, setTyped] = useState("");
@@ -39,7 +41,9 @@ export default function ConfirmDialog({
   }, [open]);
 
   const requiresTyping = Boolean(confirmWord);
-  const isConfirmEnabled = (requiresTyping ? typed === confirmWord : true) && !loading;
+  const normalizedTyped = typed.trim().toLocaleLowerCase();
+  const normalizedConfirmWord = (confirmWord ?? "").trim().toLocaleLowerCase();
+  const isConfirmEnabled = (requiresTyping ? normalizedTyped === normalizedConfirmWord : true) && !loading;
 
   return (
     <Modal open={open} onClose={loading ? () => {} : onClose} title={title ?? t("areYouSure")} maxWidth="max-w-sm">
@@ -100,7 +104,7 @@ export default function ConfirmDialog({
                 <LoadingLottie size={24} />
               </span>
             ) : (
-              t("delete")
+              confirmLabel ?? t("delete")
             )}
           </button>
         </div>

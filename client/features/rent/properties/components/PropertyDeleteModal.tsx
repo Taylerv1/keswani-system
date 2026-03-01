@@ -3,6 +3,7 @@
 // ============================================================
 
 import { ConfirmDialog } from "@/components/ui";
+import { useTranslation } from "@/lib/translation";
 
 interface PropertyDeleteModalProps {
   open: boolean;
@@ -17,13 +18,15 @@ export function PropertyDeleteModal({
   onConfirm,
   loading,
 }: PropertyDeleteModalProps) {
+  const { t } = useTranslation();
+
   return (
     <ConfirmDialog
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
       loading={loading}
-      confirmWord="DELETE"
+      confirmWord={t("cancel")}
     />
   );
 }

@@ -20,6 +20,7 @@ const variantMap: Record<string, "success" | "warning" | "danger" | "info"> = {
   terminated: "danger",
   overdue: "danger",
   late: "danger",
+  cancelled: "danger",
   open: "info",
   in_progress: "warning",
   inProgress: "warning",
