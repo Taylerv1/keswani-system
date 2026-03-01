@@ -93,6 +93,8 @@ export function MaintenanceCreateModal({
                 label: property.name,
               }))}
               placeholder="--"
+              searchable
+              searchPlaceholder={`${t("search")}...`}
               noResultsLabel={t("noResults")}
             />
           </div>
@@ -125,6 +127,8 @@ export function MaintenanceCreateModal({
                 label: locale === "ar" ? tenant.nameAr : tenant.name,
               }))}
               placeholder="--"
+              searchable
+              searchPlaceholder={`${t("search")}...`}
               noResultsLabel={t("noResults")}
             />
           </div>
