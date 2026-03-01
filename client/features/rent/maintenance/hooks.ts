@@ -166,7 +166,11 @@ export function useMaintenanceState({
   const resolveUnitId = (propertyId: string, unitNumber: string) => {
     const property = propertyOptions.find((item) => item.id === propertyId);
     if (!property) return null;
+    if (property.type === "house") {
+      return property.units[0]?.id ?? null;
+    }
     const normalized = unitNumber.trim().toLowerCase();
+    if (!normalized) return null;
     const unit = property.units.find(
       (item) => item.unit_number.trim().toLowerCase() === normalized
     );

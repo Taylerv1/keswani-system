@@ -29,6 +29,12 @@ export function MaintenanceCreateModal({
   t,
 }: MaintenanceCreateModalProps) {
   const selectedProperty = properties.find((property) => property.id === form.propertyId);
+  const shouldShowUnitSelector = Boolean(
+    form.propertyId &&
+      selectedProperty &&
+      selectedProperty.type !== "house" &&
+      selectedProperty.units.length > 0
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveClick = async () => {
@@ -91,21 +97,23 @@ export function MaintenanceCreateModal({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
-            <SelectMenu
-              value={form.unitNumber}
-              onChange={(value) => setForm({ ...form, unitNumber: value })}
-              options={
-                selectedProperty?.units.map((unit) => ({
-                  value: unit.unit_number,
-                  label: unit.unit_number,
-                })) ?? []
-              }
-              placeholder="--"
-              noResultsLabel={t("noResults")}
-            />
-          </div>
+          {shouldShowUnitSelector && (
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">{t("unitNumber")}</label>
+              <SelectMenu
+                value={form.unitNumber}
+                onChange={(value) => setForm({ ...form, unitNumber: value })}
+                options={
+                  selectedProperty?.units.map((unit) => ({
+                    value: unit.unit_number,
+                    label: unit.unit_number,
+                  })) ?? []
+                }
+                placeholder="--"
+                noResultsLabel={t("noResults")}
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">{t("tenant")}</label>
