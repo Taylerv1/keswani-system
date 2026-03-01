@@ -16,6 +16,15 @@ import type {
   PaymentSummary,
   RentPaymentItem,
 } from "./payments/types";
+import {
+  getMaintenanceLookups,
+  getMaintenanceRequests,
+} from "./maintenance/api";
+import type {
+  MaintenanceRequest,
+  PropertyLookup as MaintenancePropertyLookup,
+  Tenant as MaintenanceTenant,
+} from "./maintenance/types";
 
 export type RentOverview = {
   total_properties: number;
@@ -45,6 +54,11 @@ type PaymentSnapshot = PaginatedSnapshot<RentPaymentItem> & {
   summary: PaymentSummary;
 };
 
+type MaintenanceLookupSnapshot = {
+  properties: MaintenancePropertyLookup[];
+  tenants: MaintenanceTenant[];
+};
+
 function stableKey(input: Record<string, unknown>): string {
   return JSON.stringify(input);
 }
@@ -55,7 +69,9 @@ class RentStore {
   private tenantPages = new Map<string, PaginatedSnapshot<TenantListItem>>();
   private contractPages = new Map<string, PaginatedSnapshot<ContractListItem>>();
   private paymentPages = new Map<string, PaymentSnapshot>();
+  private maintenancePages = new Map<string, PaginatedSnapshot<MaintenanceRequest>>();
   private contractLookups: LookupSnapshot | null = null;
+  private maintenanceLookups: MaintenanceLookupSnapshot | null = null;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -272,6 +288,87 @@ class RentStore {
     return { data: snapshot, fromCache: false };
   }
 
+  private maintenanceKey(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    priority?: string;
+  }) {
+    return stableKey({
+      page: params.page ?? 1,
+      limit: params.limit ?? 6,
+      search: params.search ?? "",
+      status: params.status ?? "",
+      priority: params.priority ?? "",
+    });
+  }
+
+  getMaintenanceSnapshot(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    priority?: string;
+  }) {
+    return this.maintenancePages.get(this.maintenanceKey(params)) ?? null;
+  }
+
+  async loadMaintenance(
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      priority?: string;
+    },
+    options?: { force?: boolean }
+  ) {
+    const key = this.maintenanceKey(params);
+    const cached = this.maintenancePages.get(key);
+
+    if (!options?.force && cached) {
+      return { data: cached, fromCache: true };
+    }
+
+    const response = await getMaintenanceRequests(params);
+    const items = response.data?.items ?? [];
+    const pagination = response.data?.pagination;
+    const snapshot: PaginatedSnapshot<MaintenanceRequest> = {
+      items,
+      totalItems: pagination?.total ?? items.length,
+      totalPages: Math.max(1, pagination?.total_pages ?? 1),
+    };
+
+    runInAction(() => {
+      this.maintenancePages.set(key, snapshot);
+    });
+
+    return { data: snapshot, fromCache: false };
+  }
+
+  getMaintenanceLookupsSnapshot() {
+    return this.maintenanceLookups;
+  }
+
+  async loadMaintenanceLookups(options?: { force?: boolean }) {
+    if (!options?.force && this.maintenanceLookups) {
+      return { data: this.maintenanceLookups, fromCache: true };
+    }
+
+    const response = await getMaintenanceLookups();
+    const snapshot: MaintenanceLookupSnapshot = {
+      properties: response.data?.properties ?? [],
+      tenants: response.data?.tenants ?? [],
+    };
+
+    runInAction(() => {
+      this.maintenanceLookups = snapshot;
+    });
+
+    return { data: snapshot, fromCache: false };
+  }
+
   getContractLookupsSnapshot() {
     return this.contractLookups;
   }
@@ -330,8 +427,16 @@ class RentStore {
     this.paymentPages.clear();
   }
 
+  invalidateMaintenance() {
+    this.maintenancePages.clear();
+  }
+
   invalidateContractLookups() {
     this.contractLookups = null;
+  }
+
+  invalidateMaintenanceLookups() {
+    this.maintenanceLookups = null;
   }
 }
 

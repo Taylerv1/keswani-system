@@ -4,11 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createMaintenanceRequest,
   deleteMaintenanceRequest,
-  getMaintenanceLookups,
-  getMaintenanceRequests,
   updateMaintenanceRequest,
 } from "./api";
 import type { MaintenanceFormData, MaintenanceRequest, PropertyLookup, Tenant } from "./types";
+import { rentStore } from "../store";
 import {
   PAGE_SIZE,
   createEmptyForm,
@@ -51,12 +50,24 @@ export function useMaintenanceState({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchLookupOptions = useCallback(async () => {
+  const fetchLookupOptions = useCallback(async (options?: { force?: boolean }) => {
+    if (!options?.force) {
+      const cached = rentStore.getMaintenanceLookupsSnapshot();
+      if (cached) {
+        setPropertyOptions(cached.properties);
+        setTenantOptions(cached.tenants);
+        setLookupLoading(false);
+        return;
+      }
+    }
+
     try {
       setLookupLoading(true);
-      const response = await getMaintenanceLookups();
-      setPropertyOptions(response.data?.properties ?? []);
-      setTenantOptions(response.data?.tenants ?? []);
+      const { data } = await rentStore.loadMaintenanceLookups({
+        force: options?.force,
+      });
+      setPropertyOptions(data.properties);
+      setTenantOptions(data.tenants);
     } catch {
       setPropertyOptions([]);
       setTenantOptions(tenants);
@@ -65,31 +76,45 @@ export function useMaintenanceState({
     }
   }, [tenants]);
 
-  const fetchMaintenance = useCallback(async () => {
+  const fetchMaintenance = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      status:
+        filterStatus === "all"
+          ? undefined
+          : uiStatusToBackend(filterStatus as "open" | "in_progress" | "completed" | "closed"),
+      priority:
+        filterPriority === "all"
+          ? undefined
+          : uiPriorityToBackend(filterPriority as "high" | "medium" | "low"),
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getMaintenanceSnapshot(query);
+      if (cached) {
+        setError("");
+        setMaintenanceRequests(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        setHasLoadedOnce(true);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await getMaintenanceRequests({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        status:
-          filterStatus === "all"
-            ? undefined
-            : uiStatusToBackend(filterStatus as "open" | "in_progress" | "completed" | "closed"),
-        priority:
-          filterPriority === "all"
-            ? undefined
-            : uiPriorityToBackend(filterPriority as "high" | "medium" | "low"),
+      const { data } = await rentStore.loadMaintenance(query, {
+        force: options?.force,
       });
 
-      const items = response.data?.items ?? [];
-      const pagination = response.data?.pagination;
-
-      setMaintenanceRequests(items);
-      setTotalItems(pagination?.total ?? items.length);
-      setTotalPages(Math.max(1, pagination?.total_pages ?? 1));
+      setMaintenanceRequests(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch maintenance requests");
       setMaintenanceRequests([]);
@@ -197,7 +222,9 @@ export function useMaintenanceState({
           priority: uiPriorityToBackend(payload.priority),
           estimated_cost: payload.cost ?? undefined,
         });
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create maintenance request");
@@ -234,7 +261,9 @@ export function useMaintenanceState({
           status: payload.status ? uiStatusToBackend(payload.status) : undefined,
           actual_cost: payload.cost ?? undefined,
         });
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to update maintenance request");
@@ -252,7 +281,9 @@ export function useMaintenanceState({
         setActionLoading(true);
         setError("");
         await deleteMaintenanceRequest(id);
-        await fetchMaintenance();
+        rentStore.invalidateMaintenance();
+        rentStore.invalidateOverview();
+        await fetchMaintenance({ force: true });
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to delete maintenance request");
