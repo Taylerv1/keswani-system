@@ -14,6 +14,8 @@ import {
   LoadingLottie,
   Pagination,
   SearchBar,
+  SelectMenu,
+  type SelectOption,
 } from "@/components/ui";
 import { usePaymentForm, usePaymentState } from "./hooks";
 import { toNumber } from "./utils";
@@ -36,6 +38,25 @@ export function PaymentsPage() {
 
   const isQueueView = state.viewFilter === "queue";
   const currentViewLabel = isQueueView ? t("paymentQueue") : t("paymentArchive");
+
+  const statusFilterOptions = useMemo<SelectOption[]>(() => {
+    const baseOption = { value: "all", label: `${t("all")} - ${t("status")}` };
+
+    if (isQueueView) {
+      return [
+        baseOption,
+        { value: "pending", label: t("pending") },
+        { value: "overdue", label: t("overdue") },
+        { value: "partial", label: t("partial") },
+      ];
+    }
+
+    return [
+      baseOption,
+      { value: "paid", label: t("paid") },
+      { value: "cancelled", label: t("cancelled") },
+    ];
+  }, [isQueueView, t]);
 
   return (
     <div className="@container">
@@ -134,32 +155,20 @@ export function PaymentsPage() {
           </button>
         </div>
 
-        <select
-          value={state.statusFilter}
-          onChange={(event) => {
-            state.setStatusFilter(
-              event.target.value as "all" | "pending" | "paid" | "partial" | "overdue" | "cancelled"
-            );
-            state.setPage(1);
-          }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 @md:w-52 @md:shrink-0"
-        >
-          <option value="all">
-            {t("all")} - {t("status")}
-          </option>
-          {isQueueView ? (
-            <>
-              <option value="pending">{t("pending")}</option>
-              <option value="overdue">{t("overdue")}</option>
-              <option value="partial">{t("partial")}</option>
-            </>
-          ) : (
-            <>
-              <option value="paid">{t("paid")}</option>
-              <option value="cancelled">{t("cancelled")}</option>
-            </>
-          )}
-        </select>
+        <div className="@md:w-52 @md:shrink-0">
+          <SelectMenu
+            value={state.statusFilter}
+            onChange={(value) => {
+              state.setStatusFilter(
+                value as "all" | "pending" | "paid" | "partial" | "overdue" | "cancelled"
+              );
+              state.setPage(1);
+            }}
+            options={statusFilterOptions}
+            placeholder={`${t("all")} - ${t("status")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
 
         <div className="flex-1">
           <SearchBar
