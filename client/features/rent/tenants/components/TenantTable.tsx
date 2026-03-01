@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui";
 import type { TenantListItem } from "../types";
 import { formatNullable } from "../utils";
@@ -11,7 +11,6 @@ interface TenantTableProps {
   actionLoading: boolean;
   onView: (item: TenantListItem) => void;
   onEdit: (item: TenantListItem) => void;
-  onDelete: (id: string) => void;
   t: (key: string) => string;
 }
 
@@ -39,7 +38,6 @@ export function TenantTable({
   actionLoading,
   onView,
   onEdit,
-  onDelete,
   t,
 }: TenantTableProps) {
   return (
@@ -100,14 +98,6 @@ export function TenantTable({
                       title={t("edit")}
                     >
                       <Pencil size={15} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(tenant.id)}
-                      disabled={actionLoading}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={t("delete")}
-                    >
-                      <Trash2 size={15} />
                     </button>
                   </div>
                 </td>

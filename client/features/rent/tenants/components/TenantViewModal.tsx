@@ -98,7 +98,12 @@ export function TenantViewModal({
                         <p className="text-sm font-medium text-text-primary">
                           {String(payment.amount)} {payment.currency}
                         </p>
-                        <p className="text-xs text-text-secondary">{formatDate(payment.payment_date)}</p>
+                        <p className="text-xs text-text-secondary">
+                          {t("dueDate")}: {formatDate(payment.payment_date)}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {t("paymentDate")}: {formatDate(payment.paid_at)}
+                        </p>
                       </div>
                       <StatusBadge status={payment.status} />
                     </div>
