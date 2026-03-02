@@ -43,7 +43,6 @@ interface RentPayment {
     received_by: string | null;
     receiver_name: string | null;
     receipt_number: string | null;
-    manual_receipt_ref: string | null;
     notes: string | null;
     created_at: string;
     updated_at: string;
@@ -58,7 +57,6 @@ interface CreatePaymentInput {
     period_end?: string;
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string;
-    manual_receipt_ref?: string;
     currency?: string;
     notes?: string;
 }
@@ -71,7 +69,6 @@ interface UpdatePaymentInput {
     period_end?: string | null;
     status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
     receipt_number?: string | null;
-    manual_receipt_ref?: string | null;
     currency?: string;
     notes?: string | null;
 }

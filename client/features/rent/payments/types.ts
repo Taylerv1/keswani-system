@@ -50,7 +50,6 @@ export interface RentPaymentItem {
   received_by: string | null;
   receiver_name: string | null;
   receipt_number: string | null;
-  manual_receipt_ref: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -79,7 +78,6 @@ export interface UpdatePaymentInput {
   period_end?: string | null;
   status?: PaymentStatus;
   receipt_number?: string | null;
-  manual_receipt_ref?: string | null;
   notes?: string | null;
 }
 

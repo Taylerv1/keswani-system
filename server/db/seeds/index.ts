@@ -206,7 +206,6 @@ async function main() {
                 status: rp.status,
                 received_by: rp.received_by,
                 paid_at: rp.paid_at ? new Date(rp.paid_at) : null,
-                manual_receipt_ref: rp.manual_receipt_ref || null,
                 notes: rp.notes || null,
             },
         });
