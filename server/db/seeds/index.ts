@@ -292,18 +292,18 @@ async function main() {
 
     // ---- 11. Readings ----
     console.log("  → Seeding readings...");
-    for (const rd of readings) {
-        await prisma.readings.create({
-            data: {
-                meter_id: rd.meter_id,
-                reading_value: rd.reading_value,
-                reading_date: new Date(rd.reading_date),
-                recorded_by: rd.recorded_by,
-                source: rd.source,
-            },
-        });
-    }
-    console.log(`    ✅ ${readings.length} readings`);
+    // Use createMany with skipDuplicates to avoid failing when seed is re-run
+    await prisma.readings.createMany({
+        data: readings.map((rd) => ({
+            meter_id: rd.meter_id,
+            reading_value: rd.reading_value,
+            reading_date: new Date(rd.reading_date),
+            recorded_by: rd.recorded_by,
+            source: rd.source,
+        })),
+        skipDuplicates: true,
+    });
+    console.log(`    ✅ ${readings.length} readings (skipped duplicates)`);
 
     // ---- 12. Bills ----
     console.log("  → Seeding bills...");

@@ -9,6 +9,7 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   maxWidth?: string;
+  showClose?: boolean;
 }
 
 export default function Modal({
@@ -17,6 +18,7 @@ export default function Modal({
   title,
   children,
   maxWidth = "max-w-lg",
+  showClose = true,
 }: ModalProps) {
   useEffect(() => {
     if (open) {
@@ -36,7 +38,9 @@ export default function Modal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={() => {
+          if (showClose) onClose();
+        }}
       />
       {/* Content */}
       <div
@@ -45,12 +49,14 @@ export default function Modal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-background transition-colors cursor-pointer border-0 bg-transparent"
-          >
-            <X size={18} />
-          </button>
+          {showClose && (
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-background transition-colors cursor-pointer border-0 bg-transparent"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
         {/* Body */}
         <div className="scrollbar-primary px-6 py-4 overflow-y-auto flex-1">{children}</div>

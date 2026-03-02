@@ -90,6 +90,7 @@ export function PropertyEditModal({
       onClose={onClose}
       title={t("editProperty")}
       maxWidth="max-w-xl"
+      showClose={!actionLoading}
     >
       <div className="space-y-4">
         <div>

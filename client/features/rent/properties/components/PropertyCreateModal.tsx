@@ -75,6 +75,7 @@ export function PropertyCreateModal({
       onClose={handleModalClose}
       title={unitModalOpen ? t("addUnit") : t("addProperty")}
       maxWidth={unitModalOpen ? "max-w-lg" : "max-w-xl"}
+      showClose={!actionLoading}
     >
       {unitModalOpen ? (
         <div className="space-y-4">

@@ -50,7 +50,6 @@ const electricitySubNav: SubNavItem[] = [
   { key: "elecPayments", href: "/admin-dashboard/electricity/payments", icon: <CreditCard size={16} /> },
   { key: "elecDebts", href: "/admin-dashboard/electricity/debts", icon: <DollarSign size={16} /> },
   { key: "elecPricing", href: "/admin-dashboard/electricity/pricing", icon: <Zap size={16} /> },
-  { key: "elecEmployees", href: "/admin-dashboard/electricity/employees", icon: <UserCog size={16} /> },
   { key: "elecReports", href: "/admin-dashboard/electricity/reports", icon: <BarChart3 size={16} /> },
   { key: "elecSettings", href: "/admin-dashboard/electricity/settings", icon: <Settings size={16} /> },
 ];
