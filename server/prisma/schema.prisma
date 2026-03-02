@@ -126,7 +126,6 @@ model rent_payments {
   status             payment_status @default(pending)
   received_by        String?        @db.Uuid
   receipt_number     String?
-  manual_receipt_ref String?
   notes              String?
   deleted_at         DateTime?      @db.Timestamptz(6)
   created_at         DateTime       @default(now()) @db.Timestamptz(6)
