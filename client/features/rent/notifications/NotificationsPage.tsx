@@ -1,91 +1,46 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Bell,
-  CreditCard,
-  FileText,
-  Wrench,
-  Building2,
-  CheckCheck,
-  Check,
-} from "lucide-react";
+import { useMemo } from "react";
+import { CheckCheck } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { SearchBar, Pagination, LoadingLottie } from "@/components/ui";
 import {
-  fetchNotifications,
-  markNotificationReadApi,
-  markAllNotificationsReadApi,
-  type NotificationItem,
-} from "@/features/rent/api/notifications";
-
-const PAGE_SIZE = 8;
-
-const typeIcons: Record<string, React.ReactNode> = {
-  late_payment: <CreditCard size={16} />,
-  contract_ending: <FileText size={16} />,
-  maintenance: <Wrench size={16} />,
-  vacant_property: <Building2 size={16} />,
-};
-
-const typeColors: Record<string, { bg: string; text: string }> = {
-  late_payment: { bg: "bg-card-red-light", text: "text-card-red" },
-  contract_ending: { bg: "bg-card-orange-light", text: "text-card-orange" },
-  maintenance: { bg: "bg-card-blue-light", text: "text-card-blue" },
-  vacant_property: { bg: "bg-card-green-light", text: "text-card-green" },
-};
+  SearchBar,
+  Pagination,
+  LoadingLottie,
+  SelectMenu,
+  type SelectOption,
+} from "@/components/ui";
+import { ContractDetailsModal } from "@/features/rent/contracts/components/ContractDetailsModal";
+import { TenantViewModal } from "@/features/rent/tenants/components/TenantViewModal";
+import { useNotificationDetails, useNotificationState } from "./hooks";
+import { MaintenanceDetailsModal } from "./components/MaintenanceDetailsModal";
+import { NotificationCard } from "./components/NotificationCard";
+import type { NotificationReadFilter, NotificationTypeFilter } from "./types";
 
 export default function NotificationsPage() {
   const { t, locale } = useTranslation();
+  const state = useNotificationState(t);
+  const details = useNotificationDetails(t);
 
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const typeFilterOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "all", label: `${t("all")} - ${t("notificationType")}` },
+      { value: "late_payment", label: t("latePaymentNotif") },
+      { value: "contract_ending", label: t("contractEndingNotif") },
+      { value: "maintenance", label: t("maintenanceNotif") },
+      { value: "vacant_property", label: t("vacantPropertyNotif") },
+    ],
+    [t]
+  );
 
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterRead, setFilterRead] = useState<string>("all");
-  const [page, setPage] = useState(1);
-
-  const loadNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchNotifications({
-        section: "rent",
-        type: filterType !== "all" ? filterType : undefined,
-        is_read: filterRead === "unread" ? "false" : filterRead === "read" ? "true" : undefined,
-        search: search || undefined,
-        page,
-        limit: PAGE_SIZE,
-      });
-      if (res.success && res.data) {
-        setItems(res.data.items);
-        setTotal(res.data.pagination.total);
-        setTotalPages(res.data.pagination.total_pages);
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, [filterType, filterRead, search, page]);
-
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
-
-  const unreadCount = items.filter((n) => !n.read).length;
-
-  const handleMarkRead = async (id: string) => {
-    await markNotificationReadApi(id);
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  };
-
-  const handleMarkAllRead = async () => {
-    await markAllNotificationsReadApi("rent");
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
+  const readFilterOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "all", label: t("all") },
+      { value: "unread", label: t("unread") },
+      { value: "read", label: t("read") },
+    ],
+    [t]
+  );
 
   return (
     <div>
@@ -93,12 +48,16 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-primary">{t("notificationManagement")}</h1>
           <p className="text-text-secondary text-sm mt-1">
-            {unreadCount} {t("unread")}
+            {state.unreadCount} {t("unread")}
           </p>
         </div>
-        {unreadCount > 0 && (
+        {state.unreadCount > 0 && (
           <button
-            onClick={handleMarkAllRead}
+            type="button"
+            onClick={() => {
+              void state.markAllNotificationsRead();
+            }}
+            disabled={state.actionLoading}
             className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
           >
             <CheckCheck size={16} />
@@ -109,97 +68,113 @@ export default function NotificationsPage() {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex-1">
-          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+          <SearchBar
+            value={state.search}
+            onChange={(value) => {
+              state.setSearch(value);
+              state.setPage(1);
+            }}
+          />
         </div>
-        <select
-          value={filterType}
-          onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="all">{t("all")} - {t("notificationType")}</option>
-          <option value="late_payment">{t("latePaymentNotif")}</option>
-          <option value="contract_ending">{t("contractEndingNotif")}</option>
-          <option value="maintenance">{t("maintenanceNotif")}</option>
-          <option value="vacant_property">{t("vacantPropertyNotif")}</option>
-        </select>
-        <select
-          value={filterRead}
-          onChange={(e) => { setFilterRead(e.target.value); setPage(1); }}
-          className="h-10 rounded-lg border border-surface-border bg-surface text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="all">{t("all")}</option>
-          <option value="unread">{t("unread")}</option>
-          <option value="read">{t("read")}</option>
-        </select>
+        <div className="sm:w-52">
+          <SelectMenu
+            value={state.filterType}
+            onChange={(value) => {
+              state.setFilterType(value as NotificationTypeFilter);
+              state.setPage(1);
+            }}
+            options={typeFilterOptions}
+            placeholder={`${t("all")} - ${t("notificationType")}`}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
+        <div className="sm:w-40">
+          <SelectMenu
+            value={state.filterRead}
+            onChange={(value) => {
+              state.setFilterRead(value as NotificationReadFilter);
+              state.setPage(1);
+            }}
+            options={readFilterOptions}
+            placeholder={t("all")}
+            noResultsLabel={t("noResults")}
+          />
+        </div>
       </div>
 
-      {loading ? (
-        <div className="min-h-[30vh] flex items-center justify-center">
-          <LoadingLottie size={80} className="p-4" />
+      {state.error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {state.error}
+        </div>
+      )}
+
+      {details.detailError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {details.detailError}
+        </div>
+      )}
+
+      {state.loading ? (
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center">
+          <LoadingLottie size={150} className="p-6" />
         </div>
       ) : (
         <>
           <div className="space-y-3">
-            {items.length === 0 ? (
+            {state.items.length === 0 ? (
               <div className="bg-surface rounded-xl border border-surface-border p-8 text-center text-text-muted">
                 {t("noResults")}
               </div>
             ) : (
-              items.map((n) => {
-                const colors = typeColors[n.type] ?? typeColors.maintenance;
-                return (
-                  <div
-                    key={n.id}
-                    className={`bg-surface rounded-xl border p-4 flex items-start gap-4 transition-all ${n.read
-                        ? "border-surface-border"
-                        : "border-primary/30 shadow-sm"
-                      }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0`}
-                    >
-                      {typeIcons[n.type] ?? <Bell size={16} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-sm font-semibold text-text-primary">
-                          {n.title}
-                        </h3>
-                        {!n.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-sm text-text-secondary">
-                        {n.message}
-                      </p>
-                      <p className="text-xs text-text-muted mt-1">
-                        {new Date(n.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    {!n.read && (
-                      <button
-                        onClick={() => handleMarkRead(n.id)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0 shrink-0"
-                        title={t("markAsRead")}
-                      >
-                        <Check size={16} />
-                      </button>
-                    )}
-                  </div>
-                );
-              })
+              state.items.map((item) => (
+                <NotificationCard
+                  key={item.id}
+                  item={item}
+                  locale={locale}
+                  t={t}
+                  viewLoading={details.detailLoadingId === item.id}
+                  onView={(target) => {
+                    void details.openDetails(target);
+                  }}
+                  onMarkRead={(id) => {
+                    void state.markNotificationRead(id);
+                  }}
+                />
+              ))
             )}
           </div>
 
           <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={total}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
+            currentPage={state.page}
+            totalPages={state.totalPages}
+            totalItems={state.totalItems}
+            pageSize={state.PAGE_SIZE}
+            onPageChange={state.setPage}
           />
         </>
       )}
+
+      <ContractDetailsModal
+        open={!!details.contractDetail}
+        t={t}
+        item={details.contractDetail}
+        onClose={() => details.setContractDetail(null)}
+      />
+
+      <TenantViewModal
+        open={!!details.tenantDetail}
+        tenant={details.tenantDetail}
+        onClose={() => details.setTenantDetail(null)}
+        t={t}
+      />
+
+      <MaintenanceDetailsModal
+        open={!!details.maintenanceDetail}
+        item={details.maintenanceDetail}
+        onClose={() => details.setMaintenanceDetail(null)}
+        t={t}
+        locale={locale}
+      />
     </div>
   );
 }

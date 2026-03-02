@@ -1,1 +1,1 @@
-export { default } from '@/features/rent/notifications/NotificationsPage';
+export { NotificationsPage as default } from "@/features/rent/notifications";
