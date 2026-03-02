@@ -205,14 +205,9 @@ async function main() {
                 payment_method: "cash",
                 status: rp.status,
                 received_by: rp.received_by,
-                paid_at:
-                    (rp as any).paid_at
-                        ? new Date((rp as any).paid_at)
-                        : rp.status === "paid" || rp.status === "partial"
-                          ? new Date(rp.payment_date)
-                          : null,
-                manual_receipt_ref: (rp as any).manual_receipt_ref || null,
-                notes: (rp as any).notes || null,
+                paid_at: rp.paid_at ? new Date(rp.paid_at) : null,
+                manual_receipt_ref: rp.manual_receipt_ref || null,
+                notes: rp.notes || null,
             },
         });
     }
