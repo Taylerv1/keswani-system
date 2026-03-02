@@ -148,7 +148,6 @@ export const getPayments = async (
             where.OR = [
                 { contract: { client: { full_name: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } },
                 { receipt_number: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
-                { manual_receipt_ref: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
                 { contract: { unit: { property: { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } } },
                 { contract: { unit: { unit_number: { contains: search, mode: "insensitive" as Prisma.QueryMode } } } },
             ];
@@ -199,7 +198,6 @@ export const getPayments = async (
             received_by: p.received_by,
             receiver_name: p.receiver?.full_name || null,
             receipt_number: p.receipt_number,
-            manual_receipt_ref: p.manual_receipt_ref,
             notes: p.notes,
             created_at: p.created_at,
             updated_at: p.updated_at,
@@ -285,7 +283,6 @@ export const createPayment = async (
         }
 
         const status = data.status;
-        const manualReceiptRef = normalizeOptionalText(data.manual_receipt_ref) ?? null;
         let receiptNumber = normalizeOptionalText(data.receipt_number) ?? null;
 
         if (receiptNumber) {
@@ -332,7 +329,6 @@ export const createPayment = async (
                 status,
                 received_by: receivedBy,
                 receipt_number: receiptNumber,
-                manual_receipt_ref: manualReceiptRef,
                 notes: data.notes,
             },
             include: paymentInclude,
@@ -375,7 +371,6 @@ export const updatePayment = async (
                 contract_id: true,
                 status: true,
                 receipt_number: true,
-                manual_receipt_ref: true,
                 payment_date: true,
                 paid_at: true,
                 period_start: true,
@@ -397,9 +392,6 @@ export const updatePayment = async (
         const nextStatus = data.status ?? existing.status;
         const normalizedReceiptInput = data.receipt_number !== undefined
             ? normalizeOptionalText(data.receipt_number)
-            : undefined;
-        const normalizedManualReceiptInput = data.manual_receipt_ref !== undefined
-            ? normalizeOptionalText(data.manual_receipt_ref)
             : undefined;
 
         let nextReceiptNumber = normalizedReceiptInput !== undefined
@@ -431,7 +423,6 @@ export const updatePayment = async (
         if (data.period_end !== undefined) updateData.period_end = data.period_end ? parseDateOnly(data.period_end) : null;
         if (data.status !== undefined) updateData.status = data.status;
         if (nextReceiptNumber !== existing.receipt_number) updateData.receipt_number = nextReceiptNumber;
-        if (normalizedManualReceiptInput !== undefined) updateData.manual_receipt_ref = normalizedManualReceiptInput;
         if (data.notes !== undefined) updateData.notes = data.notes;
         updateData.payment_method = "cash";
 

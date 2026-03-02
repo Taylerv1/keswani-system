@@ -17,7 +17,6 @@ export const createPaymentSchema = z.object({
     period_end: z.string().regex(YYYY_MM_DD_REGEX).optional(),
     status: paymentStatusEnum.default("pending"),
     receipt_number: z.string().max(100).optional(),
-    manual_receipt_ref: z.string().max(100).optional(),
     notes: z.string().max(2000).optional(),
 }).refine((data) => {
     if (data.period_start && data.period_end) {
@@ -38,7 +37,6 @@ export const updatePaymentSchema = z.object({
     period_end: z.string().regex(YYYY_MM_DD_REGEX).nullable().optional(),
     status: paymentStatusEnum.optional(),
     receipt_number: z.string().max(100).nullable().optional(),
-    manual_receipt_ref: z.string().max(100).nullable().optional(),
     notes: z.string().max(2000).nullable().optional(),
 }).refine((data) => Object.keys(data).length > 0, { message: "At least one field is required" })
     .refine((data) => {
