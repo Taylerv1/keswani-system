@@ -242,9 +242,11 @@
       "contractId": "con-1",
       "amount": 1200,
       "date": "2026-02-01",
+      "paidAt": "2026-02-01",
       "status": "paid",
       "month": "2026-02",
-      "receiptNumber": "REC-20260201-001"
+      "receiptNumber": "REC-20260201-001",
+      "manualReceiptRef": "MNL-RNT-20260201-001"
     },
     {
       "id": "pay-2",
@@ -252,9 +254,11 @@
       "contractId": "con-1",
       "amount": 1200,
       "date": "2026-01-03",
+      "paidAt": "2026-01-03",
       "status": "paid",
       "month": "2026-01",
-      "receiptNumber": "REC-20260103-002"
+      "receiptNumber": "REC-20260103-002",
+      "manualReceiptRef": "MNL-RNT-20260103-002"
     },
     {
       "id": "pay-3",
@@ -262,9 +266,11 @@
       "contractId": "con-2",
       "amount": 1400,
       "date": "2026-01-05",
+      "paidAt": "2026-01-05",
       "status": "paid",
       "month": "2026-01",
-      "receiptNumber": "REC-20260105-003"
+      "receiptNumber": "REC-20260105-003",
+      "manualReceiptRef": "MNL-RNT-20260105-003"
     },
     {
       "id": "pay-4",
@@ -272,9 +278,11 @@
       "contractId": "con-2",
       "amount": 0,
       "date": null,
+      "paidAt": null,
       "status": "overdue",
       "month": "2026-02",
-      "receiptNumber": null
+      "receiptNumber": null,
+      "manualReceiptRef": null
     },
     {
       "id": "pay-5",
@@ -282,9 +290,11 @@
       "contractId": "con-3",
       "amount": 900,
       "date": "2026-01-02",
+      "paidAt": "2026-01-02",
       "status": "paid",
       "month": "2026-01",
-      "receiptNumber": "REC-20260102-005"
+      "receiptNumber": "REC-20260102-005",
+      "manualReceiptRef": "MNL-RNT-20260102-005"
     },
     {
       "id": "pay-6",
@@ -292,9 +302,11 @@
       "contractId": "con-4",
       "amount": 3500,
       "date": "2026-02-01",
+      "paidAt": "2026-02-01",
       "status": "paid",
       "month": "2026-02",
-      "receiptNumber": "REC-20260201-006"
+      "receiptNumber": "REC-20260201-006",
+      "manualReceiptRef": "MNL-RNT-20260201-006"
     },
     {
       "id": "pay-7",
@@ -302,9 +314,11 @@
       "contractId": "con-5",
       "amount": 0,
       "date": null,
+      "paidAt": null,
       "status": "overdue",
       "month": "2026-01",
-      "receiptNumber": null
+      "receiptNumber": null,
+      "manualReceiptRef": null
     },
     {
       "id": "pay-8",
@@ -312,9 +326,11 @@
       "contractId": "con-5",
       "amount": 0,
       "date": null,
+      "paidAt": null,
       "status": "overdue",
       "month": "2026-02",
-      "receiptNumber": null
+      "receiptNumber": null,
+      "manualReceiptRef": null
     },
     {
       "id": "pay-9",
@@ -322,9 +338,11 @@
       "contractId": "con-6",
       "amount": 2000,
       "date": "2026-02-02",
+      "paidAt": "2026-02-02",
       "status": "paid",
       "month": "2026-02",
-      "receiptNumber": "REC-20260202-009"
+      "receiptNumber": "REC-20260202-009",
+      "manualReceiptRef": "MNL-RNT-20260202-009"
     },
     {
       "id": "pay-10",
@@ -332,9 +350,11 @@
       "contractId": "con-6",
       "amount": 2000,
       "date": "2026-01-01",
+      "paidAt": "2026-01-01",
       "status": "paid",
       "month": "2026-01",
-      "receiptNumber": "REC-20260101-010"
+      "receiptNumber": "REC-20260101-010",
+      "manualReceiptRef": "MNL-RNT-20260101-010"
     }
   ],
   "maintenanceRequests": [

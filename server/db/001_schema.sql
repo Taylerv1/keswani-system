@@ -150,6 +150,8 @@ CREATE TABLE rent_payments (
   status          payment_status NOT NULL DEFAULT 'pending',
   received_by     UUID REFERENCES employees(id) ON DELETE RESTRICT,
   receipt_number  TEXT,
+  paid_at         DATE,
+  manual_receipt_ref TEXT,
   notes           TEXT,
   deleted_at      TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
