@@ -43,7 +43,7 @@ export function EmployeeMobileCard({
         <div className="flex justify-between">
           <span className="text-text-secondary">{t("role")}:</span>
           <span className="text-text-primary font-medium">
-            <StatusBadge status={employee.role} variant="secondary" />
+            <StatusBadge status={employee.role} variant="info" />
           </span>
         </div>
         <div className="flex justify-between">

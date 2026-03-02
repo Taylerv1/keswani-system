@@ -73,7 +73,7 @@ export function EmployeeTable({
                 {employee.phone}
               </td>
               <td className="px-4 py-3 text-sm">
-                <StatusBadge status={employee.role} variant="secondary" />
+                <StatusBadge status={employee.role} variant="info" />
               </td>
               <td className="px-4 py-3 text-sm">
                 <StatusBadge

@@ -157,6 +157,7 @@ export function EmployeeOverviewPage() {
               { value: "employee", label: t("employee") },
             ]}
             placeholder={t("filterByRole")}
+            noResultsLabel={t("noResults") || "No roles found"}
           />
         </div>
       </div>
@@ -194,8 +195,10 @@ export function EmployeeOverviewPage() {
       {state.totalPages > 1 && (
         <div className="mt-6">
           <Pagination
-            page={state.page}
+            currentPage={state.page}
             totalPages={state.totalPages}
+            totalItems={state.totalItems}
+            pageSize={10}
             onPageChange={state.setPage}
           />
         </div>

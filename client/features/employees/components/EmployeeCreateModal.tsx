@@ -188,7 +188,7 @@ export function EmployeeCreateModal({
             disabled={actionLoading}
             className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
-            {actionLoading && <LoadingLottie size="sm" />}
+            {actionLoading && <LoadingLottie size={20} />}
             {t("create")}
           </button>
         </div>

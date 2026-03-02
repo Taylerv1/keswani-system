@@ -93,7 +93,7 @@ export function EmployeeDeleteModal({
             disabled={isDeleting}
             className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
           >
-            {isDeleting && <LoadingLottie size="sm" />}
+            {isDeleting && <LoadingLottie size={20} />}
             {t("delete")}
           </button>
         </div>

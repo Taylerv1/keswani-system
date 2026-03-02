@@ -10,6 +10,8 @@ import PreferencesPanel from "@/features/profile/components/PreferencesPanel";
 import EditProfileModal from "@/features/profile/components/EditProfileModal";
 import { LoadingLottie, Modal } from "@/components/ui";
 import { resetPassword } from "@/features/auth/api/auth";
+import { getProfileFromProxy, updateProfileViaProxy } from "@/features/profile/api/profile";
+import { UserProfile } from "@/features/profile/types";
 
 interface ProfileData {
   fullName: string;
@@ -49,14 +51,9 @@ export default function ProfilePage() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/auth/me", { method: "GET", cache: "no-store" });
-        const json = await res.json();
+        const response = await getProfileFromProxy();
+        const p = response.profile;
 
-        if (!json?.success || !json?.data?.profile) {
-          throw new Error(json?.error || "Failed to load profile");
-        }
-
-        const p = json.data.profile as any;
         const mapped: ProfileData = {
           fullName: p.full_name ?? "",
           email: p.email ?? "",
@@ -64,8 +61,8 @@ export default function ProfilePage() {
           address: p.address ?? "",
           createdAt: p.created_at ? new Date(p.created_at as string).toLocaleDateString() : "",
           lastLogin: p.last_login ?? "",
-          status: p.is_active ? "active" : "inactive",
-          role: json.data.user?.role ?? json.data.user?.user_type ?? "",
+          status: "is_active" in p ? (p.is_active ? "active" : "inactive") : "active",
+          role: "role" in p ? (p.role ?? "") : (response.user?.role ?? response.user?.user_type ?? ""),
           twoFactorEnabled: false,
         };
 
@@ -87,47 +84,35 @@ export default function ProfilePage() {
   const handleSaveProfile = async (data: Partial<ProfileData>) => {
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          full_name: data.fullName,
-          phone: data.phone,
-          address: data.address,
-        }),
+      const response = await updateProfileViaProxy({
+        full_name: data.fullName,
+        phone: data.phone,
+        address: data.address,
       });
 
-      const json = await res.json();
+      const p = response.profile;
+      const updatedFullName = typeof p.full_name === "string" ? p.full_name.trim() : "";
 
-      if (json.success && json.data?.profile) {
-        const p = json.data.profile;
-        const updatedFullName = typeof p.full_name === "string" ? p.full_name.trim() : "";
+      setProfile((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          fullName: updatedFullName || prev.fullName,
+          phone: p.phone || prev.phone,
+          address: p.address || prev.address,
+        };
+      });
 
-        setProfile((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            fullName: updatedFullName || prev.fullName,
-            phone: p.phone || prev.phone,
-            address: p.address || prev.address,
-          };
-        });
-
-        if (updatedFullName && typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("profile:name-updated", {
-              detail: { fullName: updatedFullName },
-            })
-          );
-        }
-
-        setToastVisible(true);
-        setTimeout(() => setToastVisible(false), 2500);
-      } else {
-        console.error("Failed to update profile", json.error);
+      if (updatedFullName && typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("profile:name-updated", {
+            detail: { fullName: updatedFullName },
+          })
+        );
       }
+
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 2500);
     } catch (err) {
       console.error("Error updating profile", err);
     } finally {

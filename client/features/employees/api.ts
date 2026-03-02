@@ -9,6 +9,7 @@ import mockEmployeesData from "@/mocks/employees.mock.json";
 import type {
   EmployeeDto,
   EmployeeLookup,
+  EmployeeRole,
   CreateEmployeeInput,
   UpdateEmployeeInput,
 } from "./types";
@@ -171,7 +172,7 @@ export async function createEmployee(
       address: input.address || "",
       role: input.role || "employee",
       is_active: true,
-      access: input.access || {
+      access: {
         rent: false,
         electricity: false,
         expenses: false,
@@ -206,10 +207,17 @@ export async function updateEmployee(
       throw new Error(`Employee with ID ${id} not found`);
     }
 
+    const existing = mockEmployees[index];
     // Update employee object
     const updated: EmployeeDto = {
-      ...mockEmployees[index],
-      ...input,
+      id: existing.id,
+      full_name: input.full_name ?? existing.full_name,
+      email: input.email ?? existing.email,
+      phone: input.phone ?? existing.phone,
+      address: input.address ?? existing.address,
+      role: (input.role ?? existing.role) as EmployeeRole,
+      access: input.access ?? existing.access,
+      is_active: input.is_active ?? existing.is_active,
     };
     mockEmployees[index] = updated;
     return updated;
