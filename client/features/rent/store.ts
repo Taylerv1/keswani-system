@@ -25,6 +25,8 @@ import type {
   PropertyLookup as MaintenancePropertyLookup,
   Tenant as MaintenanceTenant,
 } from "./maintenance/types";
+import { getNotifications } from "./notifications/api";
+import type { NotificationItem, NotificationQueryParams } from "./notifications/types";
 
 export type RecentActivityItem = {
   id: string;
@@ -82,6 +84,7 @@ class RentStore {
   private contractPages = new Map<string, PaginatedSnapshot<ContractListItem>>();
   private paymentPages = new Map<string, PaymentSnapshot>();
   private maintenancePages = new Map<string, PaginatedSnapshot<MaintenanceRequest>>();
+  private notificationPages = new Map<string, PaginatedSnapshot<NotificationItem>>();
   private contractLookups: LookupSnapshot | null = null;
   private maintenanceLookups: MaintenanceLookupSnapshot | null = null;
 
@@ -300,6 +303,48 @@ class RentStore {
     return { data: snapshot, fromCache: false };
   }
 
+  private notificationKey(params: NotificationQueryParams) {
+    return stableKey({
+      page: params.page ?? 1,
+      limit: params.limit ?? 8,
+      section: params.section ?? "",
+      type: params.type ?? "",
+      is_read: params.is_read ?? "",
+      search: params.search ?? "",
+    });
+  }
+
+  getNotificationsSnapshot(params: NotificationQueryParams) {
+    return this.notificationPages.get(this.notificationKey(params)) ?? null;
+  }
+
+  async loadNotifications(
+    params: NotificationQueryParams,
+    options?: { force?: boolean }
+  ) {
+    const key = this.notificationKey(params);
+    const cached = this.notificationPages.get(key);
+
+    if (!options?.force && cached) {
+      return { data: cached, fromCache: true };
+    }
+
+    const response = await getNotifications(params);
+    const items = response.data?.items ?? [];
+    const pagination = response.data?.pagination;
+    const snapshot: PaginatedSnapshot<NotificationItem> = {
+      items,
+      totalItems: pagination?.total ?? items.length,
+      totalPages: Math.max(1, pagination?.total_pages ?? 1),
+    };
+
+    runInAction(() => {
+      this.notificationPages.set(key, snapshot);
+    });
+
+    return { data: snapshot, fromCache: false };
+  }
+
   private maintenanceKey(params: {
     page?: number;
     limit?: number;
@@ -441,6 +486,10 @@ class RentStore {
 
   invalidateMaintenance() {
     this.maintenancePages.clear();
+  }
+
+  invalidateNotifications() {
+    this.notificationPages.clear();
   }
 
   invalidateContractLookups() {
