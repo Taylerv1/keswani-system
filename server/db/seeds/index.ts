@@ -205,7 +205,8 @@ async function main() {
                 payment_method: "cash",
                 status: rp.status,
                 received_by: rp.received_by,
-                notes: (rp as any).notes || null,
+                paid_at: rp.paid_at ? new Date(rp.paid_at) : null,
+                notes: rp.notes || null,
             },
         });
     }

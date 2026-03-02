@@ -296,43 +296,43 @@ export const contracts = [
 // ===========================
 export const rentPayments = [
     // Contract 1 (c1, $500/mo) — months 1-5
-    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-01-05", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-02-03", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-03-04", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-04-02", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-05-05", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-01-05", paid_at: "2025-01-05", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-02-03", paid_at: "2025-02-03", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-03-04", paid_at: "2025-03-04", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-04-02", paid_at: "2025-04-02", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct1, amount: 500, payment_date: "2025-05-05", paid_at: "2025-05-05", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
     // Contract 2 (c2, $700/mo) — months 2-5
-    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-02-05", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-03-03", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-04-07", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct2, amount: 350, payment_date: "2025-05-10", period_start: "2025-05-01", period_end: "2025-05-31", status: "partial" as const, received_by: EMPLOYEE_IDS.emp1, notes: "Partial payment — remaining due" },
+    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-02-05", paid_at: "2025-02-05", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-03-03", paid_at: "2025-03-03", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-04-07", paid_at: "2025-04-07", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct2, amount: 350, payment_date: "2025-05-10", paid_at: "2025-05-10", period_start: "2025-05-01", period_end: "2025-05-31", status: "partial" as const, received_by: EMPLOYEE_IDS.emp1, notes: "Partial payment — remaining due" },
     // Contract 3 (c3, $500/mo) — months 3-5
-    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-03-05", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-04-03", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-05-06", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-03-05", paid_at: "2025-03-05", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-04-03", paid_at: "2025-04-03", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-05-06", paid_at: "2025-05-06", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
     // Contract 4 (c4, $450/mo) — months 1-4
-    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-01-20", period_start: "2025-01-15", period_end: "2025-02-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-02-18", period_start: "2025-02-15", period_end: "2025-03-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-03-16", period_start: "2025-03-15", period_end: "2025-04-14", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-04-17", period_start: "2025-04-15", period_end: "2025-05-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-01-20", paid_at: "2025-01-20", period_start: "2025-01-15", period_end: "2025-02-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-02-18", paid_at: "2025-02-18", period_start: "2025-02-15", period_end: "2025-03-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-03-16", paid_at: "2025-03-16", period_start: "2025-03-15", period_end: "2025-04-14", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct4, amount: 450, payment_date: "2025-04-17", paid_at: "2025-04-17", period_start: "2025-04-15", period_end: "2025-05-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
     // Contract 6 (c6, $900/mo) — months 1-5
-    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-01-04", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-02-02", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-03-05", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-04-03", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-05-02", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-01-04", paid_at: "2025-01-04", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-02-02", paid_at: "2025-02-02", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-03-05", paid_at: "2025-03-05", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-04-03", paid_at: "2025-04-03", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct6, amount: 900, payment_date: "2025-05-02", paid_at: "2025-05-02", period_start: "2025-05-01", period_end: "2025-05-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
     // Contract 8 (c8, $350/mo) — months 6-8
-    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-06-05", period_start: "2025-06-01", period_end: "2025-06-30", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-07-04", period_start: "2025-07-01", period_end: "2025-07-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-08-06", period_start: "2025-08-01", period_end: "2025-08-31", status: "pending" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-06-05", paid_at: "2025-06-05", period_start: "2025-06-01", period_end: "2025-06-30", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-07-04", paid_at: "2025-07-04", period_start: "2025-07-01", period_end: "2025-07-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct8, amount: 350, payment_date: "2025-08-06", paid_at: null, period_start: "2025-08-01", period_end: "2025-08-31", status: "pending" as const, received_by: EMPLOYEE_IDS.emp1 },
     // Contract 10 (c10, $1200/mo shop) — months 1-4
-    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-01-03", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-02-04", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-03-03", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-04-05", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-01-03", paid_at: "2025-01-03", period_start: "2025-01-01", period_end: "2025-01-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-02-04", paid_at: "2025-02-04", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-03-03", paid_at: "2025-03-03", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
+    { contract_id: CONTRACT_IDS.ct10, amount: 1200, payment_date: "2025-04-05", paid_at: "2025-04-05", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
     // Contract 11 (c11, $550/mo) — months 2-3
-    { contract_id: CONTRACT_IDS.ct11, amount: 550, payment_date: "2025-02-20", period_start: "2025-02-15", period_end: "2025-03-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
-    { contract_id: CONTRACT_IDS.ct11, amount: 550, payment_date: "2025-03-18", period_start: "2025-03-15", period_end: "2025-04-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct11, amount: 550, payment_date: "2025-02-20", paid_at: "2025-02-20", period_start: "2025-02-15", period_end: "2025-03-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
+    { contract_id: CONTRACT_IDS.ct11, amount: 550, payment_date: "2025-03-18", paid_at: "2025-03-18", period_start: "2025-03-15", period_end: "2025-04-14", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
 ];
 
 // ===========================
