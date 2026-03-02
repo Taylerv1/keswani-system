@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,9 +8,362 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ===========================
-// ENUM TYPES
-// ===========================
+model employees {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_user_id           String?                @unique @db.Uuid
+  full_name              String
+  email                  String?                @unique
+  phone                  String?
+  role                   employee_role          @default(employee)
+  access                 Json                   @default("{}")
+  is_active              Boolean                @default(true)
+  deleted_at             DateTime?              @db.Timestamptz(6)
+  created_at             DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime               @default(now()) @db.Timestamptz(6)
+  address                String?
+  received_bill_payments bill_payments[]        @relation("BillPaymentReceiver")
+  generated_bills        bills[]                @relation("BillGenerator")
+  paid_expenses          expenses[]             @relation("ExpensePayer")
+  assigned_maintenance   maintenance_requests[] @relation("MaintenanceAssignee")
+  set_pricing            pricing_history[]      @relation("PricingSetter")
+  managed_properties     properties[]           @relation("PropertyManager")
+  recorded_readings      readings[]             @relation("ReadingRecorder")
+  rent_invoices          rent_invoices[]
+  received_rent_payments rent_payments[]        @relation("RentPaymentReceiver")
+}
+
+model clients {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_user_id         String?                @unique @db.Uuid
+  full_name            String
+  email                String?
+  phone                String?
+  address              String?
+  notes                String?
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  contracts            contracts[]
+  maintenance_requests maintenance_requests[] @relation("MaintenanceRequester")
+  subscribers          subscribers[]
+}
+
+model properties {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  address     String?
+  city        String?
+  type        property_type @default(building)
+  managed_by  String?       @db.Uuid
+  owner_notes String?
+  deleted_at  DateTime?     @db.Timestamptz(6)
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime      @default(now()) @db.Timestamptz(6)
+  expenses    expenses[]    @relation("ExpenseProperty")
+  manager     employees?    @relation("PropertyManager", fields: [managed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  subscribers subscribers[] @relation("SubscriberProperty")
+  units       units[]
+
+  @@index([managed_by], map: "idx_properties_managed_by")
+}
+
+model units {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  property_id          String                 @db.Uuid
+  unit_number          String
+  floor                Int?
+  bedrooms             Int?
+  bathrooms            Int?
+  area_sqm             Decimal?               @db.Decimal(10, 2)
+  description          String?
+  is_available         Boolean                @default(true)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  contracts            contracts[]
+  expenses             expenses[]             @relation("ExpenseUnit")
+  maintenance_requests maintenance_requests[]
+  subscribers          subscribers[]          @relation("SubscriberUnit")
+  property             properties             @relation(fields: [property_id], references: [id], onUpdate: NoAction)
+
+  @@unique([property_id, unit_number], map: "uq_property_unit")
+  @@index([property_id], map: "idx_units_property_id")
+}
+
+model contracts {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id        String          @db.Uuid
+  client_id      String          @db.Uuid
+  start_date     DateTime        @db.Date
+  end_date       DateTime?       @db.Date
+  monthly_rent   Decimal         @db.Decimal(12, 2)
+  currency       String          @default("USD")
+  deposit_amount Decimal?        @default(0) @db.Decimal(12, 2)
+  status         contract_status @default(pending)
+  notes          String?
+  deleted_at     DateTime?       @db.Timestamptz(6)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  client         clients         @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  unit           units           @relation(fields: [unit_id], references: [id], onUpdate: NoAction)
+  rent_invoices  rent_invoices[]
+  rent_payments  rent_payments[]
+
+  @@index([client_id], map: "idx_contracts_client_id")
+  @@index([unit_id], map: "idx_contracts_unit_id")
+}
+
+model rent_payments {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contract_id        String         @db.Uuid
+  amount             Decimal        @db.Decimal(12, 2)
+  currency           String         @default("USD")
+  payment_date       DateTime       @db.Date
+  period_start       DateTime?      @db.Date
+  period_end         DateTime?      @db.Date
+  payment_method     payment_method @default(cash)
+  status             payment_status @default(pending)
+  received_by        String?        @db.Uuid
+  receipt_number     String?
+  notes              String?
+  deleted_at         DateTime?      @db.Timestamptz(6)
+  created_at         DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime       @default(now()) @db.Timestamptz(6)
+  invoice_id         String?        @db.Uuid
+  paid_at            DateTime?      @db.Date
+  manual_receipt_ref String?
+  contract           contracts      @relation(fields: [contract_id], references: [id], onUpdate: NoAction)
+  rent_invoices      rent_invoices? @relation(fields: [invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  receiver           employees?     @relation("RentPaymentReceiver", fields: [received_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([contract_id], map: "idx_rent_payments_contract_id")
+  @@index([invoice_id, deleted_at], map: "idx_rent_payments_invoice_id_deleted_at")
+  @@index([received_by], map: "idx_rent_payments_received_by")
+}
+
+model maintenance_requests {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id        String               @db.Uuid
+  requested_by   String?              @db.Uuid
+  assigned_to    String?              @db.Uuid
+  title          String
+  description    String?
+  status         maintenance_status   @default(pending)
+  priority       maintenance_priority @default(medium)
+  estimated_cost Decimal?             @db.Decimal(12, 2)
+  actual_cost    Decimal?             @db.Decimal(12, 2)
+  completed_at   DateTime?            @db.Timestamptz(6)
+  deleted_at     DateTime?            @db.Timestamptz(6)
+  created_at     DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime             @default(now()) @db.Timestamptz(6)
+  assignee       employees?           @relation("MaintenanceAssignee", fields: [assigned_to], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  requester      clients?             @relation("MaintenanceRequester", fields: [requested_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  unit           units                @relation(fields: [unit_id], references: [id], onUpdate: NoAction)
+
+  @@index([assigned_to], map: "idx_maintenance_assigned_to")
+  @@index([requested_by], map: "idx_maintenance_requested_by")
+  @@index([unit_id], map: "idx_maintenance_unit_id")
+}
+
+model subscribers {
+  id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_id           String      @db.Uuid
+  subscription_number String      @unique
+  property_id         String?     @db.Uuid
+  unit_id             String?     @db.Uuid
+  is_active           Boolean     @default(true)
+  notes               String?
+  deleted_at          DateTime?   @db.Timestamptz(6)
+  created_at          DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime    @default(now()) @db.Timestamptz(6)
+  bills               bills[]
+  meters              meters[]
+  client              clients     @relation(fields: [client_id], references: [id], onUpdate: NoAction)
+  property            properties? @relation("SubscriberProperty", fields: [property_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  unit                units?      @relation("SubscriberUnit", fields: [unit_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([client_id], map: "idx_subscribers_client_id")
+  @@index([property_id], map: "idx_subscribers_property_id")
+  @@index([unit_id], map: "idx_subscribers_unit_id")
+}
+
+model meters {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriber_id      String      @db.Uuid
+  meter_number       String      @unique
+  meter_type         meter_type  @default(residential)
+  installation_date  DateTime?   @db.Date
+  is_active          Boolean     @default(true)
+  last_reading_value Decimal?    @db.Decimal(12, 2)
+  last_reading_date  DateTime?   @db.Date
+  deleted_at         DateTime?   @db.Timestamptz(6)
+  created_at         DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime    @default(now()) @db.Timestamptz(6)
+  bills              bills[]
+  subscriber         subscribers @relation(fields: [subscriber_id], references: [id], onUpdate: NoAction)
+  readings           readings[]
+
+  @@index([subscriber_id], map: "idx_meters_subscriber_id")
+}
+
+model readings {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meter_id      String         @db.Uuid
+  reading_value Decimal        @db.Decimal(12, 2)
+  reading_date  DateTime       @db.Date
+  recorded_by   String?        @db.Uuid
+  source        reading_source @default(manual)
+  photo_url     String?
+  notes         String?
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
+  meter         meters         @relation(fields: [meter_id], references: [id], onUpdate: NoAction)
+  recorder      employees?     @relation("ReadingRecorder", fields: [recorded_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([meter_id, reading_date], map: "uq_meter_reading_date")
+  @@index([reading_date], map: "idx_readings_date")
+  @@index([meter_id, reading_date(sort: Desc)], map: "idx_readings_meter_date")
+  @@index([meter_id], map: "idx_readings_meter_id")
+  @@index([recorded_by], map: "idx_readings_recorded_by")
+}
+
+model pricing_history {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  price_per_kwh  Decimal    @db.Decimal(10, 4)
+  currency       String     @default("USD")
+  effective_from DateTime   @db.Date
+  effective_to   DateTime?  @db.Date
+  set_by         String?    @db.Uuid
+  notes          String?
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime   @default(now()) @db.Timestamptz(6)
+  setter         employees? @relation("PricingSetter", fields: [set_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([effective_from, effective_to], map: "idx_pricing_effective")
+}
+
+model bills {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meter_id             String          @db.Uuid
+  subscriber_id        String          @db.Uuid
+  billing_period_start DateTime        @db.Date
+  billing_period_end   DateTime        @db.Date
+  previous_reading     Decimal         @db.Decimal(12, 2)
+  current_reading      Decimal         @db.Decimal(12, 2)
+  consumption_kwh      Decimal         @db.Decimal(12, 2)
+  price_per_kwh        Decimal         @db.Decimal(10, 4)
+  total_amount         Decimal         @db.Decimal(14, 2)
+  currency             String          @default("USD")
+  status               payment_status  @default(pending)
+  generated_by         String?         @db.Uuid
+  notes                String?
+  deleted_at           DateTime?       @db.Timestamptz(6)
+  created_at           DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime        @default(now()) @db.Timestamptz(6)
+  bill_payments        bill_payments[]
+  generator            employees?      @relation("BillGenerator", fields: [generated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  meter                meters          @relation(fields: [meter_id], references: [id], onUpdate: NoAction)
+  subscriber           subscribers     @relation(fields: [subscriber_id], references: [id], onUpdate: NoAction)
+
+  @@index([generated_by], map: "idx_bills_generated_by")
+  @@index([meter_id], map: "idx_bills_meter_id")
+  @@index([subscriber_id], map: "idx_bills_subscriber_id")
+}
+
+model bill_payments {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bill_id        String         @db.Uuid
+  amount         Decimal        @db.Decimal(12, 2)
+  currency       String         @default("USD")
+  payment_date   DateTime       @db.Date
+  payment_method payment_method @default(cash)
+  status         payment_status @default(pending)
+  received_by    String?        @db.Uuid
+  receipt_number String?
+  notes          String?
+  deleted_at     DateTime?      @db.Timestamptz(6)
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime       @default(now()) @db.Timestamptz(6)
+  bill           bills          @relation(fields: [bill_id], references: [id], onUpdate: NoAction)
+  receiver       employees?     @relation("BillPaymentReceiver", fields: [received_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([bill_id], map: "idx_bill_payments_bill_id")
+  @@index([received_by], map: "idx_bill_payments_received_by")
+}
+
+model expenses {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category     expense_category @default(other)
+  amount       Decimal          @db.Decimal(14, 2)
+  currency     String           @default("USD")
+  description  String
+  expense_date DateTime         @db.Date
+  property_id  String?          @db.Uuid
+  unit_id      String?          @db.Uuid
+  paid_by      String?          @db.Uuid
+  receipt_url  String?
+  notes        String?
+  deleted_at   DateTime?        @db.Timestamptz(6)
+  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime         @default(now()) @db.Timestamptz(6)
+  payer        employees?       @relation("ExpensePayer", fields: [paid_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  property     properties?      @relation("ExpenseProperty", fields: [property_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  unit         units?           @relation("ExpenseUnit", fields: [unit_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([paid_by], map: "idx_expenses_paid_by")
+  @@index([property_id], map: "idx_expenses_property_id")
+  @@index([unit_id], map: "idx_expenses_unit_id")
+}
+
+model notifications {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipient_type      String
+  recipient_id        String               @db.Uuid
+  channel             notification_channel @default(in_app)
+  subject             String?
+  body                String?
+  status              notification_status  @default(pending)
+  scheduled_at        DateTime?            @db.Timestamptz(6)
+  sent_at             DateTime?            @db.Timestamptz(6)
+  related_entity_type String?
+  related_entity_id   String?              @db.Uuid
+  created_at          DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime             @default(now()) @db.Timestamptz(6)
+  section             String?
+  notification_type   String?
+  is_read             Boolean              @default(false)
+
+  @@index([recipient_type, recipient_id], map: "idx_notifications_recipient")
+  @@index([status], map: "idx_notifications_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model rent_invoices {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contract_id   String          @db.Uuid
+  period_start  DateTime        @db.Date
+  period_end    DateTime        @db.Date
+  issue_date    DateTime        @db.Date
+  due_date      DateTime        @db.Date
+  payment_date  DateTime?       @db.Date
+  amount_due    Decimal         @db.Decimal(12, 2)
+  amount_paid   Decimal         @default(0) @db.Decimal(12, 2)
+  balance_due   Decimal         @db.Decimal(12, 2)
+  currency      String          @default("USD")
+  status        payment_status  @default(pending)
+  generated_by  String?         @db.Uuid
+  notes         String?
+  deleted_at    DateTime?       @db.Timestamptz(6)
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
+  contracts     contracts       @relation(fields: [contract_id], references: [id], onUpdate: NoAction)
+  employees     employees?      @relation(fields: [generated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rent_payments rent_payments[]
+
+  @@unique([contract_id, period_start, period_end], map: "uq_rent_invoices_contract_period")
+  @@index([contract_id, status, deleted_at], map: "idx_rent_invoices_contract_status_deleted_at")
+  @@index([due_date, status, deleted_at], map: "idx_rent_invoices_due_date_status_deleted_at")
+}
 
 enum employee_role {
   owner
@@ -92,320 +442,4 @@ enum property_type {
   house
   land
   commercial
-}
-
-// ===========================
-// MODELS
-// ===========================
-
-model employees {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  auth_user_id String?       @unique @db.Uuid
-  full_name    String
-  email        String?       @unique
-  phone        String?
-  address      String?
-  role         employee_role @default(employee)
-  access       Json          @default("{}")
-  is_active    Boolean       @default(true)
-  deleted_at   DateTime?     @db.Timestamptz(6)
-  created_at   DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime      @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  managed_properties     properties[]           @relation("PropertyManager")
-  received_rent_payments rent_payments[]        @relation("RentPaymentReceiver")
-  assigned_maintenance   maintenance_requests[] @relation("MaintenanceAssignee")
-  recorded_readings      readings[]             @relation("ReadingRecorder")
-  set_pricing            pricing_history[]      @relation("PricingSetter")
-  generated_bills        bills[]                @relation("BillGenerator")
-  received_bill_payments bill_payments[]        @relation("BillPaymentReceiver")
-  paid_expenses          expenses[]             @relation("ExpensePayer")
-}
-
-model clients {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  auth_user_id String?   @unique @db.Uuid
-  full_name    String
-  email        String?
-  phone        String?
-  address      String?
-  notes        String?
-  deleted_at   DateTime? @db.Timestamptz(6)
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime  @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  contracts              contracts[]
-  maintenance_requests   maintenance_requests[] @relation("MaintenanceRequester")
-  subscribers            subscribers[]
-}
-
-model properties {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  address     String?
-  city        String?
-  type        property_type @default(building)
-  managed_by  String?       @db.Uuid
-  owner_notes String?
-  deleted_at  DateTime?     @db.Timestamptz(6)
-  created_at  DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime      @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  manager     employees?    @relation("PropertyManager", fields: [managed_by], references: [id], onDelete: Restrict)
-  units       units[]
-  subscribers subscribers[] @relation("SubscriberProperty")
-  expenses    expenses[]    @relation("ExpenseProperty")
-}
-
-model units {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  property_id  String    @db.Uuid
-  unit_number  String
-  floor        Int?
-  bedrooms     Int?
-  bathrooms    Int?
-  area_sqm     Decimal?  @db.Decimal(10, 2)
-  description  String?
-  deleted_at   DateTime? @db.Timestamptz(6)
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime  @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  property               properties             @relation(fields: [property_id], references: [id], onDelete: Restrict)
-  contracts              contracts[]
-  maintenance_requests   maintenance_requests[]
-  subscribers            subscribers[]           @relation("SubscriberUnit")
-  expenses               expenses[]              @relation("ExpenseUnit")
-
-  @@unique([property_id, unit_number])
-}
-
-model contracts {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  unit_id        String          @db.Uuid
-  client_id      String          @db.Uuid
-  start_date     DateTime        @db.Date
-  end_date       DateTime?       @db.Date
-  monthly_rent   Decimal         @db.Decimal(12, 2)
-  currency       String          @default("USD")
-  deposit_amount Decimal?        @default(0) @db.Decimal(12, 2)
-  status         contract_status @default(pending)
-  notes          String?
-  deleted_at     DateTime?       @db.Timestamptz(6)
-  created_at     DateTime        @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  unit           units           @relation(fields: [unit_id], references: [id], onDelete: Restrict)
-  client         clients         @relation(fields: [client_id], references: [id], onDelete: Restrict)
-  rent_payments  rent_payments[]
-}
-
-model rent_payments {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contract_id    String         @db.Uuid
-  amount         Decimal        @db.Decimal(12, 2)
-  currency       String         @default("USD")
-  payment_date   DateTime       @db.Date
-  paid_at        DateTime?      @db.Date
-  period_start   DateTime?      @db.Date
-  period_end     DateTime?      @db.Date
-  payment_method payment_method @default(cash)
-  status         payment_status @default(pending)
-  received_by    String?        @db.Uuid
-  receipt_number String?
-  manual_receipt_ref String?
-  notes          String?
-  deleted_at     DateTime?      @db.Timestamptz(6)
-  created_at     DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime       @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  contract       contracts      @relation(fields: [contract_id], references: [id], onDelete: Restrict)
-  receiver       employees?     @relation("RentPaymentReceiver", fields: [received_by], references: [id], onDelete: Restrict)
-}
-
-model maintenance_requests {
-  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  unit_id        String               @db.Uuid
-  requested_by   String?              @db.Uuid
-  assigned_to    String?              @db.Uuid
-  title          String
-  description    String?
-  status         maintenance_status   @default(pending)
-  priority       maintenance_priority @default(medium)
-  estimated_cost Decimal?             @db.Decimal(12, 2)
-  actual_cost    Decimal?             @db.Decimal(12, 2)
-  completed_at   DateTime?            @db.Timestamptz(6)
-  deleted_at     DateTime?            @db.Timestamptz(6)
-  created_at     DateTime             @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime             @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  unit           units                @relation(fields: [unit_id], references: [id], onDelete: Restrict)
-  requester      clients?             @relation("MaintenanceRequester", fields: [requested_by], references: [id], onDelete: Restrict)
-  assignee       employees?           @relation("MaintenanceAssignee", fields: [assigned_to], references: [id], onDelete: Restrict)
-}
-
-model subscribers {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  client_id           String    @db.Uuid
-  subscription_number String    @unique
-  property_id         String?   @db.Uuid
-  unit_id             String?   @db.Uuid
-  is_active           Boolean   @default(true)
-  notes               String?
-  deleted_at          DateTime? @db.Timestamptz(6)
-  created_at          DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime  @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  client              clients    @relation(fields: [client_id], references: [id], onDelete: Restrict)
-  property            properties? @relation("SubscriberProperty", fields: [property_id], references: [id], onDelete: Restrict)
-  unit                units?     @relation("SubscriberUnit", fields: [unit_id], references: [id], onDelete: Restrict)
-  meters              meters[]
-  bills               bills[]
-}
-
-model meters {
-  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  subscriber_id      String      @db.Uuid
-  meter_number       String      @unique
-  meter_type         meter_type  @default(residential)
-  installation_date  DateTime?   @db.Date
-  is_active          Boolean     @default(true)
-  last_reading_value Decimal?    @db.Decimal(12, 2)
-  last_reading_date  DateTime?   @db.Date
-  deleted_at         DateTime?   @db.Timestamptz(6)
-  created_at         DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime    @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  subscriber         subscribers @relation(fields: [subscriber_id], references: [id], onDelete: Restrict)
-  readings           readings[]
-  bills              bills[]
-}
-
-model readings {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  meter_id      String         @db.Uuid
-  reading_value Decimal        @db.Decimal(12, 2)
-  reading_date  DateTime       @db.Date
-  recorded_by   String?        @db.Uuid
-  source        reading_source @default(manual)
-  photo_url     String?
-  notes         String?
-  created_at    DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  meter         meters         @relation(fields: [meter_id], references: [id], onDelete: Restrict)
-  recorder      employees?     @relation("ReadingRecorder", fields: [recorded_by], references: [id], onDelete: Restrict)
-
-  @@unique([meter_id, reading_date])
-}
-
-model pricing_history {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  price_per_kwh  Decimal   @db.Decimal(10, 4)
-  currency       String    @default("USD")
-  effective_from DateTime  @db.Date
-  effective_to   DateTime? @db.Date
-  set_by         String?   @db.Uuid
-  notes          String?
-  created_at     DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime  @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  setter         employees? @relation("PricingSetter", fields: [set_by], references: [id], onDelete: Restrict)
-}
-
-model bills {
-  id                   String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  meter_id             String         @db.Uuid
-  subscriber_id        String         @db.Uuid
-  billing_period_start DateTime       @db.Date
-  billing_period_end   DateTime       @db.Date
-  previous_reading     Decimal        @db.Decimal(12, 2)
-  current_reading      Decimal        @db.Decimal(12, 2)
-  consumption_kwh      Decimal        @db.Decimal(12, 2)
-  price_per_kwh        Decimal        @db.Decimal(10, 4)
-  total_amount         Decimal        @db.Decimal(14, 2)
-  currency             String         @default("USD")
-  status               payment_status @default(pending)
-  generated_by         String?        @db.Uuid
-  notes                String?
-  deleted_at           DateTime?      @db.Timestamptz(6)
-  created_at           DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime       @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  meter                meters         @relation(fields: [meter_id], references: [id], onDelete: Restrict)
-  subscriber           subscribers    @relation(fields: [subscriber_id], references: [id], onDelete: Restrict)
-  generator            employees?     @relation("BillGenerator", fields: [generated_by], references: [id], onDelete: Restrict)
-  bill_payments        bill_payments[]
-}
-
-model bill_payments {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  bill_id        String         @db.Uuid
-  amount         Decimal        @db.Decimal(12, 2)
-  currency       String         @default("USD")
-  payment_date   DateTime       @db.Date
-  payment_method payment_method @default(cash)
-  status         payment_status @default(pending)
-  received_by    String?        @db.Uuid
-  receipt_number String?
-  notes          String?
-  deleted_at     DateTime?      @db.Timestamptz(6)
-  created_at     DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime       @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  bill           bills          @relation(fields: [bill_id], references: [id], onDelete: Restrict)
-  receiver       employees?     @relation("BillPaymentReceiver", fields: [received_by], references: [id], onDelete: Restrict)
-}
-
-model expenses {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  category     expense_category @default(other)
-  amount       Decimal          @db.Decimal(14, 2)
-  currency     String           @default("USD")
-  description  String
-  expense_date DateTime         @db.Date
-  property_id  String?          @db.Uuid
-  unit_id      String?          @db.Uuid
-  paid_by      String?          @db.Uuid
-  receipt_url  String?
-  notes        String?
-  deleted_at   DateTime?        @db.Timestamptz(6)
-  created_at   DateTime         @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime         @default(now()) @db.Timestamptz(6)
-
-  // Relations
-  property     properties?      @relation("ExpenseProperty", fields: [property_id], references: [id], onDelete: Restrict)
-  unit         units?           @relation("ExpenseUnit", fields: [unit_id], references: [id], onDelete: Restrict)
-  payer        employees?       @relation("ExpensePayer", fields: [paid_by], references: [id], onDelete: Restrict)
-}
-
-model notifications {
-  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  recipient_type      String
-  recipient_id        String              @db.Uuid
-  channel             notification_channel @default(in_app)
-  section             String?             // 'rent' or 'electricity'
-  notification_type   String?             // e.g. 'late_payment','contract_ending','unpaid_bill'
-  subject             String?
-  body                String?
-  is_read             Boolean             @default(false)
-  status              notification_status  @default(pending)
-  scheduled_at        DateTime?           @db.Timestamptz(6)
-  sent_at             DateTime?           @db.Timestamptz(6)
-  related_entity_type String?
-  related_entity_id   String?             @db.Uuid
-  created_at          DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime            @default(now()) @db.Timestamptz(6)
 }
