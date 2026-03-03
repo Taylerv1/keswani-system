@@ -284,6 +284,7 @@ const en = {
   subscriberName: "Subscriber Name",
   subscriberPhone: "Phone",
   subscriberEmail: "Email",
+  subscriptionNumber: "Subscription Number",
   subscriberBuilding: "Building",
   subscriberUnit: "Unit",
   subscriberMeter: "Meter",

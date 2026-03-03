@@ -284,6 +284,7 @@ const ar: Record<string, string> = {
   subscriberName: "اسم المشترك",
   subscriberPhone: "الهاتف",
   subscriberEmail: "البريد الإلكتروني",
+  subscriptionNumber: "رقم الاشتراك",
   subscriberBuilding: "المبنى",
   subscriberUnit: "الوحدة",
   subscriberMeter: "العداد",

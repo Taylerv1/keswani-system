@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "./auth.routes";
 import propertyRoutes from "./property.routes";
 import clientRoutes from "./client.routes";
+import subscriberRoutes from "./subscriber.routes";
 import contractRoutes from "./contract.routes";
 import maintenanceRoutes from "./maintenance.routes";
 import paymentRoutes from "./payment.routes";
@@ -22,6 +23,7 @@ router.use("/auth", authRoutes);
 // Resource routes
 router.use("/properties", propertyRoutes);
 router.use("/clients", clientRoutes);
+router.use("/subscribers", subscriberRoutes);
 router.use("/contracts", contractRoutes);
 router.use("/maintenance", maintenanceRoutes);
 router.use("/payments", paymentRoutes);
