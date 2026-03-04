@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Home, Zap, FileText, User } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
@@ -9,6 +10,7 @@ import Link from "next/link";
 export default function CustomerDashboardPage() {
     const { t, locale } = useTranslation();
     const { data, hasRentData, hasElectricityData } = useCustomer();
+    const [pendingMaintenance, setPendingMaintenance] = useState<number | null>(null);
 
     const displayName = locale === "ar" ? data.user.nameAr : data.user.name;
 
@@ -16,7 +18,48 @@ export default function CustomerDashboardPage() {
         data.rent?.payments.filter((p) => p.status === "pending" || p.status === "overdue").length ?? 0;
     const unpaidBills =
         data.electricity?.bills.filter((b) => b.status === "unpaid").length ?? 0;
-    const pendingReports = data.reports.filter((r) => r.status === "pending").length;
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadPendingMaintenance = async () => {
+            if (!hasRentData) {
+                setPendingMaintenance(null);
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/maintenance?status=pending&page=1&limit=1", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+                const payload = await response.json();
+
+                if (cancelled) return;
+
+                if (response.ok && payload?.success) {
+                    const total = Number(payload?.data?.pagination?.total ?? 0);
+                    setPendingMaintenance(Number.isFinite(total) ? total : 0);
+                    return;
+                }
+            } catch {
+                // Fallback to mock-derived count below
+            }
+
+            if (!cancelled) {
+                setPendingMaintenance(null);
+            }
+        };
+
+        void loadPendingMaintenance();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [hasRentData]);
+
+    const pendingReports =
+        pendingMaintenance ?? data.reports.filter((r) => r.status === "pending").length;
 
     const quickLinks = [
         ...(hasRentData

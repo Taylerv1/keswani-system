@@ -1,23 +1,105 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
-import { StatusBadge } from "@/components/ui";
+import { LoadingLottie, StatusBadge } from "@/components/ui";
 import RentHistoryCard from "@/features/rent/components/RentHistoryCard";
 import {
     Building2,
     FileText,
-    Calendar,
     DollarSign,
     Wrench,
-    Clock,
 } from "lucide-react";
+
+interface MaintenanceHistoryItem {
+    id: string;
+    title: string;
+    titleAr?: string;
+    priority: string;
+    status: string;
+    createdAt: string;
+}
+
+function mapBackendStatus(status: string): string {
+    if (status === "pending") return "open";
+    if (status === "cancelled") return "closed";
+    return status;
+}
+
+function mapBackendPriority(priority: string): string {
+    if (priority === "critical" || priority === "urgent") return "high";
+    return priority;
+}
 
 export default function RentHistoryPage() {
     const { t, locale } = useTranslation();
     const { data } = useCustomer();
+    const rentData = data.rent;
+    const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceHistoryItem[]>([]);
+    const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
-    if (!data.rent) {
+    useEffect(() => {
+        let cancelled = false;
+
+        const fallbackItems: MaintenanceHistoryItem[] = rentData?.maintenanceRequests.map((item) => ({
+            id: item.id,
+            title: item.title,
+            titleAr: item.titleAr,
+            priority: item.priority,
+            status: item.status,
+            createdAt: item.createdAt,
+        })) ?? [];
+
+        const loadMaintenance = async () => {
+            if (!rentData) {
+                setMaintenanceItems([]);
+                return;
+            }
+
+            try {
+                setMaintenanceLoading(true);
+                const response = await fetch("/api/maintenance?page=1&limit=50", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+                const payload = await response.json();
+
+                if (cancelled) return;
+
+                if (response.ok && payload?.success && Array.isArray(payload?.data?.items)) {
+                    const items = (payload.data.items as Array<Record<string, unknown>>).map((item) => ({
+                        id: String(item.id ?? ""),
+                        title: String(item.title ?? ""),
+                        priority: mapBackendPriority(String(item.priority ?? "medium")),
+                        status: mapBackendStatus(String(item.status ?? "pending")),
+                        createdAt: String(item.created_at ?? ""),
+                    }));
+
+                    setMaintenanceItems(items);
+                    return;
+                }
+            } catch {
+                // ignore and fall back to context data
+            } finally {
+                if (!cancelled) setMaintenanceLoading(false);
+            }
+
+            if (!cancelled) {
+                setMaintenanceItems(fallbackItems);
+            }
+        };
+
+        void loadMaintenance();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [rentData]);
+
+    const displayedMaintenance = useMemo(() => maintenanceItems, [maintenanceItems]);
+
+    if (!rentData) {
         return (
             <div className="flex items-center justify-center h-[60vh]">
                 <p className="text-text-secondary">{t("noData")}</p>
@@ -25,7 +107,7 @@ export default function RentHistoryPage() {
         );
     }
 
-    const { property, contract, payments, maintenanceRequests } = data.rent;
+    const { property, contract, payments } = rentData;
     const propertyName = locale === "ar" ? property.nameAr : property.name;
     const propertyAddress = locale === "ar" ? property.addressAr : property.address;
 
@@ -188,25 +270,41 @@ export default function RentHistoryPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {maintenanceRequests.map((req) => (
-                                    <tr
-                                        key={req.id}
-                                        className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors"
-                                    >
-                                        <td className="px-4 py-3 font-medium text-text-primary">
-                                            {locale === "ar" ? req.titleAr : req.title}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge status={req.priority} />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge status={req.status} />
-                                        </td>
-                                        <td className="px-4 py-3 text-text-secondary">
-                                            {req.createdAt}
+                                {maintenanceLoading ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-4 py-10">
+                                            <div className="flex justify-center">
+                                                <LoadingLottie size={72} />
+                                            </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ) : displayedMaintenance.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
+                                            {t("noResults")}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    displayedMaintenance.map((req) => (
+                                        <tr
+                                            key={req.id}
+                                            className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors"
+                                        >
+                                            <td className="px-4 py-3 font-medium text-text-primary">
+                                                {locale === "ar" && req.titleAr ? req.titleAr : req.title}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <StatusBadge status={req.priority} />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <StatusBadge status={req.status} />
+                                            </td>
+                                            <td className="px-4 py-3 text-text-secondary">
+                                                {req.createdAt}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
