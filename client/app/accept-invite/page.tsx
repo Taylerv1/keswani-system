@@ -6,81 +6,74 @@ import { useTranslation } from "@/lib/translation";
 import { LoadingLottie, Modal } from "@/components/ui";
 import { resetPassword } from "@/features/auth/api/auth";
 
-export default function ResetPasswordPage() {
+export default function AcceptInvitePage() {
   const { t } = useTranslation();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [accessToken, setAccessToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError] = useState("");
-  const [resetSuccess, setResetSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Support both legacy hash tokens and query tokens/error params.
+
     const hash = typeof window !== "undefined" ? window.location.hash : "";
     const search = typeof window !== "undefined" ? window.location.search : "";
-    const hashParams = new URLSearchParams(hash.substring(1)); // Remove '#'
+    const hashParams = new URLSearchParams(hash.substring(1));
     const searchParams = new URLSearchParams(search);
-    const flowType = hashParams.get("type") || searchParams.get("type");
-
-    // Backward compatibility: old invite links might still point to /reset-password.
-    if (flowType === "invite") {
-      router.replace(`/accept-invite${search}${hash}`);
-      return;
-    }
-
     const token =
       hashParams.get("access_token") || searchParams.get("access_token");
 
     if (token) {
       setAccessToken(token);
-      setResetModalOpen(true);
-    } else {
-      const errorDescription =
-        searchParams.get("error_description") || searchParams.get("error");
-      if (errorDescription) {
-        setResetError(decodeURIComponent(errorDescription));
-      }
-      // No token found, redirect to login
-      setTimeout(() => router.replace("/login"), 2000);
+      setModalOpen(true);
+      return;
     }
+
+    const errorDescription =
+      searchParams.get("error_description") || searchParams.get("error");
+    if (errorDescription) {
+      setError(decodeURIComponent(errorDescription));
+    }
+
+    setTimeout(() => router.replace("/login"), 2000);
   }, [router]);
 
-  const handleResetPassword = async () => {
-    setResetError("");
+  const handleCreatePassword = async () => {
+    setError("");
 
     if (!newPassword || newPassword.length < 6) {
-      setResetError(t("passwordMinLength"));
+      setError(t("passwordMinLength"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setResetError(t("passwordsDoNotMatch"));
+      setError(t("passwordsDoNotMatch"));
       return;
     }
 
-    setResetLoading(true);
+    setLoading(true);
     try {
       const result = await resetPassword(accessToken, newPassword);
       if (!result.success) {
-        setResetError(result.error || "Failed to reset password");
+        setError(result.error || t("error"));
         return;
       }
 
-      setResetSuccess(true);
+      setSuccess(true);
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => {
         router.replace("/login");
       }, 3000);
     } catch {
-      setResetError(t("genericTryAgain"));
+      setError(t("genericTryAgain"));
     } finally {
-      setResetLoading(false);
+      setLoading(false);
     }
   };
 
@@ -96,31 +89,31 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary-hover/10 flex items-center justify-center p-4">
       {accessToken ? (
         <Modal
-          open={resetModalOpen}
+          open={modalOpen}
           onClose={() => {
-            setResetModalOpen(false);
+            setModalOpen(false);
             router.replace("/login");
           }}
-          title={t("resetPassword")}
+          title={t("createPassword")}
           maxWidth="max-w-sm"
         >
           <div className="space-y-4">
-            {resetSuccess && (
+            {success && (
               <div className="rounded-lg border border-card-green/20 bg-card-green-light px-3 py-2 text-sm text-card-green font-medium">
-                {t("passwordReset")} {t("redirectingLogin")}
+                {t("createPasswordSuccess")} {t("redirectingLogin")}
               </div>
             )}
 
-            {resetError && (
+            {error && (
               <div className="rounded-lg border border-card-red/20 bg-card-red-light px-3 py-2 text-sm text-card-red">
-                {resetError}
+                {error}
               </div>
             )}
 
-            {!resetSuccess && (
+            {!success && (
               <>
                 <p className="text-sm text-text-secondary">
-                  {t("enterNewPassword")}
+                  {t("createPasswordForAccount")}
                 </p>
 
                 <div>
@@ -153,7 +146,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setResetModalOpen(false);
+                      setModalOpen(false);
                       router.replace("/login");
                     }}
                     className="flex-1 h-10 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
@@ -162,11 +155,11 @@ export default function ResetPasswordPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={resetLoading}
-                    onClick={handleResetPassword}
+                    disabled={loading}
+                    onClick={handleCreatePassword}
                     className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {resetLoading ? <LoadingLottie size={24} /> : t("resetPassword")}
+                    {loading ? <LoadingLottie size={24} /> : t("createPassword")}
                   </button>
                 </div>
               </>
@@ -176,11 +169,9 @@ export default function ResetPasswordPage() {
       ) : (
         <div className="text-center">
           <h1 className="text-2xl font-bold text-text-primary mb-2">
-            {t("invalidResetLink")}
+            {t("invalidInviteLink")}
           </h1>
-          {resetError && (
-            <p className="text-card-red text-sm mb-2">{resetError}</p>
-          )}
+          {error && <p className="text-card-red text-sm mb-2">{error}</p>}
           <p className="text-text-secondary mb-6">{t("redirectingLogin")}</p>
           <button
             onClick={() => router.replace("/login")}

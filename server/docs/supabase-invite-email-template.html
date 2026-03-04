@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kiswani Invitation</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f7f4ef;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f4ef;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #ece3d8;">
+            <tr>
+              <td style="background:linear-gradient(135deg,#f39c12 0%,#d97706 100%);padding:22px 28px;color:#ffffff;">
+                <div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.95;">Kiswani System</div>
+                <div style="font-size:26px;font-weight:700;line-height:1.25;margin-top:6px;">You have been invited</div>
+                <div style="font-size:14px;opacity:0.9;margin-top:6px;">تمت دعوتك للانضمام إلى نظام كسواني</div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:28px;">
+                <div style="font-size:16px;line-height:1.7;color:#374151;">
+                  Hello {{ if .Data.full_name }}{{ .Data.full_name }}{{ else }}{{ .Email }}{{ end }},
+                </div>
+                <div style="font-size:16px;line-height:1.7;color:#374151;margin-top:8px;">
+                  Your tenant portal account is ready. Click the button below to create your password and access your dashboard.
+                </div>
+
+                <div dir="rtl" style="font-size:16px;line-height:1.9;color:#374151;margin-top:16px;text-align:right;">
+                  مرحبًا {{ if .Data.full_name }}{{ .Data.full_name }}{{ else }}{{ .Email }}{{ end }}،
+                </div>
+                <div dir="rtl" style="font-size:16px;line-height:1.9;color:#374151;text-align:right;">
+                  تم تجهيز حسابك على بوابة المستأجر. اضغط الزر أدناه لإنشاء كلمة المرور والدخول إلى لوحة التحكم الخاصة بك.
+                </div>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:24px;">
+                  <tr>
+                    <td style="border-radius:10px;background:#f39c12;">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+                        Create Password
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="font-size:13px;line-height:1.7;color:#6b7280;margin-top:18px;">
+                  If the button does not work, copy and paste this link into your browser:
+                </div>
+                <div style="font-size:12px;line-height:1.7;color:#6b7280;word-break:break-all;margin-top:4px;">
+                  {{ .ConfirmationURL }}
+                </div>
+
+                <hr style="border:none;border-top:1px solid #f0e7dc;margin:24px 0;" />
+
+                <div style="font-size:13px;line-height:1.8;color:#6b7280;">
+                  Security notice: This invitation link is personal and should not be shared.
+                </div>
+                <div dir="rtl" style="font-size:13px;line-height:1.9;color:#6b7280;text-align:right;margin-top:6px;">
+                  تنبيه أمني: رابط الدعوة خاص بك ولا يجب مشاركته مع أي شخص.
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:18px 28px;background:#fff8ef;border-top:1px solid #f0e7dc;">
+                <div style="font-size:12px;color:#9ca3af;line-height:1.7;">
+                  Kiswani System - Property Management Platform
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
