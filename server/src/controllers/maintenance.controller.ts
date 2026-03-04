@@ -26,6 +26,129 @@ const maintenanceInclude = {
     },
 } as const;
 
+type MaintenanceWithRelations = Prisma.maintenance_requestsGetPayload<{
+    include: typeof maintenanceInclude;
+}>;
+
+function hasRentAccess(access: Prisma.JsonValue | null): boolean {
+    if (!access || typeof access !== "object" || Array.isArray(access)) return false;
+    const raw = (access as Record<string, unknown>).rent;
+
+    if (typeof raw === "boolean") return raw;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+
+    return (raw as Record<string, unknown>).enabled === true;
+}
+
+function formatMaintenanceStatus(status: string): string {
+    if (status === "pending") return "Pending";
+    if (status === "in_progress") return "In Progress";
+    if (status === "completed") return "Completed";
+    if (status === "cancelled") return "Cancelled";
+    return status;
+}
+
+function formatMaintenancePriority(priority: string): string {
+    if (priority === "critical") return "Critical";
+    if (priority === "urgent") return "Urgent";
+    if (priority === "high") return "High";
+    if (priority === "medium") return "Medium";
+    if (priority === "low") return "Low";
+    return priority;
+}
+
+async function notifyRentEmployeesOfNewMaintenanceRequest(
+    request: MaintenanceWithRelations
+): Promise<void> {
+    const employees = await prisma.employees.findMany({
+        where: { deleted_at: null, is_active: true },
+        select: { id: true, role: true, access: true },
+    });
+
+    const recipientIds = employees
+        .filter(
+            (employee) =>
+                employee.role === "owner" ||
+                employee.role === "admin" ||
+                hasRentAccess(employee.access)
+        )
+        .map((employee) => employee.id);
+
+    if (recipientIds.length === 0) return;
+
+    const requesterName = request.requester?.full_name || "Tenant";
+    const location = `${request.unit.property.name}, Unit ${request.unit.unit_number}`;
+    const description = request.title.trim();
+    const estimatedCostText =
+        request.estimated_cost != null
+            ? ` Estimated cost: ${Number(request.estimated_cost).toLocaleString()} USD.`
+            : "";
+
+    await prisma.notifications.createMany({
+        data: recipientIds.map((recipientId) => ({
+            recipient_type: "employee",
+            recipient_id: recipientId,
+            channel: "in_app",
+            section: "rent",
+            notification_type: "maintenance",
+            subject: "New Maintenance Request",
+            body: `${requesterName} submitted "${description}" at ${location}.${estimatedCostText}`,
+            related_entity_type: "maintenance_request",
+            related_entity_id: request.id,
+            status: "sent",
+        })),
+    });
+}
+
+async function notifyRequesterMaintenanceUpdated(
+    request: MaintenanceWithRelations,
+    options: {
+        statusChanged: boolean;
+        priorityChanged: boolean;
+        assigneeChanged: boolean;
+        actualCostChanged: boolean;
+    }
+): Promise<void> {
+    if (!request.requested_by) return;
+
+    const details: string[] = [];
+
+    if (options.statusChanged) {
+        details.push(`Status: ${formatMaintenanceStatus(request.status)}`);
+    }
+    if (options.priorityChanged) {
+        details.push(`Priority: ${formatMaintenancePriority(request.priority)}`);
+    }
+    if (options.assigneeChanged) {
+        details.push(
+            request.assignee?.full_name
+                ? `Assigned To: ${request.assignee.full_name}`
+                : "Assigned To: Unassigned"
+        );
+    }
+    if (options.actualCostChanged && request.actual_cost != null) {
+        details.push(`Cost: ${Number(request.actual_cost).toLocaleString()} USD`);
+    }
+
+    const detailsText =
+        details.length > 0 ? ` ${details.join(" | ")}.` : " Please check latest updates.";
+
+    await prisma.notifications.create({
+        data: {
+            recipient_type: "client",
+            recipient_id: request.requested_by,
+            channel: "in_app",
+            section: "rent",
+            notification_type: "maintenance",
+            subject: "Maintenance Request Updated",
+            body: `Your maintenance request "${request.title}" was updated.${detailsText}`,
+            related_entity_type: "maintenance_request",
+            related_entity_id: request.id,
+            status: "sent",
+        },
+    });
+}
+
 /**
  * GET /api/maintenance
  * List maintenance requests with status/priority filters, search, pagination.
@@ -46,6 +169,11 @@ export const getMaintenanceRequests = async (
         const skip = (page - 1) * limit;
 
         const where: Prisma.maintenance_requestsWhereInput = { deleted_at: null };
+
+        if (req.user?.user_type === "client") {
+            where.requested_by = req.user.profile_id;
+        }
+
         if (status) where.status = status;
         if (priority) where.priority = priority;
         if (search) {
@@ -113,8 +241,17 @@ export const getMaintenanceById = async (
     try {
         const id = req.params.id as string;
 
+        const where: Prisma.maintenance_requestsWhereInput = {
+            id,
+            deleted_at: null,
+        };
+
+        if (req.user?.user_type === "client") {
+            where.requested_by = req.user.profile_id;
+        }
+
         const request = await prisma.maintenance_requests.findFirst({
-            where: { id, deleted_at: null },
+            where,
             include: maintenanceInclude,
         });
 
@@ -146,10 +283,48 @@ export const createMaintenance = async (
         }
 
         const data = parsed.data;
+        const isClient = req.user?.user_type === "client";
+        const clientProfileId = isClient ? req.user?.profile_id : undefined;
+
+        let unitId = data.unit_id;
+
+        if (isClient) {
+            if (!clientProfileId) {
+                res.status(401).json({ success: false, error: "Not authenticated" });
+                return;
+            }
+
+            const activeContract = await prisma.contracts.findFirst({
+                where: {
+                    client_id: clientProfileId,
+                    status: "active",
+                    deleted_at: null,
+                    unit: { deleted_at: null },
+                },
+                orderBy: { updated_at: "desc" },
+                select: { unit_id: true },
+            });
+
+            if (!activeContract) {
+                res.status(409).json({
+                    success: false,
+                    error: "No active contract found for this client",
+                });
+                return;
+            }
+
+            unitId = activeContract.unit_id;
+        } else if (!unitId) {
+            res.status(400).json({
+                success: false,
+                error: "unit_id is required for employee-created requests",
+            });
+            return;
+        }
 
         // Validate unit exists
         const unit = await prisma.units.findFirst({
-            where: { id: data.unit_id, deleted_at: null },
+            where: { id: unitId, deleted_at: null },
         });
         if (!unit) {
             res.status(404).json({ success: false, error: "Unit not found" });
@@ -157,22 +332,22 @@ export const createMaintenance = async (
         }
 
         const createData: Prisma.maintenance_requestsCreateInput = {
-            unit: { connect: { id: data.unit_id } },
+            unit: { connect: { id: unitId } },
             title: data.title,
-            description: data.description,
-            priority: data.priority,
+            description: data.description || undefined,
+            priority: isClient ? "medium" : data.priority ?? "medium",
             estimated_cost: data.estimated_cost,
         };
 
         // If the requester is a client and is authenticated, set requested_by to their profile.
-        if (req.user?.user_type === "client") {
-            createData.requester = { connect: { id: req.user.profile_id } };
+        if (isClient) {
+            createData.requester = { connect: { id: clientProfileId } };
         } else if (data.requested_by) {
             // Employees may create requests on behalf of a client
             createData.requester = { connect: { id: data.requested_by } };
         }
 
-        if (data.assigned_to) {
+        if (!isClient && data.assigned_to) {
             createData.assignee = { connect: { id: data.assigned_to } };
         }
 
@@ -180,6 +355,12 @@ export const createMaintenance = async (
             data: createData,
             include: maintenanceInclude,
         });
+
+        try {
+            await notifyRentEmployeesOfNewMaintenanceRequest(request);
+        } catch (notificationError) {
+            console.error("Failed to create maintenance notification:", notificationError);
+        }
 
         res.status(201).json({
             success: true,
@@ -205,6 +386,7 @@ export const updateMaintenance = async (
 
         const existing = await prisma.maintenance_requests.findFirst({
             where: { id, deleted_at: null },
+            include: maintenanceInclude,
         });
         if (!existing) {
             res.status(404).json({ success: false, error: "Maintenance request not found" });
@@ -218,6 +400,14 @@ export const updateMaintenance = async (
         }
 
         const data = parsed.data;
+        const statusChanged = data.status !== undefined && data.status !== existing.status;
+        const priorityChanged =
+            data.priority !== undefined && data.priority !== existing.priority;
+        const assigneeChanged =
+            data.assigned_to !== undefined && data.assigned_to !== existing.assigned_to;
+        const actualCostChanged =
+            data.actual_cost !== undefined &&
+            String(data.actual_cost ?? "") !== String(existing.actual_cost ?? "");
 
         // Build update input
         const updateData: Prisma.maintenance_requestsUpdateInput = {};
@@ -259,6 +449,22 @@ export const updateMaintenance = async (
             data: updateData,
             include: maintenanceInclude,
         });
+
+        if (statusChanged || priorityChanged || assigneeChanged || actualCostChanged) {
+            try {
+                await notifyRequesterMaintenanceUpdated(request, {
+                    statusChanged,
+                    priorityChanged,
+                    assigneeChanged,
+                    actualCostChanged,
+                });
+            } catch (notificationError) {
+                console.error(
+                    "Failed to create maintenance update notification:",
+                    notificationError
+                );
+            }
+        }
 
         res.json({
             success: true,

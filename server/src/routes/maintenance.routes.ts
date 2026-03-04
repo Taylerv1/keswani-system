@@ -11,14 +11,14 @@ import {
 
 const router = Router();
 
-// All routes require employee auth
+// All routes require authentication
 router.use(authenticate);
 
 // Read
-router.get("/", getMaintenanceRequests);
-router.get("/:id", getMaintenanceById);
+router.get("/", requireAccessOrClient("rent"), getMaintenanceRequests);
+router.get("/:id", requireAccessOrClient("rent"), getMaintenanceById);
 
-// Write — allow clients or employees with 'rent' access
+// Write
 router.post("/", requireAccessOrClient("rent"), createMaintenance);
 router.patch("/:id", requireAccess("rent"), updateMaintenance);
 router.delete("/:id", requireAccess("rent"), deleteMaintenance);
