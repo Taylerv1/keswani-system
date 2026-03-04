@@ -49,6 +49,17 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 class SubscribersStore {
   PAGE_SIZE = 8;
+  private subscriberPageCache = new Map<
+    string,
+    {
+      items: SubscriberListItem[];
+      totalItems: number;
+      totalPages: number;
+    }
+  >();
+  private propertiesLoaded = false;
+  private inFlightSubscribers = new Map<string, Promise<void>>();
+  private inFlightProperties: Promise<void> | null = null;
 
   subscribers: SubscriberListItem[] = [];
   properties: PropertyLookup[] = [];
@@ -72,6 +83,23 @@ class SubscribersStore {
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
+  }
+
+  private buildSubscriberCacheKey(page: number) {
+    return JSON.stringify({
+      page,
+      limit: this.PAGE_SIZE,
+      search: this.search || "",
+      status: this.filterStatus === "all" ? "" : this.filterStatus,
+    });
+  }
+
+  private invalidateSubscriberCache() {
+    this.subscriberPageCache.clear();
+  }
+
+  private invalidatePropertiesCache() {
+    this.propertiesLoaded = false;
   }
 
   // Used by component-level autorun hook to subscribe to store changes.
@@ -178,50 +206,128 @@ class SubscribersStore {
   async loadSubscribers(options: {
     errorFallback: string;
     targetPage?: number;
+    force?: boolean;
   }): Promise<void> {
-    try {
-      this.loading = true;
-      this.error = "";
+    const currentPage = options.targetPage ?? this.page;
+    const cacheKey = this.buildSubscriberCacheKey(currentPage);
+    const cached = this.subscriberPageCache.get(cacheKey);
 
-      const currentPage = options.targetPage ?? this.page;
-
-      const response = await getSubscribers({
-        page: currentPage,
-        limit: this.PAGE_SIZE,
-        search: this.search || undefined,
-        status: this.filterStatus === "all" ? undefined : this.filterStatus,
-      });
-
+    if (!options.force && cached) {
       runInAction(() => {
-        this.subscribers = response.data?.items ?? [];
-        this.totalItems = response.data?.pagination.total ?? 0;
-        this.totalPages = response.data?.pagination.total_pages ?? 1;
-      });
-    } catch (error) {
-      runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
-        this.subscribers = [];
-        this.totalItems = 0;
-        this.totalPages = 1;
-      });
-    } finally {
-      runInAction(() => {
+        this.page = currentPage;
+        this.error = "";
+        this.subscribers = cached.items;
+        this.totalItems = cached.totalItems;
+        this.totalPages = cached.totalPages;
         this.loading = false;
       });
+      return;
+    }
+
+    if (!options.force) {
+      const inFlight = this.inFlightSubscribers.get(cacheKey);
+      if (inFlight) {
+        await inFlight;
+        const afterWait = this.subscriberPageCache.get(cacheKey);
+        if (afterWait) {
+          runInAction(() => {
+            this.page = currentPage;
+            this.error = "";
+            this.subscribers = afterWait.items;
+            this.totalItems = afterWait.totalItems;
+            this.totalPages = afterWait.totalPages;
+            this.loading = false;
+          });
+          return;
+        }
+      }
+    }
+
+    const requestPromise = (async () => {
+      try {
+        this.loading = true;
+        this.error = "";
+
+        const response = await getSubscribers({
+          page: currentPage,
+          limit: this.PAGE_SIZE,
+          search: this.search || undefined,
+          status: this.filterStatus === "all" ? undefined : this.filterStatus,
+        });
+
+        runInAction(() => {
+          const items = response.data?.items ?? [];
+          const totalItems = response.data?.pagination.total ?? 0;
+          const totalPages = response.data?.pagination.total_pages ?? 1;
+
+          this.page = currentPage;
+          this.subscribers = items;
+          this.totalItems = totalItems;
+          this.totalPages = totalPages;
+          this.subscriberPageCache.set(cacheKey, {
+            items,
+            totalItems,
+            totalPages,
+          });
+        });
+      } catch (error) {
+        runInAction(() => {
+          this.error = getErrorMessage(error, options.errorFallback);
+          this.subscribers = [];
+          this.totalItems = 0;
+          this.totalPages = 1;
+        });
+      } finally {
+        runInAction(() => {
+          this.loading = false;
+        });
+      }
+    })();
+
+    this.inFlightSubscribers.set(cacheKey, requestPromise);
+
+    try {
+      await requestPromise;
+    } finally {
+      this.inFlightSubscribers.delete(cacheKey);
     }
   }
 
-  async loadProperties(options: { errorFallback: string }): Promise<void> {
+  async loadProperties(options: {
+    errorFallback: string;
+    force?: boolean;
+  }): Promise<void> {
+    if (!options.force && this.propertiesLoaded) {
+      return;
+    }
+
+    if (!options.force && this.inFlightProperties) {
+      await this.inFlightProperties;
+      return;
+    }
+
+    const requestPromise = (async () => {
+      try {
+        const properties = await getSubscriberProperties();
+        runInAction(() => {
+          this.properties = properties;
+          this.propertiesLoaded = true;
+        });
+      } catch (error) {
+        runInAction(() => {
+          this.properties = [];
+          this.propertiesLoaded = false;
+          this.error = getErrorMessage(error, options.errorFallback);
+        });
+      }
+    })();
+
+    this.inFlightProperties = requestPromise;
+
     try {
-      const properties = await getSubscriberProperties();
-      runInAction(() => {
-        this.properties = properties;
-      });
-    } catch (error) {
-      runInAction(() => {
-        this.properties = [];
-        this.error = getErrorMessage(error, options.errorFallback);
-      });
+      await requestPromise;
+    } finally {
+      this.inFlightProperties = null;
     }
   }
 
@@ -278,11 +384,13 @@ class SubscribersStore {
       runInAction(() => {
         this.closeModal();
         this.page = 1;
+        this.invalidateSubscriberCache();
       });
 
       await this.loadSubscribers({
         errorFallback: options.errorFallback,
         targetPage: 1,
+        force: true,
       });
 
       return true;
@@ -309,11 +417,13 @@ class SubscribersStore {
 
       runInAction(() => {
         this.deleteId = null;
+        this.invalidateSubscriberCache();
       });
 
       await this.loadSubscribers({
         errorFallback: options.errorFallback,
         targetPage: this.page,
+        force: true,
       });
 
       return true;
