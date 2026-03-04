@@ -78,17 +78,33 @@ export async function deleteSubscriber(id: string): Promise<ApiResponse> {
 }
 
 export async function getSubscriberProperties(): Promise<PropertyLookup[]> {
-  const response = await fetchApi<
-    PaginatedResponse<{
-      id: string;
-      name: string;
-      units?: Array<{ id: string; unit_number: string }>;
-    }>
-  >("/api/properties?page=1&limit=100");
+  const PAGE_LIMIT = 50;
+  let page = 1;
+  let totalPages = 1;
+  const allItems: Array<{
+    id: string;
+    name: string;
+    units?: Array<{ id: string; unit_number: string }>;
+  }> = [];
 
-  const items = response.data?.items ?? [];
+  do {
+    const response = await fetchApi<
+      PaginatedResponse<{
+        id: string;
+        name: string;
+        units?: Array<{ id: string; unit_number: string }>;
+      }>
+    >(`/api/properties?page=${page}&limit=${PAGE_LIMIT}`);
 
-  return items.map((property) => ({
+    const items = response.data?.items ?? [];
+    const pagination = response.data?.pagination;
+
+    allItems.push(...items);
+    totalPages = Math.max(1, pagination?.total_pages ?? 1);
+    page += 1;
+  } while (page <= totalPages);
+
+  return allItems.map((property) => ({
     id: property.id,
     name: property.name,
     units: (property.units ?? []).map((unit) => ({
