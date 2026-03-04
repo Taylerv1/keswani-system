@@ -8,6 +8,8 @@ interface TenantViewModalProps {
   open: boolean;
   tenant: TenantDetail | null;
   onClose: () => void;
+  onInvite?: (id: string) => void;
+  actionLoading?: boolean;
   t: (key: string) => string;
 }
 
@@ -22,6 +24,8 @@ export function TenantViewModal({
   open,
   tenant,
   onClose,
+  onInvite,
+  actionLoading = false,
   t,
 }: TenantViewModalProps) {
   return (
@@ -40,11 +44,29 @@ export function TenantViewModal({
               <p className="text-xs text-text-muted">{t("phone")}</p>
               <p className="text-sm font-medium text-text-primary">{formatNullable(tenant.phone)}</p>
             </div>
+            <div className="bg-background rounded-lg p-3">
+              <p className="text-xs text-text-muted">{t("portalAccess")}</p>
+              <p className="text-sm font-medium text-text-primary">
+                {tenant.auth_user_id ? t("portalLinked") : t("portalNotLinked")}
+              </p>
+            </div>
             <div className="bg-background rounded-lg p-3 sm:col-span-2">
               <p className="text-xs text-text-muted">{t("notes")}</p>
               <p className="text-sm font-medium text-text-primary">{formatNullable(tenant.notes)}</p>
             </div>
           </div>
+
+          {onInvite && (
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => onInvite(tenant.id)}
+                disabled={actionLoading || !tenant.email}
+                className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-green hover:border-card-green transition-colors text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {tenant.auth_user_id ? t("sendAccessLink") : t("inviteTenant")}
+              </button>
+            </div>
+          )}
 
           <div className="space-y-2">
             <h4 className="text-sm font-semibold text-text-primary">{t("contractsSummary")}</h4>

@@ -59,6 +59,11 @@ export function TenantsPage() {
           {state.error}
         </div>
       )}
+      {state.success && (
+        <div className="mb-4 p-3 rounded-lg bg-card-green-light border border-card-green/20 text-card-green text-sm">
+          {state.success}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex-1">
@@ -100,6 +105,9 @@ export function TenantsPage() {
             actionLoading={state.actionLoading}
             onView={(tenant) => void form.openView(tenant)}
             onEdit={form.openEdit}
+            onInvite={(tenant) => {
+              void state.inviteTenantPortalAccess(tenant.id);
+            }}
             t={t}
           />
 
@@ -115,6 +123,9 @@ export function TenantsPage() {
                   tenant={tenant}
                   onView={(item) => void form.openView(item)}
                   onEdit={form.openEdit}
+                  onInvite={(item) => {
+                    void state.inviteTenantPortalAccess(item.id);
+                  }}
                   actionLoading={state.actionLoading}
                   t={t}
                 />
@@ -149,6 +160,10 @@ export function TenantsPage() {
         open={form.detailOpen}
         tenant={form.detailData}
         onClose={form.closeView}
+        onInvite={(id) => {
+          void state.inviteTenantPortalAccess(id);
+        }}
+        actionLoading={state.actionLoading}
         t={t}
       />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Mail, Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui";
 import type { TenantListItem } from "../types";
 import { formatNullable } from "../utils";
@@ -9,6 +9,7 @@ interface TenantMobileCardProps {
   tenant: TenantListItem;
   onView: (item: TenantListItem) => void;
   onEdit: (item: TenantListItem) => void;
+  onInvite: (item: TenantListItem) => void;
   actionLoading: boolean;
   t: (key: string) => string;
 }
@@ -17,6 +18,7 @@ export function TenantMobileCard({
   tenant,
   onView,
   onEdit,
+  onInvite,
   actionLoading,
   t,
 }: TenantMobileCardProps) {
@@ -59,6 +61,14 @@ export function TenantMobileCard({
         >
           <Eye size={14} />
           {t("view")}
+        </button>
+        <button
+          onClick={() => onInvite(tenant)}
+          disabled={actionLoading || !tenant.email}
+          className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-green hover:border-card-green transition-colors text-sm font-medium cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Mail size={14} />
+          {tenant.auth_user_id ? t("sendAccessLink") : t("inviteTenant")}
         </button>
         <button
           onClick={() => onEdit(tenant)}

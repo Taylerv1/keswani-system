@@ -6,6 +6,7 @@ export {
   createTenant,
   updateTenant,
   deleteTenant,
+  inviteTenantAccess,
 } from "./api";
 
 export type {
@@ -22,6 +23,7 @@ export type {
   UpdateTenantInput,
   TenantFormValues,
   TenantContractFilter,
+  InviteTenantResponse,
 } from "./types";
 
 export { useTenantState, useTenantForm } from "./hooks";

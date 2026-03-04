@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Mail, Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui";
 import type { TenantListItem } from "../types";
 import { formatNullable } from "../utils";
@@ -11,6 +11,7 @@ interface TenantTableProps {
   actionLoading: boolean;
   onView: (item: TenantListItem) => void;
   onEdit: (item: TenantListItem) => void;
+  onInvite: (item: TenantListItem) => void;
   t: (key: string) => string;
 }
 
@@ -38,6 +39,7 @@ export function TenantTable({
   actionLoading,
   onView,
   onEdit,
+  onInvite,
   t,
 }: TenantTableProps) {
   return (
@@ -90,6 +92,14 @@ export function TenantTable({
                       title={t("view")}
                     >
                       <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={() => onInvite(tenant)}
+                      disabled={actionLoading || !tenant.email}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={tenant.auth_user_id ? t("sendAccessLink") : t("inviteTenant")}
+                    >
+                      <Mail size={15} />
                     </button>
                     <button
                       onClick={() => onEdit(tenant)}

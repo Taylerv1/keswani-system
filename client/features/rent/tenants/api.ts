@@ -1,6 +1,7 @@
 import type {
   ApiResponse,
   CreateTenantInput,
+  InviteTenantResponse,
   PaginatedResponse,
   TenantDetail,
   TenantListItem,
@@ -74,5 +75,13 @@ export async function updateTenant(
 export async function deleteTenant(id: string): Promise<ApiResponse> {
   return fetchApi(`/api/clients/${id}`, {
     method: "DELETE",
+  });
+}
+
+export async function inviteTenantAccess(
+  id: string
+): Promise<ApiResponse<InviteTenantResponse>> {
+  return fetchApi(`/api/clients/${id}/invite`, {
+    method: "POST",
   });
 }

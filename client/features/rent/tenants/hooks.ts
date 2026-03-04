@@ -5,6 +5,7 @@ import {
   createTenant,
   deleteTenant,
   getTenantById,
+  inviteTenantAccess,
   updateTenant,
 } from "./api";
 import type {
@@ -34,6 +35,7 @@ export function useTenantState(t: TranslateFn) {
   const [actionLoading, setActionLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -61,22 +63,23 @@ export function useTenantState(t: TranslateFn) {
       }
     }
 
-    try {
-      setLoading(true);
-      setError("");
+      try {
+        setLoading(true);
+        setError("");
+        setSuccess("");
 
-      const { data } = await rentStore.loadTenants(query, {
-        force: options?.force,
+        const { data } = await rentStore.loadTenants(query, {
+          force: options?.force,
       });
 
       setTenants(data.items);
       setTotalItems(data.totalItems);
       setTotalPages(data.totalPages);
-    } catch (err) {
-      setError(extractErrorMessage(err, t("error")));
-      setTenants([]);
-      setTotalItems(0);
-      setTotalPages(1);
+      } catch (err) {
+        setError(extractErrorMessage(err, t("error")));
+        setTenants([]);
+        setTotalItems(0);
+        setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -93,6 +96,7 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
+        setSuccess("");
 
         const payload = buildCreateTenantPayload(form);
         await createTenant(payload);
@@ -117,6 +121,7 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
+        setSuccess("");
 
         const payload = buildUpdateTenantPayload(form);
         await updateTenant(id, payload);
@@ -139,11 +144,35 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
+        setSuccess("");
 
         await deleteTenant(id);
         rentStore.invalidateTenants();
         rentStore.invalidateOverview();
         await fetchTenantList({ force: true });
+        return true;
+      } catch (err) {
+        setError(extractErrorMessage(err, t("error")));
+        return false;
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [fetchTenantList, t]
+  );
+
+  const inviteTenantPortalAccess = useCallback(
+    async (id: string) => {
+      try {
+        setActionLoading(true);
+        setError("");
+        setSuccess("");
+
+        const response = await inviteTenantAccess(id);
+
+        rentStore.invalidateTenants();
+        await fetchTenantList({ force: true });
+        setSuccess(response.message || t("tenantAccessInviteSent"));
         return true;
       } catch (err) {
         setError(extractErrorMessage(err, t("error")));
@@ -184,6 +213,8 @@ export function useTenantState(t: TranslateFn) {
     detailLoading,
     error,
     setError,
+    success,
+    setSuccess,
     search,
     setSearch,
     page,
@@ -194,6 +225,7 @@ export function useTenantState(t: TranslateFn) {
     createTenantItem,
     updateTenantItem,
     deleteTenantItem,
+    inviteTenantPortalAccess,
     getTenantDetails,
   };
 }
@@ -266,7 +298,7 @@ export function useTenantForm({
     async (item: TenantListItem) => {
       setDetailData({
         id: item.id,
-        auth_user_id: null,
+        auth_user_id: item.auth_user_id,
         full_name: item.full_name,
         email: item.email,
         phone: item.phone,

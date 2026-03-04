@@ -30,6 +30,7 @@ export interface TenantActiveContract {
 
 export interface TenantListItem {
   id: string;
+  auth_user_id: string | null;
   full_name: string;
   email: string | null;
   phone: string | null;
@@ -115,6 +116,12 @@ export interface UpdateTenantInput {
   email?: string | null;
   phone?: string | null;
   notes?: string | null;
+}
+
+export interface InviteTenantResponse {
+  client_id: string;
+  email: string;
+  auth_user_id: string;
 }
 
 export interface TenantFormValues {
