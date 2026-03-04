@@ -22,7 +22,10 @@ export function MaintenanceDeleteModal({
       onClose={onClose}
       onConfirm={onConfirm}
       loading={loading}
-      confirmWord={t("delete")}
+      title={t("archiveMaintenanceRequest")}
+      message={t("archiveMaintenanceConfirm")}
+      confirmWord={t("archive")}
+      confirmLabel={t("archive")}
     />
   );
 }

@@ -1,9 +1,10 @@
-import { Pencil, Trash2, Wrench } from "lucide-react";
+import { Eye, Pencil, Trash2, Wrench } from "lucide-react";
 import type { MaintenanceRequest, TranslateFn } from "../types";
 
 interface MaintenanceMobileCardProps {
   request: MaintenanceRequest;
   propertyName: string;
+  onView: (request: MaintenanceRequest) => void;
   onEdit: (request: MaintenanceRequest) => void;
   onDelete: (id: string) => void;
   t: TranslateFn;
@@ -12,10 +13,14 @@ interface MaintenanceMobileCardProps {
 export function MaintenanceMobileCard({
   request,
   propertyName,
+  onView,
   onEdit,
   onDelete,
   t,
 }: MaintenanceMobileCardProps) {
+  const reviewLabel =
+    request.status === "open" && !request.assigneeId ? t("review") : t("edit");
+
   return (
     <div className="bg-surface rounded-xl border border-surface-border p-3">
       <div className="flex items-start justify-between mb-2">
@@ -40,24 +45,31 @@ export function MaintenanceMobileCard({
         </div>
         <div>
           <div className="text-[11px]">{t("priority")}</div>
-          <div className="font-medium text-text-primary">{request.priority}</div>
+          <div className="font-medium text-text-primary">{t(request.priority)}</div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <button
+          onClick={() => onView(request)}
+          className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-blue hover:border-card-blue transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
+        >
+          <Eye size={14} />
+          {t("view")}
+        </button>
+        <button
           onClick={() => onEdit(request)}
           className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
         >
           <Pencil size={14} />
-          {t("edit")}
+          {reviewLabel}
         </button>
         <button
           onClick={() => onDelete(request.id)}
           className="h-9 px-3 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-sm font-medium cursor-pointer flex items-center gap-2"
         >
           <Trash2 size={14} />
-          {t("delete")}
+          {t("archive")}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ interface MaintenanceTableProps {
   requests: MaintenanceRequest[];
   resolvePropertyName: (id: string) => string;
   resolveTenantName: (id: string) => string;
+  onView: (request: MaintenanceRequest) => void;
   onEdit: (request: MaintenanceRequest) => void;
   onDelete: (id: string) => void;
   t: TranslateFn;
@@ -14,6 +15,7 @@ export function MaintenanceTable({
   requests,
   resolvePropertyName,
   resolveTenantName,
+  onView,
   onEdit,
   onDelete,
   t,
@@ -47,6 +49,7 @@ export function MaintenanceTable({
                 request={request}
                 propertyName={resolvePropertyName(request.propertyId)}
                 tenantName={resolveTenantName(request.tenantId)}
+                onView={onView}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 t={t}

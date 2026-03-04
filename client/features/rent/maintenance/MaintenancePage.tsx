@@ -10,6 +10,7 @@ import { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
 import { MaintenanceCreateModal } from "./components/MaintenanceCreateModal";
 import { MaintenanceFormModal } from "./components/MaintenanceFormModal";
 import { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";
+import { MaintenanceViewModal } from "./components/MaintenanceViewModal";
 import { LoadingLottie } from "@/components/ui";
 
 export default function MaintenancePage() {
@@ -98,6 +99,7 @@ export default function MaintenancePage() {
             requests={state.paginated}
             resolvePropertyName={state.resolvePropertyName}
             resolveTenantName={state.resolveTenantName}
+            onView={form.openView}
             onEdit={form.openEdit}
             onDelete={form.setDeleteId}
             t={t}
@@ -112,6 +114,7 @@ export default function MaintenancePage() {
                   key={request.id}
                   request={request}
                   propertyName={state.resolvePropertyName(request.propertyId)}
+                  onView={form.openView}
                   onEdit={form.openEdit}
                   onDelete={form.setDeleteId}
                   t={t}
@@ -170,6 +173,18 @@ export default function MaintenancePage() {
         onClose={() => form.setDeleteId(null)}
         onConfirm={form.handleDelete}
         loading={form.deleteLoading}
+      />
+
+      <MaintenanceViewModal
+        open={!!form.viewItem}
+        item={form.viewItem}
+        locale={locale}
+        onClose={() => form.setViewItem(null)}
+        onReview={(request) => {
+          form.setViewItem(null);
+          form.openEdit(request);
+        }}
+        t={t}
       />
     </div>
   );

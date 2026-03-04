@@ -127,7 +127,7 @@ export function useMaintenanceState({
   }, [filterPriority, filterStatus, page, search]);
 
   useEffect(() => {
-    void fetchMaintenance();
+    void fetchMaintenance({ force: true });
   }, [fetchMaintenance]);
 
   useEffect(() => {
@@ -362,6 +362,7 @@ export function useMaintenanceForm({
 }: UseMaintenanceFormInput) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<MaintenanceRequest | null>(null);
+  const [viewItem, setViewItem] = useState<MaintenanceRequest | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [form, setForm] = useState<MaintenanceFormData>(createEmptyForm());
@@ -374,6 +375,10 @@ export function useMaintenanceForm({
   const openAdd = () => {
     resetForm();
     setModalOpen(true);
+  };
+
+  const openView = (request: MaintenanceRequest) => {
+    setViewItem(request);
   };
 
   const openEdit = (request: MaintenanceRequest) => {
@@ -458,6 +463,8 @@ export function useMaintenanceForm({
     modalOpen,
     setModalOpen,
     editItem,
+    viewItem,
+    setViewItem,
     deleteId,
     deleteLoading,
     setDeleteId,
@@ -465,6 +472,7 @@ export function useMaintenanceForm({
     setForm,
     resetForm,
     openAdd,
+    openView,
     openEdit,
     handleSave,
     handleDelete,

@@ -38,3 +38,4 @@ export { MaintenanceMobileCard } from "./components/MaintenanceMobileCard";
 export { MaintenanceCreateModal } from "./components/MaintenanceCreateModal";
 export { MaintenanceFormModal } from "./components/MaintenanceFormModal";
 export { MaintenanceDeleteModal } from "./components/MaintenanceDeleteModal";
+export { MaintenanceViewModal } from "./components/MaintenanceViewModal";

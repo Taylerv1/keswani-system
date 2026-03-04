@@ -94,11 +94,11 @@ export async function getMaintenanceRequests(params?: {
 }
 
 export async function createMaintenanceRequest(payload: {
-  unit_id: string;
+  unit_id?: string;
   requested_by?: string;
   title: string;
-  description: string;
-  priority: BackendMaintenancePriority;
+  description?: string;
+  priority?: BackendMaintenancePriority;
   estimated_cost?: number;
 }): Promise<ApiResponse> {
   return fetchApi("/api/maintenance", {

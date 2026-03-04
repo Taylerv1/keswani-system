@@ -15,6 +15,8 @@ export interface MaintenanceRequest {
   unitNumber: string;
   tenantId: string;
   tenantName: string;
+  assigneeId: string;
+  assigneeName: string;
   title: string;
   description: string;
   priority: MaintenancePriority;
@@ -38,7 +40,7 @@ export interface BackendMaintenanceItem {
   assigned_to: string | null;
   assignee_name: string | null;
   title: string;
-  description: string;
+  description: string | null;
   status: BackendMaintenanceStatus;
   priority: BackendMaintenancePriority;
   estimated_cost: string | number | null;
