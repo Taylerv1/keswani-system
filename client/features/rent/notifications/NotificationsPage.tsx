@@ -134,7 +134,12 @@ export default function NotificationsPage() {
                   t={t}
                   viewLoading={details.detailLoadingId === item.id}
                   onView={(target) => {
-                    void details.openDetails(target);
+                    void (async () => {
+                      const opened = await details.openDetails(target);
+                      if (opened && !target.read) {
+                        await state.markNotificationRead(target.id);
+                      }
+                    })();
                   }}
                   onMarkRead={(id) => {
                     void state.markNotificationRead(id);

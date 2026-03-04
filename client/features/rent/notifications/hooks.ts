@@ -92,7 +92,7 @@ export function useNotificationState(t: TranslateFn) {
   );
 
   useEffect(() => {
-    void fetchNotificationList();
+    void fetchNotificationList({ force: true });
   }, [fetchNotificationList]);
 
   const markNotificationRead = useCallback(
@@ -219,8 +219,8 @@ export function useNotificationDetails(t: TranslateFn) {
   );
 
   const openDetails = useCallback(
-    async (notification: NotificationItem) => {
-      if (!notification.relatedId) return;
+    async (notification: NotificationItem): Promise<boolean> => {
+      if (!notification.relatedId) return false;
 
       setDetailError("");
       clearOpenedDetails();
@@ -231,14 +231,14 @@ export function useNotificationDetails(t: TranslateFn) {
           const contract = await loadContractDetails(notification.relatedId);
           if (!contract) throw new Error("Contract details not found");
           setContractDetail(contract);
-          return;
+          return true;
         }
 
         if (notification.type === "maintenance") {
           const request = await loadMaintenanceDetails(notification.relatedId);
           if (!request) throw new Error("Maintenance request details not found");
           setMaintenanceDetail(request);
-          return;
+          return true;
         }
 
         if (notification.type === "late_payment") {
@@ -246,7 +246,7 @@ export function useNotificationDetails(t: TranslateFn) {
             const tenant = await loadTenantDetails(notification.relatedId);
             if (tenant) {
               setTenantDetail(tenant);
-              return;
+              return true;
             }
           }
 
@@ -256,21 +256,23 @@ export function useNotificationDetails(t: TranslateFn) {
             if (!tenant) throw new Error("Related tenant not found");
 
             setTenantDetail(tenant);
-            return;
+            return true;
           }
 
           const fallbackTenant = await loadTenantDetails(notification.relatedId);
           if (fallbackTenant) {
             setTenantDetail(fallbackTenant);
-            return;
+            return true;
           }
 
           throw new Error("Related contract or tenant not found");
         }
 
         setDetailError(t("error"));
+        return false;
       } catch (error) {
         setDetailError(extractErrorMessage(error, t("error")));
+        return false;
       } finally {
         setDetailLoadingId(null);
       }

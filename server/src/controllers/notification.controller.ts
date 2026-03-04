@@ -7,6 +7,20 @@ import {
 } from "../validators/notification.validator";
 import { AuthenticatedRequest, ApiResponse } from "../types";
 
+function buildRecipientScope(req: AuthenticatedRequest): Prisma.notificationsWhereInput {
+    if (!req.user) {
+        return {
+            recipient_id: "__no_user__",
+            recipient_type: "employee",
+        };
+    }
+
+    return {
+        recipient_type: req.user.user_type,
+        recipient_id: req.user.profile_id,
+    };
+}
+
 /**
  * GET /api/notifications
  * List in-app notifications with filtering by section, type, read status, and search.
@@ -32,6 +46,7 @@ export const getNotifications = async (
 
         const where: Prisma.notificationsWhereInput = {
             channel: "in_app",
+            ...buildRecipientScope(req),
         };
 
         if (section) where.section = section;
@@ -89,20 +104,31 @@ export const getNotifications = async (
  * Returns unread counts per section.
  */
 export const getNotificationStats = async (
-    _req: AuthenticatedRequest,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
+        const recipientScope = buildRecipientScope(req);
         const [rentUnread, electricityUnread, totalUnread] = await Promise.all([
             prisma.notifications.count({
-                where: { channel: "in_app", section: "rent", is_read: false },
+                where: {
+                    channel: "in_app",
+                    section: "rent",
+                    is_read: false,
+                    ...recipientScope,
+                },
             }),
             prisma.notifications.count({
-                where: { channel: "in_app", section: "electricity", is_read: false },
+                where: {
+                    channel: "in_app",
+                    section: "electricity",
+                    is_read: false,
+                    ...recipientScope,
+                },
             }),
             prisma.notifications.count({
-                where: { channel: "in_app", is_read: false },
+                where: { channel: "in_app", is_read: false, ...recipientScope },
             }),
         ]);
 
@@ -185,9 +211,10 @@ export const markNotificationRead = async (
 ): Promise<void> => {
     try {
         const id = req.params.id as string;
+        const recipientScope = buildRecipientScope(req);
 
-        const notification = await prisma.notifications.findUnique({
-            where: { id },
+        const notification = await prisma.notifications.findFirst({
+            where: { id, ...recipientScope },
         });
 
         if (!notification) {
@@ -220,10 +247,12 @@ export const markAllNotificationsRead = async (
 ): Promise<void> => {
     try {
         const section = req.query.section as string | undefined;
+        const recipientScope = buildRecipientScope(req);
 
         const where: Prisma.notificationsWhereInput = {
             channel: "in_app",
             is_read: false,
+            ...recipientScope,
         };
 
         if (section === "rent" || section === "electricity") {
