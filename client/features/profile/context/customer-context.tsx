@@ -7,7 +7,6 @@ import {
     useEffect,
     type ReactNode,
 } from "react";
-import customerMock from "@/mocks/customer.mock.json";
 
 /* ---------- Types ---------- */
 
@@ -144,14 +143,24 @@ const CustomerContext = createContext<CustomerContextValue | null>(null);
 
 export function CustomerProvider({ children }: { children: ReactNode }) {
     const [data, setData] = useState<CustomerData>(() => {
-        const raw = customerMock as Record<string, unknown>;
+        // Initialize with empty/default data to avoid relying on mock files
         return {
-            user: raw.user as CustomerUser,
-            rent: raw.rent ? (raw.rent as CustomerData["rent"]) : null,
-            electricity: raw.electricity
-                ? (raw.electricity as CustomerData["electricity"])
-                : null,
-            reports: (raw.reports as CustomerReport[]) ?? [],
+            user: {
+                id: "",
+                name: "",
+                nameAr: "",
+                email: "",
+                phone: "",
+                address: "",
+                addressAr: "",
+                subscriptionType: "",
+                languagePreference: "en",
+                accountCreated: new Date().toISOString().split("T")[0],
+                avatar: null,
+            },
+            rent: null,
+            electricity: null,
+            reports: [],
         };
     });
 
@@ -179,8 +188,9 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
                     });
                     setError(null);
                 }
-            } catch (err: any) {
-                if (!cancelled) setError(err.message || "Failed to load profile");
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                if (!cancelled) setError(msg || "Failed to load profile");
             } finally {
                 if (!cancelled) setLoading(false);
             }
