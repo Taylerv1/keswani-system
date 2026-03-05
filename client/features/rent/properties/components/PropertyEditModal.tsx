@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import type { PropertyDto } from "../types";
@@ -50,13 +50,37 @@ export function PropertyEditModal({
   actionLoading,
   t,
 }: PropertyEditModalProps) {
-  const [unitsExpanded, setUnitsExpanded] = useState(true);
+  const [expandedUnitKeys, setExpandedUnitKeys] = useState<Record<string, boolean>>({});
   const unitsEndRef = useRef<HTMLDivElement | null>(null);
+
+  const renderUnits = form.type === "house" ? units.slice(0, 1) : units;
+
+  const getUnitKey = (unit: CreateUnitInput, index: number): string => {
+    return unit.id ?? `edit-${index}-${unit.unit_number || "unit"}`;
+  };
 
   useEffect(() => {
     if (!open) return;
-    setUnitsExpanded(true);
-  }, [open, form.type]);
+
+    setExpandedUnitKeys((prev) => {
+      const next: Record<string, boolean> = {};
+
+      renderUnits.forEach((unit, index) => {
+        const key = getUnitKey(unit, index);
+        next[key] = prev[key] ?? index === 0;
+      });
+
+      if (form.type === "house" && renderUnits.length === 0) {
+        next.house_unit = prev.house_unit ?? true;
+      }
+
+      return next;
+    });
+  }, [open, form.type, units]);
+
+  const toggleUnit = (key: string) => {
+    setExpandedUnitKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const scrollToUnitsEnd = () => {
     requestAnimationFrame(() => {
@@ -87,8 +111,6 @@ export function PropertyEditModal({
   const removeUnit = (index: number) => {
     setUnits((prev) => prev.filter((_, i) => i !== index));
   };
-
-  const renderUnits = form.type === "house" ? units.slice(0, 1) : units;
 
   return (
     <Modal
@@ -181,51 +203,66 @@ export function PropertyEditModal({
         </div>
 
         {(form.type === "building" || form.type === "house") && (
-          <div className="space-y-3 rounded-lg border border-surface-border p-3">
+          <div className="space-y-3 rounded-xl border border-surface-border bg-surface p-3">
             <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => setUnitsExpanded((prev) => !prev)}
-                className="h-9 px-3 rounded-lg border border-surface-border bg-background text-text-secondary text-sm font-medium cursor-pointer hover:bg-surface transition-colors"
-              >
-                {unitsExpanded ? "v" : ">"} {t("units")}
-              </button>
+              <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
 
               {form.type === "building" && (
                 <button
                   type="button"
                   onClick={addUnit}
-                  className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                  className="h-9 px-3 rounded-lg border border-surface-border bg-background text-text-secondary text-sm font-medium cursor-pointer hover:bg-surface transition-colors inline-flex items-center gap-1"
                 >
+                  <Plus size={14} />
                   {t("addUnit")}
                 </button>
               )}
             </div>
 
-            {unitsExpanded && (
-              <>
-                {renderUnits.length === 0 ? (
-                  <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
-                    {form.type === "house" ? (
+            {renderUnits.length === 0 ? (
+              <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
+                {form.type === "house" ? (
+                  <button
+                    type="button"
+                    onClick={addUnit}
+                    className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                  >
+                    {t("addUnit")}
+                  </button>
+                ) : (
+                  t("noResults")
+                )}
+              </div>
+            ) : (
+              renderUnits.map((unit, index) => {
+                const unitKey = getUnitKey(unit, index);
+                const expanded = expandedUnitKeys[unitKey] ?? false;
+
+                return (
+                  <div
+                    key={unitKey}
+                    className="rounded-lg border border-surface-border bg-background"
+                  >
+                    <div className="px-3 py-2 flex items-center justify-between gap-2">
                       <button
                         type="button"
-                        onClick={addUnit}
-                        className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+                        onClick={() => toggleUnit(unitKey)}
+                        className="inline-flex items-center gap-2 text-sm font-medium text-text-primary cursor-pointer"
                       >
-                        {t("addUnit")}
+                        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {form.type === "house"
+                          ? t("propertyDetails")
+                          : `${t("unitNumber")} #${index + 1}`}
                       </button>
-                    ) : (
-                      t("noResults")
-                    )}
-                  </div>
-                ) : (
-                  renderUnits.map((unit, index) => (
-                    <div key={unit.id ?? `${index}-${unit.unit_number}`} className="rounded-lg border border-surface-border bg-background p-3 space-y-3">
-                      {form.type === "building" && (
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-text-secondary">
-                            {t("unitNumber")} #{index + 1}
-                          </p>
+
+                      <div className="flex items-center gap-2">
+                        {form.type === "building" && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-surface border border-surface-border text-text-secondary">
+                            {unit.unit_number || "-"}
+                          </span>
+                        )}
+
+                        {form.type === "building" && (
                           <button
                             type="button"
                             onClick={() => removeUnit(index)}
@@ -234,103 +271,94 @@ export function PropertyEditModal({
                             <Trash2 size={13} />
                             {t("delete")}
                           </button>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {form.type === "building" && (
-                          <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">
-                              {t("unitNumber")}
-                            </label>
-                            <input
-                              value={unit.unit_number ?? ""}
-                              onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
-                              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
-                          </div>
                         )}
-                        <div>
-                          <label className="block text-sm font-medium text-text-secondary mb-1">
-                            {t("floor")}
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={unit.floor ?? ""}
-                            onChange={(e) => updateUnit(index, "floor", parseOptionalInt(e.target.value))}
-                            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-secondary mb-1">
-                            {t("bedrooms")}
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={unit.bedrooms ?? ""}
-                            onChange={(e) => updateUnit(index, "bedrooms", parseOptionalInt(e.target.value))}
-                            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-secondary mb-1">
-                            {t("bathrooms")}
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={unit.bathrooms ?? ""}
-                            onChange={(e) => updateUnit(index, "bathrooms", parseOptionalInt(e.target.value))}
-                            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-secondary mb-1">
-                            {t("area_sqm")}
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={unit.area_sqm ?? ""}
-                            onChange={(e) => updateUnit(index, "area_sqm", parseOptionalNumber(e.target.value))}
-                            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                          {t("description")}
-                        </label>
-                        <textarea
-                          value={unit.description ?? ""}
-                          onChange={(e) => updateUnit(index, "description", e.target.value)}
-                          rows={2}
-                          className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                        />
                       </div>
                     </div>
-                  ))
-                )}
 
-                <div ref={unitsEndRef} />
-              </>
+                    {expanded && (
+                      <div className="px-3 pb-3 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {form.type === "building" && (
+                            <div>
+                              <label className="block text-sm font-medium text-text-secondary mb-1">
+                                {t("unitNumber")}
+                              </label>
+                              <input
+                                value={unit.unit_number ?? ""}
+                                onChange={(e) => updateUnit(index, "unit_number", e.target.value)}
+                                className="w-full h-10 rounded-lg border border-surface-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">
+                              {t("floor")}
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={unit.floor ?? ""}
+                              onChange={(e) => updateUnit(index, "floor", parseOptionalInt(e.target.value))}
+                              className="w-full h-10 rounded-lg border border-surface-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">
+                              {t("bedrooms")}
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={unit.bedrooms ?? ""}
+                              onChange={(e) => updateUnit(index, "bedrooms", parseOptionalInt(e.target.value))}
+                              className="w-full h-10 rounded-lg border border-surface-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">
+                              {t("bathrooms")}
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={unit.bathrooms ?? ""}
+                              onChange={(e) => updateUnit(index, "bathrooms", parseOptionalInt(e.target.value))}
+                              className="w-full h-10 rounded-lg border border-surface-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">
+                              {t("area_sqm")}
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={unit.area_sqm ?? ""}
+                              onChange={(e) => updateUnit(index, "area_sqm", parseOptionalNumber(e.target.value))}
+                              className="w-full h-10 rounded-lg border border-surface-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-1">
+                            {t("description")}
+                          </label>
+                          <textarea
+                            value={unit.description ?? ""}
+                            onChange={(e) => updateUnit(index, "description", e.target.value)}
+                            rows={2}
+                            className="w-full rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
-          </div>
-        )}
 
-        {form.type === "building" && unitsExpanded && (
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={addUnit}
-              className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all flex items-center gap-2"
-            >
-              <Plus size={16} />
-              {t("addUnit")}
-            </button>
+            <div ref={unitsEndRef} />
           </div>
         )}
 
