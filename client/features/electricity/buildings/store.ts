@@ -465,28 +465,40 @@ class BuildingsStore {
 
   async removeSelected(options: { errorFallback: string }): Promise<boolean> {
     if (!this.deleteId) return false;
+    const targetDeleteId = this.deleteId;
 
     try {
       this.actionLoading = true;
       this.error = "";
 
-      await deleteElectricityBuilding(this.deleteId);
+      await deleteElectricityBuilding(targetDeleteId);
+
+      const nextItems = this.items.filter((item) => item.id !== targetDeleteId);
+      const nextTotalItems = Math.max(0, this.totalItems - 1);
+      const nextTotalPages = Math.max(
+        1,
+        Math.ceil(nextTotalItems / this.PAGE_SIZE)
+      );
+      const nextPage = Math.min(this.page, nextTotalPages);
 
       runInAction(() => {
         this.deleteId = null;
         this.invalidateCache();
-      });
+        this.items = nextItems;
+        this.totalItems = nextTotalItems;
+        this.totalPages = nextTotalPages;
+        this.page = nextPage;
 
-      await this.loadBuildings({
-        errorFallback: options.errorFallback,
-        targetPage: this.page,
-        force: true,
+        if (this.detailItem?.id === targetDeleteId) {
+          this.detailItem = null;
+        }
       });
 
       return true;
     } catch (error) {
       runInAction(() => {
         this.error = getErrorMessage(error, options.errorFallback);
+        this.deleteId = null;
       });
       return false;
     } finally {
