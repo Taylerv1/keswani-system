@@ -114,6 +114,7 @@ const ar: Record<string, string> = {
   building: "مبنى",
   house: "منزل",
   land: "أرض",
+  commercial: "تجاري",
   active: "نشط",
   inactive: "غير نشط",
   vacant: "شاغر",

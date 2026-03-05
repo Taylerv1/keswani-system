@@ -114,6 +114,7 @@ const en = {
   building: "Building",
   house: "House",
   land: "Land",
+  commercial: "Commercial",
   active: "Active",
   inactive: "Inactive",
   vacant: "Vacant",
