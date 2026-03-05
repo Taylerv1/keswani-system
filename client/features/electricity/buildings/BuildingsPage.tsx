@@ -66,6 +66,11 @@ export default function BuildingsPage() {
           {store.error}
         </div>
       )}
+      {store.success && (
+        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+          {store.success}
+        </div>
+      )}
 
       <div className="mb-5">
         <SearchBar
@@ -191,6 +196,7 @@ export default function BuildingsPage() {
                 propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
                 usageRequiredMessage:
                   "Property must be enabled for rent, electricity, or both",
+                successMessage: "Building updated successfully",
                 errorFallback: t("error"),
               })
             }
@@ -219,6 +225,7 @@ export default function BuildingsPage() {
               propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
               usageRequiredMessage:
                 "Property must be enabled for rent, electricity, or both",
+              successMessage: "Building created successfully",
               errorFallback: t("error"),
             })
           }
@@ -267,7 +274,12 @@ export default function BuildingsPage() {
       <ConfirmDialog
         open={Boolean(store.deleteId)}
         onClose={() => store.setDeleteId(null)}
-        onConfirm={() => void store.removeSelected({ errorFallback: t("error") })}
+        onConfirm={() =>
+          void store.removeSelected({
+            errorFallback: t("error"),
+            successMessage: "Building deleted successfully",
+          })
+        }
         loading={store.actionLoading}
       />
     </div>
