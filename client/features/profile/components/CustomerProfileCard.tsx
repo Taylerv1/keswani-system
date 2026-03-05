@@ -9,7 +9,7 @@ interface CustomerProfileCardProps {
 }
 
 export default function CustomerProfileCard({ user }: CustomerProfileCardProps) {
-    const { t, locale } = useTranslation();
+    const { t, locale, dir } = useTranslation();
 
     const displayName = locale === "ar" ? user.nameAr : user.name;
     const displayAddress = locale === "ar" ? user.addressAr : user.address;
@@ -79,9 +79,14 @@ export default function CustomerProfileCard({ user }: CustomerProfileCardProps) 
 
                 <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                     {fields.map((field, idx) => (
-                        <div key={idx} className="flex items-start gap-4 sm:gap-6">
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0 shadow-sm">
-                                {field.icon}
+                        <div
+                            key={idx}
+                            className={`flex items-start gap-4 sm:gap-6 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                        >
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white border border-surface-border text-text-primary flex items-center justify-center shrink-0 shadow-sm">
+                                <div className="flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4 text-text-primary">
+                                    {field.icon}
+                                </div>
                             </div>
                             <div className="min-w-0">
                                 <p className="text-sm text-text-muted">{field.label}</p>
