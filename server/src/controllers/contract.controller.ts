@@ -162,9 +162,18 @@ export const createContract = async (
         // Validate unit exists
         const unit = await prisma.units.findFirst({
             where: { id: data.unit_id, deleted_at: null },
+            include: {
+                property: {
+                    select: { id: true, ...( { is_for_rent: true } as any ) },
+                },
+            },
         });
         if (!unit) {
             res.status(404).json({ success: false, error: "Unit not found" });
+            return;
+        }
+        if ((unit as any).property?.is_for_rent === false) {
+            res.status(400).json({ success: false, error: "Selected unit belongs to a property that is not enabled for rent" });
             return;
         }
 
@@ -250,6 +259,27 @@ export const updateContract = async (
         }
 
         const data = parsed.data;
+
+        if (data.unit_id !== undefined) {
+            const targetUnit = await prisma.units.findFirst({
+                where: { id: data.unit_id, deleted_at: null },
+                include: {
+                    property: {
+                        select: { id: true, ...( { is_for_rent: true } as any ) },
+                    },
+                },
+            });
+
+            if (!targetUnit) {
+                res.status(404).json({ success: false, error: "Unit not found" });
+                return;
+            }
+
+            if ((targetUnit as any).property?.is_for_rent === false) {
+                res.status(400).json({ success: false, error: "Selected unit belongs to a property that is not enabled for rent" });
+                return;
+            }
+        }
 
         // Build update payload
         const updateData: Record<string, unknown> = {};
