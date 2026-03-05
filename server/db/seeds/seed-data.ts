@@ -61,6 +61,11 @@ export const UNIT_IDS = {
     u13: "d0000000-0000-0000-0000-000000000013",
     u14: "d0000000-0000-0000-0000-000000000014",
     u15: "d0000000-0000-0000-0000-000000000015",
+    u16: "d0000000-0000-0000-0000-000000000016",
+    u17: "d0000000-0000-0000-0000-000000000017",
+    u18: "d0000000-0000-0000-0000-000000000018",
+    u19: "d0000000-0000-0000-0000-000000000019",
+    u20: "d0000000-0000-0000-0000-000000000020",
 };
 
 export const CONTRACT_IDS = {
@@ -233,20 +238,20 @@ export const clients = [
 // PROPERTIES (10)
 // ===========================
 export const properties = [
-    { id: PROPERTY_IDS.p1, name: "Keswani Tower", address: "Hamra Street 45", city: "Beirut", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Main office building" },
-    { id: PROPERTY_IDS.p2, name: "Al-Nour Building", address: "Mina Road 12", city: "Tripoli", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Managed by Hassan" },
-    { id: PROPERTY_IDS.p3, name: "Sea View Residence", address: "Corniche Blvd 78", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Sea-facing units" },
-    { id: PROPERTY_IDS.p4, name: "Sunrise Apartments", address: "Saida Main Rd 33", city: "Sidon", type: "building" as const, managed_by: EMPLOYEE_IDS.emp2, owner_notes: "Recently renovated" },
-    { id: PROPERTY_IDS.p5, name: "Cedar House", address: "Mountain View 5", city: "Byblos", type: "house" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Owner occupied" },
-    { id: PROPERTY_IDS.p6, name: "Downtown Plaza", address: "Achrafieh Center 90", city: "Beirut", type: "commercial" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Commercial retail units" },
-    { id: PROPERTY_IDS.p7, name: "Valley Residence", address: "Boulevard Principale 20", city: "Zahle", type: "building" as const, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Small complex" },
-    { id: PROPERTY_IDS.p8, name: "Olive Garden Villa", address: "Coastal Road 15", city: "Batroun", type: "house" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Vacation rental" },
-    { id: PROPERTY_IDS.p9, name: "Harissa Heights", address: "Harissa Hill 8", city: "Jounieh", type: "building" as const, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Premium building" },
-    { id: PROPERTY_IDS.p10, name: "Koura Land Parcel", address: "Koura District", city: "Tripoli", type: "land" as const, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Land parcel" },
+    { id: PROPERTY_IDS.p1, name: "Keswani Tower", address: "Hamra Street 45", city: "Beirut", type: "building" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Main office building" },
+    { id: PROPERTY_IDS.p2, name: "Al-Nour Building", address: "Mina Road 12", city: "Tripoli", type: "building" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Managed by Hassan" },
+    { id: PROPERTY_IDS.p3, name: "Sea View Residence", address: "Corniche Blvd 78", city: "Jounieh", type: "building" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Sea-facing units" },
+    { id: PROPERTY_IDS.p4, name: "Sunrise Apartments", address: "Saida Main Rd 33", city: "Sidon", type: "building" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.emp2, owner_notes: "Recently renovated" },
+    { id: PROPERTY_IDS.p5, name: "Cedar House", address: "Mountain View 5", city: "Byblos", type: "house" as const, is_for_rent: true, is_for_electricity: false, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Owner occupied" },
+    { id: PROPERTY_IDS.p6, name: "Downtown Plaza", address: "Achrafieh Center 90", city: "Beirut", type: "commercial" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Commercial retail units" },
+    { id: PROPERTY_IDS.p7, name: "Valley Residence", address: "Boulevard Principale 20", city: "Zahle", type: "building" as const, is_for_rent: true, is_for_electricity: true, managed_by: EMPLOYEE_IDS.emp1, owner_notes: "Small complex" },
+    { id: PROPERTY_IDS.p8, name: "Olive Garden Villa", address: "Coastal Road 15", city: "Batroun", type: "house" as const, is_for_rent: true, is_for_electricity: false, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Vacation rental" },
+    { id: PROPERTY_IDS.p9, name: "Harissa Heights", address: "Harissa Hill 8", city: "Jounieh", type: "building" as const, is_for_rent: false, is_for_electricity: true, managed_by: EMPLOYEE_IDS.admin1, owner_notes: "Premium building for electricity subscribers" },
+    { id: PROPERTY_IDS.p10, name: "Koura Land Parcel", address: "Koura District", city: "Tripoli", type: "land" as const, is_for_rent: true, is_for_electricity: false, managed_by: EMPLOYEE_IDS.owner, owner_notes: "Land parcel" },
 ];
 
 // ===========================
-// UNITS (15)
+// UNITS (20)
 // ===========================
 export const units = [
     // Keswani Tower (p1) — 4 apartments
@@ -270,6 +275,14 @@ export const units = [
     { id: UNIT_IDS.u14, property_id: PROPERTY_IDS.p6, unit_number: "Shop-2", floor: 0, bedrooms: 0, bathrooms: 1, area_sqm: 50 },
     // Valley Residence (p7) — 1 apartment
     { id: UNIT_IDS.u15, property_id: PROPERTY_IDS.p7, unit_number: "V1", floor: 0, bedrooms: 2, bathrooms: 1, area_sqm: 100 },
+    // Downtown Plaza (p6) — extra shop used by electricity-only subscription
+    { id: UNIT_IDS.u16, property_id: PROPERTY_IDS.p6, unit_number: "Shop-3", floor: 1, bedrooms: 0, bathrooms: 1, area_sqm: 42 },
+    // Valley Residence (p7) — extra apartment
+    { id: UNIT_IDS.u17, property_id: PROPERTY_IDS.p7, unit_number: "V2", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 96 },
+    // Harissa Heights (p9) — units primarily for electricity subscriptions
+    { id: UNIT_IDS.u18, property_id: PROPERTY_IDS.p9, unit_number: "H1", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 92 },
+    { id: UNIT_IDS.u19, property_id: PROPERTY_IDS.p9, unit_number: "H2", floor: 1, bedrooms: 2, bathrooms: 1, area_sqm: 95 },
+    { id: UNIT_IDS.u20, property_id: PROPERTY_IDS.p9, unit_number: "H3", floor: 2, bedrooms: 3, bathrooms: 2, area_sqm: 128 },
 ];
 
 // ===========================
@@ -361,7 +374,10 @@ export const pricingHistory = [
 ];
 
 // ===========================
-// SUBSCRIBERS (20) — using first 15 clients + some duplicates with different properties
+// SUBSCRIBERS (20)
+// Notes:
+// - Electricity subscriptions are independent from rent contracts.
+// - A client can rent in one property and subscribe electricity in another property.
 // ===========================
 export const subscribers = [
     { id: SUBSCRIBER_IDS.s1, client_id: CLIENT_IDS.c1, subscription_number: "EL-001", property_id: PROPERTY_IDS.p1, unit_id: UNIT_IDS.u1, is_active: true },
@@ -378,11 +394,11 @@ export const subscribers = [
     { id: SUBSCRIBER_IDS.s12, client_id: CLIENT_IDS.c12, subscription_number: "EL-012", property_id: PROPERTY_IDS.p3, is_active: true },
     { id: SUBSCRIBER_IDS.s13, client_id: CLIENT_IDS.c13, subscription_number: "EL-013", property_id: PROPERTY_IDS.p4, is_active: true },
     { id: SUBSCRIBER_IDS.s14, client_id: CLIENT_IDS.c14, subscription_number: "EL-014", property_id: PROPERTY_IDS.p1, is_active: true },
-    { id: SUBSCRIBER_IDS.s15, client_id: CLIENT_IDS.c1, subscription_number: "EL-015", property_id: PROPERTY_IDS.p6, is_active: true, notes: "Second subscription for shop" },
-    { id: SUBSCRIBER_IDS.s16, client_id: CLIENT_IDS.c2, subscription_number: "EL-016", property_id: PROPERTY_IDS.p7, is_active: true },
-    { id: SUBSCRIBER_IDS.s17, client_id: CLIENT_IDS.c3, subscription_number: "EL-017", property_id: PROPERTY_IDS.p9, is_active: true },
-    { id: SUBSCRIBER_IDS.s18, client_id: CLIENT_IDS.c4, subscription_number: "EL-018", property_id: PROPERTY_IDS.p9, is_active: true },
-    { id: SUBSCRIBER_IDS.s19, client_id: CLIENT_IDS.c5, subscription_number: "EL-019", property_id: PROPERTY_IDS.p9, is_active: true },
+    { id: SUBSCRIBER_IDS.s15, client_id: CLIENT_IDS.c1, subscription_number: "EL-015", property_id: PROPERTY_IDS.p6, unit_id: UNIT_IDS.u16, is_active: true, notes: "Rents in p1 but subscribed electricity in p6" },
+    { id: SUBSCRIBER_IDS.s16, client_id: CLIENT_IDS.c2, subscription_number: "EL-016", property_id: PROPERTY_IDS.p7, unit_id: UNIT_IDS.u17, is_active: true, notes: "Rents in p1 but subscribed electricity in p7" },
+    { id: SUBSCRIBER_IDS.s17, client_id: CLIENT_IDS.c3, subscription_number: "EL-017", property_id: PROPERTY_IDS.p9, unit_id: UNIT_IDS.u18, is_active: true, notes: "Rents in p1 but subscribed electricity in p9" },
+    { id: SUBSCRIBER_IDS.s18, client_id: CLIENT_IDS.c4, subscription_number: "EL-018", property_id: PROPERTY_IDS.p9, unit_id: UNIT_IDS.u19, is_active: true, notes: "Rents in p2 but subscribed electricity in p9" },
+    { id: SUBSCRIBER_IDS.s19, client_id: CLIENT_IDS.c5, subscription_number: "EL-019", property_id: PROPERTY_IDS.p9, unit_id: UNIT_IDS.u20, is_active: true, notes: "Rents in p2 but subscribed electricity in p9" },
     // Soft-deleted subscriber
     { id: SUBSCRIBER_IDS.s20, client_id: CLIENT_IDS.c15, subscription_number: "EL-020", property_id: PROPERTY_IDS.p2, is_active: false, deleted_at: new Date("2025-11-01") },
 ];

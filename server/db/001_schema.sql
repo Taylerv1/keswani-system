@@ -86,11 +86,16 @@ CREATE TABLE properties (
   address       TEXT,
   city          TEXT,
   type          property_type NOT NULL DEFAULT 'building',
+  is_for_rent   BOOLEAN NOT NULL DEFAULT true,
+  is_for_electricity BOOLEAN NOT NULL DEFAULT true,
   managed_by    UUID REFERENCES employees(id) ON DELETE RESTRICT,
   owner_notes   TEXT,
   deleted_at    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_property_usage_flags
+    CHECK (is_for_rent OR is_for_electricity)
 );
 
 -- -----------------------------------------------
@@ -189,6 +194,8 @@ CREATE TABLE maintenance_requests (
 
 -- -----------------------------------------------
 -- 6a. subscribers (generator electricity subscribers)
+-- Note: subscribers are not tied to rent contracts. A client can rent in one
+-- property and subscribe electricity in another property.
 -- -----------------------------------------------
 CREATE TABLE subscribers (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -200,7 +207,10 @@ CREATE TABLE subscribers (
   notes               TEXT,
   deleted_at          TIMESTAMPTZ,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_subscriber_unit_requires_property
+    CHECK (unit_id IS NULL OR property_id IS NOT NULL)
 );
 
 -- -----------------------------------------------
@@ -441,6 +451,7 @@ CREATE INDEX idx_expenses_active ON expenses (id) WHERE deleted_at IS NULL;
 
 -- ---------- Foreign key indexes ----------
 CREATE INDEX idx_properties_managed_by ON properties (managed_by);
+CREATE INDEX idx_properties_usage_flags ON properties (is_for_rent, is_for_electricity);
 CREATE INDEX idx_units_property_id ON units (property_id);
 CREATE INDEX idx_contracts_unit_id ON contracts (unit_id);
 CREATE INDEX idx_contracts_client_id ON contracts (client_id);
