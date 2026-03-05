@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { observer } from "mobx-react-lite";
+import { autorun } from "mobx";
 import {
   LoadingLottie,
   Pagination,
@@ -18,6 +18,22 @@ import type { MaintenanceRequest } from "@/services/maintenanceService";
 const PAGE_SIZE = 8;
 
 type StatusFilter = MaintenanceRequest["status"] | "all";
+
+function useMobxRender() {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const dispose = autorun(() => {
+      void maintenanceStore.requests;
+      void maintenanceStore.loading;
+      void maintenanceStore.creating;
+      void maintenanceStore.error;
+      setTick((prev) => prev + 1);
+    });
+
+    return () => dispose();
+  }, []);
+}
 
 function filterRequests(
   requests: MaintenanceRequest[],
@@ -48,6 +64,8 @@ function filterRequests(
 
 function MaintenancePage() {
   const { t, locale } = useTranslation();
+
+  useMobxRender();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -164,4 +182,4 @@ function MaintenancePage() {
   );
 }
 
-export default observer(MaintenancePage);
+export default MaintenancePage;
