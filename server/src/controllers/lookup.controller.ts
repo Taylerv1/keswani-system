@@ -9,9 +9,16 @@ import {
 } from "../validators/lookup.validator";
 
 async function getPropertiesLookupData(context: LookupContext) {
+    const propertyWhere: Record<string, unknown> = { deleted_at: null };
+    if (context === "electricity") {
+        propertyWhere.is_for_electricity = true;
+    } else {
+        propertyWhere.is_for_rent = true;
+    }
+
     const [properties, activeContracts] = await Promise.all([
         prisma.properties.findMany({
-            where: { deleted_at: null },
+            where: propertyWhere as any,
             orderBy: { name: "asc" },
             select: {
                 id: true,
@@ -24,18 +31,27 @@ async function getPropertiesLookupData(context: LookupContext) {
                 },
             },
         }),
-        prisma.contracts.findMany({
-            where: {
-                status: "active",
-                deleted_at: null,
-            },
-            select: { unit_id: true },
-        }),
+        context === "electricity"
+            ? Promise.resolve([])
+            : prisma.contracts.findMany({
+                where: {
+                    status: "active",
+                    deleted_at: null,
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
+                },
+                select: { unit_id: true },
+            }),
     ]);
 
     const occupiedUnitIds = new Set(activeContracts.map((contract) => contract.unit_id));
 
     const includeUnit = (unitId: string) => {
+        if (context === "electricity") {
+            return true;
+        }
+
         if (context === "maintenance") {
             return occupiedUnitIds.has(unitId);
         }
@@ -48,28 +64,40 @@ async function getPropertiesLookupData(context: LookupContext) {
             ...property,
             units: property.units.filter((unit) => includeUnit(unit.id)),
         }))
-        .filter((property) => property.units.length > 0);
+        .filter((property) =>
+            context === "electricity" ? true : property.units.length > 0
+        );
 }
 
 async function getClientsLookupData(context: LookupContext) {
     const clients = await prisma.clients.findMany({
         where: {
             deleted_at: null,
-            contracts: {
-                ...(context === "maintenance"
-                    ? {
-                        some: {
-                            status: "active",
-                            deleted_at: null,
-                        },
-                    }
-                    : {
-                        none: {
-                            status: "active",
-                            deleted_at: null,
-                        },
-                    }),
-            },
+            ...(context !== "electricity"
+                ? {
+                    contracts: {
+                        ...(context === "maintenance"
+                            ? {
+                                some: {
+                                    status: "active",
+                                    deleted_at: null,
+                                    unit: {
+                                        property: { ...( { is_for_rent: true } as any ) },
+                                    },
+                                },
+                            }
+                            : {
+                                none: {
+                                    status: "active",
+                                    deleted_at: null,
+                                    unit: {
+                                        property: { ...( { is_for_rent: true } as any ) },
+                                    },
+                                },
+                            }),
+                    },
+                }
+                : {}),
         },
         orderBy: { full_name: "asc" },
         select: {
@@ -81,6 +109,9 @@ async function getClientsLookupData(context: LookupContext) {
                 where: {
                     status: "active",
                     deleted_at: null,
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
                 },
                 orderBy: {
                     updated_at: "desc",

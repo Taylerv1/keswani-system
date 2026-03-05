@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE}/properties/lookup`, {
+    const query = req.nextUrl.searchParams.toString();
+    const endpoint = `${API_BASE}/properties/lookup${query ? `?${query}` : ""}`;
+
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
