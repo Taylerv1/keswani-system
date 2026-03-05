@@ -223,6 +223,12 @@ export default function SubscribersPage() {
         maxWidth="max-w-xl"
       >
         <div className="space-y-4">
+          {store.error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {store.error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               value={store.form.full_name}

@@ -203,6 +203,7 @@ class SubscribersStore {
   openAdd() {
     this.editItem = null;
     this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.error = "";
     this.modalOpen = true;
   }
 
@@ -218,6 +219,7 @@ class SubscribersStore {
       status: item.is_active ? "active" : "inactive",
       notes: item.notes ?? "",
     };
+    this.error = "";
     this.modalOpen = true;
   }
 
@@ -225,6 +227,7 @@ class SubscribersStore {
     this.modalOpen = false;
     this.editItem = null;
     this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.error = "";
   }
 
   async bootstrap(errorFallback: string): Promise<void> {
