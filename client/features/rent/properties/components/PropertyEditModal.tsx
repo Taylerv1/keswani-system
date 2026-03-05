@@ -104,7 +104,25 @@ export function PropertyEditModal({
   };
 
   const addUnit = () => {
-    setUnits((prev) => [...prev, { ...EMPTY_UNIT }]);
+    setUnits((prev) => {
+      const nextIndex = prev.length;
+      const newUnit = { ...EMPTY_UNIT };
+      const newKey = getUnitKey(newUnit, nextIndex);
+
+      setExpandedUnitKeys(() => {
+        const nextExpanded: Record<string, boolean> = {};
+
+        prev.forEach((unit, index) => {
+          nextExpanded[getUnitKey(unit, index)] = false;
+        });
+
+        nextExpanded[newKey] = true;
+        return nextExpanded;
+      });
+
+      return [...prev, newUnit];
+    });
+
     scrollToUnitsEnd();
   };
 
