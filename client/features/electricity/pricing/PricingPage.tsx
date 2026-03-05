@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Edit2, Zap, DollarSign } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { Modal, KpiCard } from "@/components/ui";
+import { LoadingLottie, Modal, KpiCard } from "@/components/ui";
 import {
   createPricingPlan,
   getPricingPlans,
@@ -259,7 +259,9 @@ export default function PricingPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setModalOpen(false); setEditing(null); resetForm(); }} className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors">{t("cancel")}</button>
-            <button onClick={handleSave} disabled={isSaving || !form.name.trim() || form.price <= 0 || !form.description.trim()} className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : t("save")}</button>
+            <button onClick={handleSave} disabled={isSaving || !form.name.trim() || form.price <= 0 || !form.description.trim()} className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-24">
+              {isSaving ? <LoadingLottie size={28} /> : t("save")}
+            </button>
           </div>
         </div>
       </Modal>
