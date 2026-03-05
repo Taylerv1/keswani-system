@@ -4,6 +4,7 @@ import {
     createContext,
     useContext,
     useState,
+    useEffect,
     type ReactNode,
 } from "react";
 import customerMock from "@/mocks/customer.mock.json";
@@ -134,6 +135,8 @@ interface CustomerContextValue {
     data: CustomerData;
     hasRentData: boolean;
     hasElectricityData: boolean;
+    loading: boolean;
+    error: string | null;
     addReport: (report: Omit<CustomerReport, "id" | "createdAt">) => void;
 }
 
@@ -152,6 +155,44 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         };
     });
 
+    // Real-data loader: try fetching from API, fall back to mock
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadRealData() {
+            try {
+                const res = await fetch("/api/customer/dashboard", { cache: "no-store" });
+                const payload = await res.json();
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${payload?.error || "Unknown error"}`);
+
+                // Backend returns: { success: true, data: { user, rent, electricity, reports } }
+                if (payload?.success && payload?.data && !cancelled) {
+                    setData({
+                        user: payload.data.user,
+                        rent: payload.data.rent || null,
+                        electricity: payload.data.electricity || null,
+                        reports: payload.data.reports || [],
+                    });
+                    setError(null);
+                }
+            } catch (err: any) {
+                if (!cancelled) setError(err.message || "Failed to load profile");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        void loadRealData();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const hasRentData = data.rent !== null;
     const hasElectricityData = data.electricity !== null;
 
@@ -166,7 +207,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 
     return (
         <CustomerContext.Provider
-            value={{ data, hasRentData, hasElectricityData, addReport }}
+            value={{ data, hasRentData, hasElectricityData, loading, error, addReport }}
         >
             {children}
         </CustomerContext.Provider>

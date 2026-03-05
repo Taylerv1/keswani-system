@@ -17,7 +17,9 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
     const { t, dir, toggleLocale, locale } = useTranslation();
     const { data } = useCustomer();
 
-    const displayName = locale === "ar" ? data.user.nameAr : data.user.name;
+    // Defensive: data.user may be undefined during initial load or when not authenticated.
+    const displayName = locale === "ar" ? data?.user?.nameAr ?? "" : data?.user?.name ?? "";
+    const avatarInitial = displayName?.charAt(0) ?? "?";
 
     return (
         <div className={`min-h-screen bg-background ${dir === "rtl" ? "scrollbar-left" : "scrollbar-right"}`} dir={dir}>
@@ -84,7 +86,7 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                         {/* Avatar */}
                         <Link href="/dashboard/profile">
                             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-semibold text-sm cursor-pointer">
-                                {displayName.charAt(0)}
+                                {avatarInitial}
                             </div>
                         </Link>
                     </div>

@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 import { Home, Zap, FileText, User } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
-import { KpiCard } from "@/components/ui";
+import { KpiCard, LoadingLottie } from "@/components/ui";
 import Link from "next/link";
 
 export default function CustomerDashboardPage() {
     const { t, locale } = useTranslation();
-    const { data, hasRentData, hasElectricityData } = useCustomer();
+    const { data, hasRentData, hasElectricityData, loading, error } = useCustomer();
     const [pendingMaintenance, setPendingMaintenance] = useState<number | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    // Prevent hydration mismatch by rendering only on client after mount
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const displayName = locale === "ar" ? data.user.nameAr : data.user.name;
 
@@ -100,8 +106,27 @@ export default function CustomerDashboardPage() {
         },
     ];
 
+    if (!mounted) return null;
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-white">
+                <div className="bg-surface rounded-xl p-12 flex justify-center" role="status" aria-live="polite">
+                    <LoadingLottie size={150} className="p-6" />
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div>
+        <div className="bg-white">
+            {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 font-medium">{error}</p>
+                </div>
+            )}
+
+            <div>
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-text-primary">
                     {t("custWelcome")}, {displayName}
@@ -181,6 +206,7 @@ export default function CustomerDashboardPage() {
                         </span>
                     </Link>
                 ))}
+            </div>
             </div>
         </div>
     );

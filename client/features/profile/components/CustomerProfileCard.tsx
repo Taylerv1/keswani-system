@@ -11,8 +11,9 @@ interface CustomerProfileCardProps {
 export default function CustomerProfileCard({ user }: CustomerProfileCardProps) {
     const { t, locale, dir } = useTranslation();
 
-    const displayName = locale === "ar" ? user.nameAr : user.name;
-    const displayAddress = locale === "ar" ? user.addressAr : user.address;
+    const displayName = locale === "ar" ? user?.nameAr ?? "" : user?.name ?? "";
+    const displayAddress = locale === "ar" ? user?.addressAr ?? "" : user?.address ?? "";
+    const displayInitial = displayName?.charAt(0) ?? "?";
 
     const fields = [
         {
@@ -60,7 +61,7 @@ export default function CustomerProfileCard({ user }: CustomerProfileCardProps) 
                 <div className="absolute -bottom-16 sm:-bottom-20 left-6 sm:left-12">
                     <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-white border-4 sm:border-8 flex items-center justify-center shadow-2xl">
                         <span className="text-4xl sm:text-6xl font-extrabold text-primary">
-                            {displayName.charAt(0)}
+                            {displayInitial}
                         </span>
                     </div>
                 </div>

@@ -9,6 +9,7 @@ import paymentRoutes from "./payment.routes";
 import rentRoutes from "./rent.routes";
 import lookupRoutes from "./lookup.routes";
 import notificationRoutes from "./notification.routes";
+import customerRoutes from "./customer.routes";
 
 const router = Router();
 
@@ -19,6 +20,9 @@ router.get("/health", (_req, res) => {
 
 // Auth routes
 router.use("/auth", authRoutes);
+
+// Customer-facing routes
+router.use("/customer", customerRoutes);
 
 // Resource routes
 router.use("/properties", propertyRoutes);
