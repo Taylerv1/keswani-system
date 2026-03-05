@@ -137,15 +137,27 @@ async function main() {
     for (const prop of properties) {
         await prisma.properties.upsert({
             where: { id: prop.id },
-            update: {},
-            create: {
+            update: ({
+                name: prop.name,
+                address: prop.address,
+                city: prop.city,
+                type: prop.type,
+                is_for_rent: (prop as any).is_for_rent ?? true,
+                is_for_electricity: (prop as any).is_for_electricity ?? true,
+                managed_by: prop.managed_by,
+                owner_notes: (prop as any).owner_notes ?? null,
+            } as any),
+            create: ({
                 id: prop.id,
                 name: prop.name,
                 address: prop.address,
                 city: prop.city,
                 type: prop.type,
+                is_for_rent: (prop as any).is_for_rent ?? true,
+                is_for_electricity: (prop as any).is_for_electricity ?? true,
                 managed_by: prop.managed_by,
-            },
+                owner_notes: (prop as any).owner_notes ?? null,
+            } as any),
         });
     }
     console.log(`    ✅ ${properties.length} properties`);
