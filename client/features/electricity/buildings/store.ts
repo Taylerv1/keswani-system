@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import type { SetStateAction } from "react";
 import {
   createElectricityBuilding,
+  deleteElectricityBuilding,
   getElectricityBuildingById,
   getElectricityBuildings,
   updateElectricityBuilding,
@@ -65,6 +66,7 @@ class BuildingsStore {
   actionLoading = false;
   error = "";
   detailItem: ElectricityBuildingItem | null = null;
+  deleteId: string | null = null;
 
   modalOpen = false;
   modalLoading = false;
@@ -102,6 +104,7 @@ class BuildingsStore {
       actionLoading: this.actionLoading,
       error: this.error,
       detailItem: this.detailItem,
+      deleteId: this.deleteId,
       modalOpen: this.modalOpen,
       modalLoading: this.modalLoading,
       editItem: this.editItem,
@@ -123,6 +126,10 @@ class BuildingsStore {
 
   setDetailItem(value: ElectricityBuildingItem | null) {
     this.detailItem = value;
+  }
+
+  setDeleteId(value: string | null) {
+    this.deleteId = value;
   }
 
   setForm(value: SetStateAction<BuildingFormState>) {
@@ -434,6 +441,39 @@ class BuildingsStore {
         const targetPage = this.editItem ? this.page : 1;
         this.closeModal();
         this.page = targetPage;
+        this.invalidateCache();
+      });
+
+      await this.loadBuildings({
+        errorFallback: options.errorFallback,
+        targetPage: this.page,
+        force: true,
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.error = getErrorMessage(error, options.errorFallback);
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
+    }
+  }
+
+  async removeSelected(options: { errorFallback: string }): Promise<boolean> {
+    if (!this.deleteId) return false;
+
+    try {
+      this.actionLoading = true;
+      this.error = "";
+
+      await deleteElectricityBuilding(this.deleteId);
+
+      runInAction(() => {
+        this.deleteId = null;
         this.invalidateCache();
       });
 

@@ -41,3 +41,36 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  try {
+    const token = req.cookies.get("auth_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const { id } = await context.params;
+
+    const response = await fetch(`${API_BASE}/properties/electricity/buildings/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete electricity building",
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { autorun } from "mobx";
-import { Building2, Eye, Pencil, Plus } from "lucide-react";
+import { Building2, Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
+import { ConfirmDialog, LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
 import { PropertyCreateModal } from "@/features/rent/properties/components/PropertyCreateModal";
 import { PropertyEditModal } from "@/features/rent/properties/components/PropertyEditModal";
 import { buildingsStore } from "./store";
@@ -109,6 +109,12 @@ export default function BuildingsPage() {
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0"
                     >
                       <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={() => store.setDeleteId(item.id)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0"
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -257,6 +263,13 @@ export default function BuildingsPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(store.deleteId)}
+        onClose={() => store.setDeleteId(null)}
+        onConfirm={() => void store.removeSelected({ errorFallback: t("error") })}
+        loading={store.actionLoading}
+      />
     </div>
   );
 }

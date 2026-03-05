@@ -751,6 +751,14 @@ export const updateElectricityBuilding = async (
     await updateProperty(req, res, next);
 };
 
+export const deleteElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    await deleteProperty(req, res, next);
+};
+
 /**
  * DELETE /api/properties/:id
  * Soft delete — only if no active contracts on any of its units.
