@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import type { SetStateAction } from "react";
 import {
   createElectricityBuilding,
+  deleteElectricityBuilding,
   getElectricityBuildingById,
   getElectricityBuildings,
   updateElectricityBuilding,
@@ -64,7 +65,9 @@ class BuildingsStore {
   loading = false;
   actionLoading = false;
   error = "";
+  success = "";
   detailItem: ElectricityBuildingItem | null = null;
+  deleteId: string | null = null;
 
   modalOpen = false;
   modalLoading = false;
@@ -73,9 +76,50 @@ class BuildingsStore {
   units: CreateUnitInput[] = [];
   unitDraft: CreateUnitInput = { ...EMPTY_UNIT };
   unitModalOpen = false;
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
+  private flashVersion = 0;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
+  }
+
+  private clearFlashTimer() {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
+  }
+
+  private scheduleFlashClear(durationMs = 3000) {
+    const currentVersion = ++this.flashVersion;
+    this.clearFlashTimer();
+
+    this.flashTimer = setTimeout(() => {
+      runInAction(() => {
+        if (this.flashVersion !== currentVersion) return;
+        this.error = "";
+        this.success = "";
+        this.flashTimer = null;
+      });
+    }, durationMs);
+  }
+
+  private showError(message: string) {
+    this.error = message;
+    this.success = "";
+    this.scheduleFlashClear();
+  }
+
+  private showSuccess(message: string) {
+    this.success = message;
+    this.error = "";
+    this.scheduleFlashClear();
+  }
+
+  private clearFlashMessages() {
+    this.error = "";
+    this.success = "";
+    this.clearFlashTimer();
   }
 
   private invalidateCache() {
@@ -101,7 +145,9 @@ class BuildingsStore {
       loading: this.loading,
       actionLoading: this.actionLoading,
       error: this.error,
+      success: this.success,
       detailItem: this.detailItem,
+      deleteId: this.deleteId,
       modalOpen: this.modalOpen,
       modalLoading: this.modalLoading,
       editItem: this.editItem,
@@ -123,6 +169,10 @@ class BuildingsStore {
 
   setDetailItem(value: ElectricityBuildingItem | null) {
     this.detailItem = value;
+  }
+
+  setDeleteId(value: string | null) {
+    this.deleteId = value;
   }
 
   setForm(value: SetStateAction<BuildingFormState>) {
@@ -177,7 +227,7 @@ class BuildingsStore {
   addBuildingUnit(unitNumberRequiredMessage = "Unit number is required") {
     const sanitized = sanitizeUnit(this.unitDraft);
     if (!sanitized) {
-      this.error = unitNumberRequiredMessage;
+      this.showError(unitNumberRequiredMessage);
       return;
     }
 
@@ -206,12 +256,12 @@ class BuildingsStore {
     this.modalLoading = true;
 
     try {
-      this.error = "";
+      this.clearFlashMessages();
 
       const response = await getElectricityBuildingById(item.id);
       const detail = response.data;
       if (!detail) {
-        this.error = options.errorFallback;
+        this.showError(options.errorFallback);
         return;
       }
 
@@ -249,7 +299,7 @@ class BuildingsStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
+        this.showError(getErrorMessage(error, options.errorFallback));
       });
     } finally {
       runInAction(() => {
@@ -340,7 +390,7 @@ class BuildingsStore {
         });
       } catch (error) {
         runInAction(() => {
-          this.error = getErrorMessage(error, options.errorFallback);
+          this.showError(getErrorMessage(error, options.errorFallback));
           this.items = [];
           this.totalItems = 0;
           this.totalPages = 1;
@@ -364,22 +414,23 @@ class BuildingsStore {
   async save(options: {
     propertyNameRequiredMessage: string;
     usageRequiredMessage: string;
+    successMessage: string;
     errorFallback: string;
   }): Promise<boolean> {
     const name = this.form.name.trim();
     if (!name) {
-      this.error = options.propertyNameRequiredMessage;
+      this.showError(options.propertyNameRequiredMessage);
       return false;
     }
 
     if (!this.form.isForRent && !this.form.isForElectricity) {
-      this.error = options.usageRequiredMessage;
+      this.showError(options.usageRequiredMessage);
       return false;
     }
 
     try {
       this.actionLoading = true;
-      this.error = "";
+      this.clearFlashMessages();
 
       const sanitizedUnits = this.units
         .map((unit) => sanitizeUnit(unit))
@@ -435,6 +486,7 @@ class BuildingsStore {
         this.closeModal();
         this.page = targetPage;
         this.invalidateCache();
+        this.showSuccess(options.successMessage);
       });
 
       await this.loadBuildings({
@@ -446,7 +498,56 @@ class BuildingsStore {
       return true;
     } catch (error) {
       runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
+        this.showError(getErrorMessage(error, options.errorFallback));
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
+    }
+  }
+
+  async removeSelected(options: {
+    errorFallback: string;
+    successMessage: string;
+  }): Promise<boolean> {
+    if (!this.deleteId) return false;
+    const targetDeleteId = this.deleteId;
+
+    try {
+      this.actionLoading = true;
+      this.clearFlashMessages();
+
+      await deleteElectricityBuilding(targetDeleteId);
+
+      const nextItems = this.items.filter((item) => item.id !== targetDeleteId);
+      const nextTotalItems = Math.max(0, this.totalItems - 1);
+      const nextTotalPages = Math.max(
+        1,
+        Math.ceil(nextTotalItems / this.PAGE_SIZE)
+      );
+      const nextPage = Math.min(this.page, nextTotalPages);
+
+      runInAction(() => {
+        this.deleteId = null;
+        this.invalidateCache();
+        this.items = nextItems;
+        this.totalItems = nextTotalItems;
+        this.totalPages = nextTotalPages;
+        this.page = nextPage;
+        this.showSuccess(options.successMessage);
+
+        if (this.detailItem?.id === targetDeleteId) {
+          this.detailItem = null;
+        }
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.showError(getErrorMessage(error, options.errorFallback));
+        this.deleteId = null;
       });
       return false;
     } finally {

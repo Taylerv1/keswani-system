@@ -128,6 +128,14 @@ export async function updateElectricityBuilding(
   });
 }
 
+export async function deleteElectricityBuilding(
+  id: string
+): Promise<ApiResponse> {
+  return fetchApi(`/api/electricity/buildings/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getElectricityBuildingById(
   id: string
 ): Promise<ApiResponse<ElectricityBuildingDetail>> {

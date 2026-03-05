@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { autorun } from "mobx";
-import { Building2, Eye, Pencil, Plus } from "lucide-react";
+import { Building2, Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
+import { ConfirmDialog, LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
 import { PropertyCreateModal } from "@/features/rent/properties/components/PropertyCreateModal";
 import { PropertyEditModal } from "@/features/rent/properties/components/PropertyEditModal";
 import { buildingsStore } from "./store";
@@ -66,6 +66,11 @@ export default function BuildingsPage() {
           {store.error}
         </div>
       )}
+      {store.success && (
+        <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+          {store.success}
+        </div>
+      )}
 
       <div className="mb-5">
         <SearchBar
@@ -109,6 +114,12 @@ export default function BuildingsPage() {
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0"
                     >
                       <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={() => store.setDeleteId(item.id)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0"
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -183,8 +194,8 @@ export default function BuildingsPage() {
             onSave={() =>
               void store.save({
                 propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-                usageRequiredMessage:
-                  "Property must be enabled for rent, electricity, or both",
+                usageRequiredMessage: t("propertyUsageRequired"),
+                successMessage: t("buildingUpdatedSuccess"),
                 errorFallback: t("error"),
               })
             }
@@ -211,8 +222,8 @@ export default function BuildingsPage() {
           onSave={() =>
             void store.save({
               propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-              usageRequiredMessage:
-                "Property must be enabled for rent, electricity, or both",
+              usageRequiredMessage: t("propertyUsageRequired"),
+              successMessage: t("buildingCreatedSuccess"),
               errorFallback: t("error"),
             })
           }
@@ -257,6 +268,18 @@ export default function BuildingsPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(store.deleteId)}
+        onClose={() => store.setDeleteId(null)}
+        onConfirm={() =>
+          void store.removeSelected({
+            errorFallback: t("error"),
+            successMessage: t("buildingDeletedSuccess"),
+          })
+        }
+        loading={store.actionLoading}
+      />
     </div>
   );
 }

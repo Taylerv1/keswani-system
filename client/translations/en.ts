@@ -77,6 +77,7 @@ const en = {
   month: "Month",
   year: "Year",
   page: "Page",
+  isRequired: "is required",
 
   // Rent Module - Secondary Sidebar
   rentOverview: "Overview",
@@ -169,6 +170,9 @@ const en = {
   recentMaintenance: "Recent Maintenance",
   noDataYet: "No data yet",
   fullNameRequired: "Full name is required",
+  tenantCreatedSuccess: "Tenant created successfully",
+  tenantUpdatedSuccess: "Tenant updated successfully",
+  tenantDeletedSuccess: "Tenant deleted successfully",
 
   // Contracts
   contractManagement: "Contract Management",
@@ -320,6 +324,10 @@ const en = {
   buildingSubscribers: "Subscribers",
   buildingConsumption: "Consumption",
   buildingDetails: "Building Details",
+  propertyUsageRequired: "Property must be enabled for rent, electricity, or both",
+  buildingCreatedSuccess: "Building created successfully",
+  buildingUpdatedSuccess: "Building updated successfully",
+  buildingDeletedSuccess: "Building deleted successfully",
 
   // Electricity Meters
   meterManagement: "Meter Management",

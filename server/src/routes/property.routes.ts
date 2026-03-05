@@ -6,6 +6,7 @@ import {
     getElectricityBuildings,
     createElectricityBuilding,
     updateElectricityBuilding,
+    deleteElectricityBuilding,
     createProperty,
     updateProperty,
     deleteProperty,
@@ -23,6 +24,7 @@ router.get("/lookup", getPropertiesLookup);
 router.get("/electricity/buildings", requireAccess("electricity"), getElectricityBuildings);
 router.post("/electricity/buildings", requireAccess("electricity"), createElectricityBuilding);
 router.patch("/electricity/buildings/:id", requireAccess("electricity"), updateElectricityBuilding);
+router.delete("/electricity/buildings/:id", requireAccess("electricity"), deleteElectricityBuilding);
 
 // CRUD
 router.get("/", getProperties);

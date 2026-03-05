@@ -77,6 +77,7 @@ const ar: Record<string, string> = {
   month: "الشهر",
   year: "السنة",
   page: "صفحة",
+  isRequired: "مطلوب",
 
   // Rent Module - Secondary Sidebar
   rentOverview: "نظرة عامة",
@@ -169,6 +170,9 @@ const ar: Record<string, string> = {
   recentMaintenance: "آخر طلبات الصيانة",
   noDataYet: "لا توجد بيانات بعد",
   fullNameRequired: "الاسم الكامل مطلوب",
+  tenantCreatedSuccess: "تم إنشاء المستأجر بنجاح",
+  tenantUpdatedSuccess: "تم تحديث بيانات المستأجر بنجاح",
+  tenantDeletedSuccess: "تم حذف المستأجر بنجاح",
 
   // Contracts
   contractManagement: "إدارة العقود",
@@ -320,6 +324,10 @@ const ar: Record<string, string> = {
   buildingSubscribers: "المشتركين",
   buildingConsumption: "الاستهلاك",
   buildingDetails: "تفاصيل المبنى",
+  propertyUsageRequired: "يجب تفعيل العقار للإيجار أو الكهرباء أو كليهما",
+  buildingCreatedSuccess: "تم إنشاء المبنى بنجاح",
+  buildingUpdatedSuccess: "تم تحديث المبنى بنجاح",
+  buildingDeletedSuccess: "تم حذف المبنى بنجاح",
 
   // Electricity Meters
   meterManagement: "إدارة العدادات",
