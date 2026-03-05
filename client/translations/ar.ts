@@ -170,6 +170,9 @@ const ar: Record<string, string> = {
   recentMaintenance: "آخر طلبات الصيانة",
   noDataYet: "لا توجد بيانات بعد",
   fullNameRequired: "الاسم الكامل مطلوب",
+  tenantCreatedSuccess: "تم إنشاء المستأجر بنجاح",
+  tenantUpdatedSuccess: "تم تحديث بيانات المستأجر بنجاح",
+  tenantDeletedSuccess: "تم حذف المستأجر بنجاح",
 
   // Contracts
   contractManagement: "إدارة العقود",

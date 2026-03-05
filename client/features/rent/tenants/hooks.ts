@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createTenant,
   deleteTenant,
@@ -25,6 +25,7 @@ import {
 import { rentStore } from "../store";
 
 export type TranslateFn = (key: string) => string;
+const FLASH_DURATION_MS = 3000;
 
 export function useTenantState(t: TranslateFn) {
   const [tenants, setTenants] = useState<TenantListItem[]>([]);
@@ -41,49 +42,93 @@ export function useTenantState(t: TranslateFn) {
   const [page, setPage] = useState(1);
   const [contractFilter, setContractFilter] =
     useState<TenantContractFilter>("all");
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashVersionRef = useRef(0);
 
-  const fetchTenantList = useCallback(async (options?: { force?: boolean }) => {
-    const query = {
-      page,
-      limit: PAGE_SIZE,
-      search: search || undefined,
-      contract_presence:
-        contractFilter === "all" ? undefined : contractFilter,
-    };
+  const clearFlashTimer = useCallback(() => {
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = null;
+    }
+  }, []);
 
-    if (!options?.force) {
-      const cached = rentStore.getTenantsSnapshot(query);
-      if (cached) {
-        setError("");
-        setTenants(cached.items);
-        setTotalItems(cached.totalItems);
-        setTotalPages(cached.totalPages);
-        setLoading(false);
+  const scheduleFlashClear = useCallback((durationMs = FLASH_DURATION_MS) => {
+    const currentVersion = ++flashVersionRef.current;
+    clearFlashTimer();
+
+    flashTimerRef.current = setTimeout(() => {
+      if (flashVersionRef.current !== currentVersion) {
         return;
       }
-    }
+
+      setError("");
+      setSuccess("");
+      flashTimerRef.current = null;
+    }, durationMs);
+  }, [clearFlashTimer]);
+
+  const showError = useCallback((message: string) => {
+    setError(message);
+    setSuccess("");
+    scheduleFlashClear();
+  }, [scheduleFlashClear]);
+
+  const showSuccess = useCallback((message: string) => {
+    setSuccess(message);
+    setError("");
+    scheduleFlashClear();
+  }, [scheduleFlashClear]);
+
+  useEffect(() => {
+    return () => {
+      clearFlashTimer();
+    };
+  }, [clearFlashTimer]);
+
+  const fetchTenantList = useCallback(
+    async (options?: { force?: boolean }) => {
+      const query = {
+        page,
+        limit: PAGE_SIZE,
+        search: search || undefined,
+        contract_presence:
+          contractFilter === "all" ? undefined : contractFilter,
+      };
+
+      if (!options?.force) {
+        const cached = rentStore.getTenantsSnapshot(query);
+        if (cached) {
+          setError("");
+          setTenants(cached.items);
+          setTotalItems(cached.totalItems);
+          setTotalPages(cached.totalPages);
+          setLoading(false);
+          return;
+        }
+      }
 
       try {
         setLoading(true);
         setError("");
-        setSuccess("");
 
         const { data } = await rentStore.loadTenants(query, {
           force: options?.force,
-      });
+        });
 
-      setTenants(data.items);
-      setTotalItems(data.totalItems);
-      setTotalPages(data.totalPages);
+        setTenants(data.items);
+        setTotalItems(data.totalItems);
+        setTotalPages(data.totalPages);
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         setTenants([]);
         setTotalItems(0);
         setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [contractFilter, page, search, t]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [contractFilter, page, search, showError, t]
+  );
 
   useEffect(() => {
     void fetchTenantList();
@@ -96,7 +141,6 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
-        setSuccess("");
 
         const payload = buildCreateTenantPayload(form);
         await createTenant(payload);
@@ -104,16 +148,17 @@ export function useTenantState(t: TranslateFn) {
         rentStore.invalidateTenants();
         rentStore.invalidateOverview();
         setPage(1);
-        await fetchTenantList({ force: true });
+        showSuccess(t("tenantCreatedSuccess"));
+        void fetchTenantList({ force: true });
         return true;
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         return false;
       } finally {
         setActionLoading(false);
       }
     },
-    [fetchTenantList, t]
+    [fetchTenantList, showError, showSuccess, t]
   );
 
   const updateTenantItem = useCallback(
@@ -121,22 +166,22 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
-        setSuccess("");
 
         const payload = buildUpdateTenantPayload(form);
         await updateTenant(id, payload);
 
         rentStore.invalidateTenants();
-        await fetchTenantList({ force: true });
+        showSuccess(t("tenantUpdatedSuccess"));
+        void fetchTenantList({ force: true });
         return true;
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         return false;
       } finally {
         setActionLoading(false);
       }
     },
-    [fetchTenantList, t]
+    [fetchTenantList, showError, showSuccess, t]
   );
 
   const deleteTenantItem = useCallback(
@@ -144,21 +189,21 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
-        setSuccess("");
 
         await deleteTenant(id);
         rentStore.invalidateTenants();
         rentStore.invalidateOverview();
-        await fetchTenantList({ force: true });
+        showSuccess(t("tenantDeletedSuccess"));
+        void fetchTenantList({ force: true });
         return true;
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         return false;
       } finally {
         setActionLoading(false);
       }
     },
-    [fetchTenantList, t]
+    [fetchTenantList, showError, showSuccess, t]
   );
 
   const inviteTenantPortalAccess = useCallback(
@@ -166,22 +211,21 @@ export function useTenantState(t: TranslateFn) {
       try {
         setActionLoading(true);
         setError("");
-        setSuccess("");
 
         const response = await inviteTenantAccess(id);
 
         rentStore.invalidateTenants();
-        await fetchTenantList({ force: true });
-        setSuccess(response.message || t("tenantAccessInviteSent"));
+        showSuccess(response.message || t("tenantAccessInviteSent"));
+        void fetchTenantList({ force: true });
         return true;
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         return false;
       } finally {
         setActionLoading(false);
       }
     },
-    [fetchTenantList, t]
+    [fetchTenantList, showError, showSuccess, t]
   );
 
   const getTenantDetails = useCallback(
@@ -193,13 +237,13 @@ export function useTenantState(t: TranslateFn) {
         const response = await getTenantById(id);
         return response.data ?? null;
       } catch (err) {
-        setError(extractErrorMessage(err, t("error")));
+        showError(extractErrorMessage(err, t("error")));
         return null;
       } finally {
         setDetailLoading(false);
       }
     },
-    [t]
+    [showError, t]
   );
 
   return {
@@ -212,9 +256,9 @@ export function useTenantState(t: TranslateFn) {
     actionLoading,
     detailLoading,
     error,
-    setError,
+    setError: showError,
     success,
-    setSuccess,
+    setSuccess: showSuccess,
     search,
     setSearch,
     page,

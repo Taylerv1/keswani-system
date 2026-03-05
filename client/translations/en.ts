@@ -170,6 +170,9 @@ const en = {
   recentMaintenance: "Recent Maintenance",
   noDataYet: "No data yet",
   fullNameRequired: "Full name is required",
+  tenantCreatedSuccess: "Tenant created successfully",
+  tenantUpdatedSuccess: "Tenant updated successfully",
+  tenantDeletedSuccess: "Tenant deleted successfully",
 
   // Contracts
   contractManagement: "Contract Management",
