@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { autorun } from "mobx";
-import { Building2, Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Building2, Eye, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
+import { PropertyCreateModal } from "@/features/rent/properties/components/PropertyCreateModal";
+import { PropertyEditModal } from "@/features/rent/properties/components/PropertyEditModal";
 import { buildingsStore } from "./store";
-import {
-  parseOptionalInt,
-  parseOptionalNumber,
-} from "@/features/rent/properties/utils";
 
 function useMobxRender() {
   const [, setTick] = useState(0);
@@ -162,293 +160,66 @@ export default function BuildingsPage() {
         }}
       />
 
-      <Modal
-        open={store.modalOpen}
-        onClose={store.closeModal}
-        title={store.editItem ? t("editProperty") : t("addProperty")}
-        maxWidth="max-w-xl"
-      >
-        {store.modalLoading ? (
-          <div className="py-10 flex justify-center">
-            <LoadingLottie size={120} className="p-4" />
-          </div>
+      {store.editItem ? (
+        store.modalLoading ? (
+          <Modal
+            open={store.modalOpen}
+            onClose={store.closeModal}
+            title={t("editProperty")}
+            maxWidth="max-w-xl"
+          >
+            <div className="py-10 flex justify-center">
+              <LoadingLottie size={120} className="p-4" />
+            </div>
+          </Modal>
         ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                {t("propertyName")}
-              </label>
-              <input
-                value={store.form.name}
-                onChange={(event) => store.setFormField("name", event.target.value)}
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">
-                  {t("propertyType")}
-                </label>
-                <select
-                  value={store.form.type}
-                  onChange={(event) =>
-                    store.setBuildingType(
-                      event.target.value as "building" | "house" | "commercial"
-                    )
-                  }
-                  className="w-full h-10 rounded-lg border border-surface-border bg-background text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-                >
-                  <option value="building">{t("building")}</option>
-                  <option value="house">{t("house")}</option>
-                  <option value="commercial">Commercial</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">
-                  {t("city")}
-                </label>
-                <input
-                  value={store.form.city}
-                  onChange={(event) => store.setFormField("city", event.target.value)}
-                  className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                {t("address")}
-              </label>
-              <input
-                value={store.form.address}
-                onChange={(event) => store.setFormField("address", event.target.value)}
-                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-surface-border p-3">
-              <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={store.form.is_for_rent}
-                  onChange={(event) =>
-                    store.setFormField("is_for_rent", event.target.checked)
-                  }
-                  className="h-4 w-4 rounded border-surface-border"
-                />
-                {t("rent")}
-              </label>
-              <label className="flex items-center gap-3 text-sm text-text-primary opacity-70">
-                <input
-                  type="checkbox"
-                  checked={store.form.is_for_electricity}
-                  disabled
-                  className="h-4 w-4 rounded border-surface-border"
-                />
-                {t("electricity")}
-              </label>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                {t("priceNotes")}
-              </label>
-              <textarea
-                value={store.form.owner_notes}
-                onChange={(event) =>
-                  store.setFormField("owner_notes", event.target.value)
-                }
-                rows={3}
-                className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-              />
-            </div>
-
-            {(store.form.type === "building" || store.form.type === "house") && (
-              <div className="space-y-3 rounded-lg border border-surface-border p-3">
-                {store.form.type === "building" && (
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-text-secondary">{t("units")}</p>
-                    <button
-                      type="button"
-                      onClick={store.addUnit}
-                      className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
-                    >
-                      {t("addUnit")}
-                    </button>
-                  </div>
-                )}
-
-                {(store.form.type === "house" ? store.units.slice(0, 1) : store.units).length === 0 ? (
-                  <div className="rounded-lg border border-surface-border bg-background p-3 text-sm text-text-secondary">
-                    {store.form.type === "house" ? (
-                      <button
-                        type="button"
-                        onClick={store.addUnit}
-                        className="h-9 px-3 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
-                      >
-                        {t("addUnit")}
-                      </button>
-                    ) : (
-                      t("noResults")
-                    )}
-                  </div>
-                ) : (
-                  (store.form.type === "house" ? store.units.slice(0, 1) : store.units).map(
-                    (unit, index) => (
-                      <div
-                        key={unit.id ?? `${index}-${unit.unit_number}`}
-                        className="rounded-lg border border-surface-border bg-background p-3 space-y-3"
-                      >
-                        {store.form.type === "building" && (
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-text-secondary">
-                              {t("unitNumber")} #{index + 1}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => store.removeUnit(index)}
-                              className="h-8 px-2 rounded-lg border border-surface-border text-text-secondary hover:text-card-red hover:border-card-red transition-colors text-xs font-medium cursor-pointer flex items-center gap-1"
-                            >
-                              <Trash2 size={13} />
-                              {t("delete")}
-                            </button>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {store.form.type === "building" && (
-                            <div>
-                              <label className="block text-sm font-medium text-text-secondary mb-1">
-                                {t("unitNumber")}
-                              </label>
-                              <input
-                                value={unit.unit_number ?? ""}
-                                onChange={(event) =>
-                                  store.updateUnitField(index, "unit_number", event.target.value)
-                                }
-                                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                              />
-                            </div>
-                          )}
-                          <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">
-                              {t("floor")}
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={unit.floor ?? ""}
-                              onChange={(event) =>
-                                store.updateUnitField(
-                                  index,
-                                  "floor",
-                                  parseOptionalInt(event.target.value)
-                                )
-                              }
-                              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">
-                              {t("bedrooms")}
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={unit.bedrooms ?? ""}
-                              onChange={(event) =>
-                                store.updateUnitField(
-                                  index,
-                                  "bedrooms",
-                                  parseOptionalInt(event.target.value)
-                                )
-                              }
-                              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">
-                              {t("bathrooms")}
-                            </label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={unit.bathrooms ?? ""}
-                              onChange={(event) =>
-                                store.updateUnitField(
-                                  index,
-                                  "bathrooms",
-                                  parseOptionalInt(event.target.value)
-                                )
-                              }
-                              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">
-                              {t("area_sqm")}
-                            </label>
-                            <input
-                              type="number"
-                              min={1}
-                              value={unit.area_sqm ?? ""}
-                              onChange={(event) =>
-                                store.updateUnitField(
-                                  index,
-                                  "area_sqm",
-                                  parseOptionalNumber(event.target.value)
-                                )
-                              }
-                              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-text-secondary mb-1">
-                            {t("description")}
-                          </label>
-                          <textarea
-                            value={unit.description ?? ""}
-                            onChange={(event) =>
-                              store.updateUnitField(index, "description", event.target.value)
-                            }
-                            rows={2}
-                            className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                          />
-                        </div>
-                      </div>
-                    )
-                  )
-                )}
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={store.closeModal}
-                className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                onClick={() =>
-                  void store.save({
-                    propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-                    usageRequiredMessage: "Select at least one usage",
-                    errorFallback: t("error"),
-                  })
-                }
-                disabled={store.actionLoading}
-                className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {store.actionLoading ? t("saving") : t("save")}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+          <PropertyEditModal
+            open={store.modalOpen}
+            onClose={store.closeModal}
+            form={store.form}
+            setForm={store.setForm}
+            units={store.units}
+            setUnits={store.setUnits}
+            onSave={() =>
+              void store.save({
+                propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
+                usageRequiredMessage:
+                  "Property must be enabled for rent, electricity, or both",
+                errorFallback: t("error"),
+              })
+            }
+            actionLoading={store.actionLoading}
+            t={t}
+          />
+        )
+      ) : (
+        <PropertyCreateModal
+          open={store.modalOpen}
+          onClose={store.closeModal}
+          form={store.form}
+          setForm={store.setForm}
+          units={store.units}
+          unitDraft={store.unitDraft}
+          setUnitDraft={store.setUnitDraft}
+          unitModalOpen={store.unitModalOpen}
+          setUnitModalOpen={store.setUnitModalOpen}
+          handleUnitTypeChange={store.handleUnitTypeChange}
+          updateHouseUnit={store.updateHouseUnit}
+          addBuildingUnit={() =>
+            store.addBuildingUnit(`${t("unitNumber")} ${t("isRequired")}`)
+          }
+          onSave={() =>
+            void store.save({
+              propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
+              usageRequiredMessage:
+                "Property must be enabled for rent, electricity, or both",
+              errorFallback: t("error"),
+            })
+          }
+          actionLoading={store.actionLoading}
+          t={t}
+        />
+      )}
 
       <Modal
         open={!!store.detailItem}

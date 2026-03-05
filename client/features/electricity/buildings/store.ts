@@ -1,11 +1,11 @@
 import { makeAutoObservable, runInAction } from "mobx";
+import type { SetStateAction } from "react";
 import {
   createElectricityBuilding,
   getElectricityBuildingById,
   getElectricityBuildings,
   updateElectricityBuilding,
   type ElectricityBuildingItem,
-  type ElectricityBuildingType,
 } from "./api";
 import {
   EMPTY_UNIT,
@@ -13,24 +13,26 @@ import {
   type CreateUnitInput,
 } from "@/features/rent/properties/utils";
 
+type PropertyType = "building" | "house" | "land" | "commercial";
+
 export interface BuildingFormState {
   name: string;
-  type: ElectricityBuildingType;
+  type: PropertyType;
+  isForRent: boolean;
+  isForElectricity: boolean;
   address: string;
   city: string;
-  owner_notes: string;
-  is_for_rent: boolean;
-  is_for_electricity: boolean;
+  ownerNotes: string;
 }
 
 const EMPTY_BUILDING_FORM: BuildingFormState = {
   name: "",
   type: "building",
+  isForRent: true,
+  isForElectricity: true,
   address: "",
   city: "",
-  owner_notes: "",
-  is_for_rent: true,
-  is_for_electricity: true,
+  ownerNotes: "",
 };
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -63,11 +65,14 @@ class BuildingsStore {
   actionLoading = false;
   error = "";
   detailItem: ElectricityBuildingItem | null = null;
+
   modalOpen = false;
   modalLoading = false;
   editItem: ElectricityBuildingItem | null = null;
   form: BuildingFormState = { ...EMPTY_BUILDING_FORM };
   units: CreateUnitInput[] = [];
+  unitDraft: CreateUnitInput = { ...EMPTY_UNIT };
+  unitModalOpen = false;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -102,6 +107,8 @@ class BuildingsStore {
       editItem: this.editItem,
       form: this.form,
       units: this.units,
+      unitDraft: this.unitDraft,
+      unitModalOpen: this.unitModalOpen,
     };
   }
 
@@ -118,14 +125,25 @@ class BuildingsStore {
     this.detailItem = value;
   }
 
-  setFormField<K extends keyof BuildingFormState>(
-    key: K,
-    value: BuildingFormState[K]
-  ) {
-    this.form = { ...this.form, [key]: value };
+  setForm(value: SetStateAction<BuildingFormState>) {
+    this.form = typeof value === "function" ? value(this.form) : value;
   }
 
-  setBuildingType(value: ElectricityBuildingType) {
+  setUnits(value: SetStateAction<CreateUnitInput[]>) {
+    this.units = typeof value === "function" ? value(this.units) : value;
+  }
+
+  setUnitDraft(value: SetStateAction<CreateUnitInput>) {
+    this.unitDraft =
+      typeof value === "function" ? value(this.unitDraft) : value;
+  }
+
+  setUnitModalOpen(value: SetStateAction<boolean>) {
+    this.unitModalOpen =
+      typeof value === "function" ? value(this.unitModalOpen) : value;
+  }
+
+  handleUnitTypeChange(value: PropertyType) {
     this.form = { ...this.form, type: value };
 
     if (value === "house") {
@@ -146,34 +164,48 @@ class BuildingsStore {
     this.units = [];
   }
 
-  updateUnitField<K extends keyof CreateUnitInput>(
-    index: number,
+  updateHouseUnit<K extends keyof CreateUnitInput>(
     key: K,
     value: CreateUnitInput[K]
   ) {
-    this.units = this.units.map((unit, currentIndex) =>
-      currentIndex === index ? { ...unit, [key]: value } : unit
-    );
+    this.units = (() => {
+      const base = this.units[0] ?? { ...EMPTY_UNIT };
+      return [{ ...base, [key]: value }];
+    })();
   }
 
-  addUnit() {
-    this.units = [...this.units, { ...EMPTY_UNIT }];
+  addBuildingUnit(unitNumberRequiredMessage = "Unit number is required") {
+    const sanitized = sanitizeUnit(this.unitDraft);
+    if (!sanitized) {
+      this.error = unitNumberRequiredMessage;
+      return;
+    }
+
+    this.units = [...this.units, sanitized];
+    this.unitDraft = { ...EMPTY_UNIT };
+    this.unitModalOpen = false;
   }
 
-  removeUnit(index: number) {
-    this.units = this.units.filter((_, currentIndex) => currentIndex !== index);
+  private resetFormState() {
+    this.form = { ...EMPTY_BUILDING_FORM };
+    this.units = [];
+    this.unitDraft = { ...EMPTY_UNIT };
+    this.unitModalOpen = false;
   }
 
   openAdd() {
     this.editItem = null;
-    this.form = { ...EMPTY_BUILDING_FORM };
-    this.units = [];
+    this.modalLoading = false;
+    this.resetFormState();
     this.modalOpen = true;
   }
 
   async openEdit(item: ElectricityBuildingItem, options: { errorFallback: string }) {
+    this.editItem = item;
+    this.modalOpen = true;
+    this.modalLoading = true;
+
     try {
-      this.modalLoading = true;
       this.error = "";
 
       const response = await getElectricityBuildingById(item.id);
@@ -201,24 +233,19 @@ class BuildingsStore {
       }
 
       runInAction(() => {
-        this.editItem = item;
         this.form = {
           name: detail.name,
-          type:
-            detail.type === "building" ||
-            detail.type === "house" ||
-            detail.type === "commercial"
-              ? detail.type
-              : "building",
+          type: detail.type,
+          isForRent: detail.is_for_rent ?? true,
+          isForElectricity: detail.is_for_electricity ?? true,
           address: detail.address ?? "",
           city: detail.city ?? "",
-          owner_notes: detail.owner_notes ?? "",
-          is_for_rent: detail.is_for_rent ?? true,
-          is_for_electricity: detail.is_for_electricity ?? true,
+          ownerNotes: detail.owner_notes ?? "",
         };
         this.units =
-          detail.type === "building" || detail.type === "house" ? mappedUnits : [];
-        this.modalOpen = true;
+          detail.type === "building" || detail.type === "house"
+            ? mappedUnits
+            : [];
       });
     } catch (error) {
       runInAction(() => {
@@ -233,10 +260,9 @@ class BuildingsStore {
 
   closeModal() {
     this.modalOpen = false;
-    this.editItem = null;
     this.modalLoading = false;
-    this.form = { ...EMPTY_BUILDING_FORM };
-    this.units = [];
+    this.editItem = null;
+    this.resetFormState();
   }
 
   async bootstrap(errorFallback: string): Promise<void> {
@@ -346,7 +372,7 @@ class BuildingsStore {
       return false;
     }
 
-    if (!this.form.is_for_rent && !this.form.is_for_electricity) {
+    if (!this.form.isForRent && !this.form.isForElectricity) {
       this.error = options.usageRequiredMessage;
       return false;
     }
@@ -386,12 +412,15 @@ class BuildingsStore {
 
       const payload = {
         name,
-        type: this.form.type,
+        type:
+          this.form.type === "land"
+            ? "building"
+            : (this.form.type as "building" | "house" | "commercial"),
         address: this.form.address.trim() || undefined,
         city: this.form.city.trim() || undefined,
-        owner_notes: this.form.owner_notes.trim() || undefined,
-        is_for_rent: this.form.is_for_rent,
-        is_for_electricity: this.form.is_for_electricity,
+        owner_notes: this.form.ownerNotes.trim() || undefined,
+        is_for_rent: this.form.isForRent,
+        is_for_electricity: this.form.isForElectricity,
         units: unitsPayload,
       };
 
