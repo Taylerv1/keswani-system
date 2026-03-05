@@ -24,6 +24,8 @@ export interface Property {
   address: string | null;
   city: string | null;
   type: PropertyType;
+  is_for_rent: boolean;
+  is_for_electricity: boolean;
   managed_by: string | null;
   manager_name: string | null;
   owner_notes: string | null;
@@ -53,6 +55,8 @@ export interface PropertyDto {
   address: string | null;
   city: string | null;
   type: PropertyType;
+  is_for_rent: boolean;
+  is_for_electricity: boolean;
   managed_by: string | null;
   manager_name: string | null;
   owner_notes: string | null;
@@ -78,6 +82,8 @@ export interface CreatePropertyInput {
   address?: string;
   city?: string;
   type: PropertyType;
+  is_for_rent?: boolean;
+  is_for_electricity?: boolean;
   managed_by?: string;
   owner_notes?: string;
   units?: {
@@ -95,6 +101,8 @@ export interface UpdatePropertyInput {
   address?: string;
   city?: string;
   type?: PropertyType;
+  is_for_rent?: boolean;
+  is_for_electricity?: boolean;
   managed_by?: string | null;
   owner_notes?: string | null;
   units?: {

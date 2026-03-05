@@ -54,6 +54,7 @@ export function usePropertyState(t: TranslateFn) {
         filterStatus === "all"
           ? undefined
           : (filterStatus as "full" | "vacant"),
+      usage: "rent" as const,
     };
 
     if (!options?.force) {
@@ -242,6 +243,8 @@ interface UsePropertyFormDeps {
     address?: string;
     city?: string;
     type: PropertyType;
+    is_for_rent?: boolean;
+    is_for_electricity?: boolean;
     owner_notes?: string;
     units?: CreateUnitInput[];
   }) => Promise<boolean>;
@@ -252,6 +255,8 @@ interface UsePropertyFormDeps {
       address?: string;
       city?: string;
       type?: PropertyType;
+      is_for_rent?: boolean;
+      is_for_electricity?: boolean;
       owner_notes?: string | null;
       units?: CreateUnitInput[];
     }
@@ -280,6 +285,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
   const [form, setForm] = useState({
     name: "",
     type: "building" as PropertyType,
+    isForRent: true,
+    isForElectricity: true,
     address: "",
     city: "",
     ownerNotes: "",
@@ -296,6 +303,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     setForm({
       name: "",
       type: "building",
+      isForRent: true,
+      isForElectricity: true,
       address: "",
       city: "",
       ownerNotes: "",
@@ -338,6 +347,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     setForm({
       name: item.name,
       type: item.type,
+      isForRent: item.is_for_rent ?? true,
+      isForElectricity: item.is_for_electricity ?? true,
       address: item.address ?? "",
       city: item.city ?? "",
       ownerNotes: item.owner_notes ?? "",
@@ -441,6 +452,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
         address: addressValue || undefined,
         city: cityValue || undefined,
         type: payloadType,
+        is_for_rent: form.isForRent,
+        is_for_electricity: form.isForElectricity,
         owner_notes: form.ownerNotes.trim() || null,
         units: unitsPayload,
       });
@@ -450,6 +463,8 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
         address: addressValue || undefined,
         city: cityValue || undefined,
         type: payloadType,
+        is_for_rent: form.isForRent,
+        is_for_electricity: form.isForElectricity,
         owner_notes: form.ownerNotes.trim() || undefined,
         units: unitsPayload,
       });

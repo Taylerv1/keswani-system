@@ -19,6 +19,8 @@ interface PropertyEditModalProps {
   form: {
     name: string;
     type: PropertyType;
+    isForRent: boolean;
+    isForElectricity: boolean;
     address: string;
     city: string;
     ownerNotes: string;
@@ -27,6 +29,8 @@ interface PropertyEditModalProps {
     React.SetStateAction<{
       name: string;
       type: PropertyType;
+      isForRent: boolean;
+      isForElectricity: boolean;
       address: string;
       city: string;
       ownerNotes: string;
@@ -126,6 +130,39 @@ export function PropertyEditModal({
               className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-surface-border p-3">
+          <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isForRent}
+              onChange={(e) =>
+                setForm((prev) => {
+                  const nextValue = e.target.checked;
+                  if (!nextValue && !prev.isForElectricity) return prev;
+                  return { ...prev, isForRent: nextValue };
+                })
+              }
+              className="h-4 w-4 rounded border-surface-border"
+            />
+            {t("rent")}
+          </label>
+          <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isForElectricity}
+              onChange={(e) =>
+                setForm((prev) => {
+                  const nextValue = e.target.checked;
+                  if (!nextValue && !prev.isForRent) return prev;
+                  return { ...prev, isForElectricity: nextValue };
+                })
+              }
+              className="h-4 w-4 rounded border-surface-border"
+            />
+            {t("electricity")}
+          </label>
         </div>
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">
