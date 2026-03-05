@@ -194,9 +194,8 @@ export default function BuildingsPage() {
             onSave={() =>
               void store.save({
                 propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-                usageRequiredMessage:
-                  "Property must be enabled for rent, electricity, or both",
-                successMessage: "Building updated successfully",
+                usageRequiredMessage: t("propertyUsageRequired"),
+                successMessage: t("buildingUpdatedSuccess"),
                 errorFallback: t("error"),
               })
             }
@@ -223,9 +222,8 @@ export default function BuildingsPage() {
           onSave={() =>
             void store.save({
               propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-              usageRequiredMessage:
-                "Property must be enabled for rent, electricity, or both",
-              successMessage: "Building created successfully",
+              usageRequiredMessage: t("propertyUsageRequired"),
+              successMessage: t("buildingCreatedSuccess"),
               errorFallback: t("error"),
             })
           }
@@ -277,7 +275,7 @@ export default function BuildingsPage() {
         onConfirm={() =>
           void store.removeSelected({
             errorFallback: t("error"),
-            successMessage: "Building deleted successfully",
+            successMessage: t("buildingDeletedSuccess"),
           })
         }
         loading={store.actionLoading}
