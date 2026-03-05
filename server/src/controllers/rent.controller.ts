@@ -28,7 +28,15 @@ async function buildRecentActivity(
 
     // 1) Overdue rent payments
     const overduePayments = await prisma.rent_payments.findMany({
-        where: { status: "overdue", deleted_at: null },
+        where: {
+            status: "overdue",
+            deleted_at: null,
+            contract: {
+                unit: {
+                    property: { ...( { is_for_rent: true } as any ) },
+                },
+            },
+        },
         orderBy: { created_at: "desc" },
         take: RECENT_ACTIVITY_LIMIT,
         include: {
@@ -68,6 +76,9 @@ async function buildRecentActivity(
             status: "active",
             deleted_at: null,
             end_date: { gte: new Date(), lte: endingCutoff },
+            unit: {
+                property: { ...( { is_for_rent: true } as any ) },
+            },
         },
         orderBy: { end_date: "asc" },
         take: RECENT_ACTIVITY_LIMIT,
@@ -104,7 +115,13 @@ async function buildRecentActivity(
 
     // 3) Recent open maintenance requests
     const maintenance = await prisma.maintenance_requests.findMany({
-        where: { deleted_at: null, status: { in: ["pending", "in_progress"] } },
+        where: {
+            deleted_at: null,
+            status: { in: ["pending", "in_progress"] },
+            unit: {
+                property: { ...( { is_for_rent: true } as any ) },
+            },
+        },
         orderBy: { created_at: "desc" },
         take: RECENT_ACTIVITY_LIMIT,
         include: {
@@ -167,22 +184,31 @@ export const getRentOverview = async (
             recentActivity,
         ] = await Promise.all([
             prisma.properties.count({
-                where: { deleted_at: null },
+                where: { deleted_at: null, ...( { is_for_rent: true } as any ) },
             }),
             prisma.units.count({
-                where: { deleted_at: null },
+                where: {
+                    deleted_at: null,
+                    property: { ...( { is_for_rent: true } as any ) },
+                },
             }),
             prisma.contracts.count({
                 where: {
                     status: "active",
                     deleted_at: null,
-                    unit: { deleted_at: null },
+                    unit: {
+                        deleted_at: null,
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
                 },
             }),
             prisma.contracts.aggregate({
                 where: {
                     status: "active",
                     deleted_at: null,
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
                 },
                 _sum: { monthly_rent: true },
             }),
@@ -190,6 +216,11 @@ export const getRentOverview = async (
                 where: {
                     status: "overdue",
                     deleted_at: null,
+                    contract: {
+                        unit: {
+                            property: { ...( { is_for_rent: true } as any ) },
+                        },
+                    },
                 },
             }),
             prisma.contracts.count({
@@ -200,17 +231,29 @@ export const getRentOverview = async (
                         gte: now,
                         lte: endingCutoff,
                     },
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
                 },
             }),
             prisma.maintenance_requests.count({
                 where: {
                     deleted_at: null,
                     status: { in: ["pending", "in_progress"] },
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
                 },
             }),
             // Count unique tenants with ACTIVE contracts only
             prisma.contracts.findMany({
-                where: { status: "active", deleted_at: null },
+                where: {
+                    status: "active",
+                    deleted_at: null,
+                    unit: {
+                        property: { ...( { is_for_rent: true } as any ) },
+                    },
+                },
                 distinct: ["client_id"],
                 select: { client_id: true },
             }),

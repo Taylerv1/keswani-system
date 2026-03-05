@@ -69,6 +69,7 @@ export async function getProperties(
     search?: string;
     type?: string;
     status?: "full" | "vacant";
+    usage?: "rent" | "electricity" | "all";
   },
 ): Promise<ApiResponse<PaginatedResponse<PropertyDto>>> {
   const query = new URLSearchParams();
@@ -77,6 +78,7 @@ export async function getProperties(
   if (params?.search) query.set("search", params.search);
   if (params?.type) query.set("type", params.type);
   if (params?.status) query.set("status", params.status);
+  if (params?.usage) query.set("usage", params.usage);
   const queryString = query.toString();
   return fetchApi(`/api/properties${queryString ? `?${queryString}` : ""}`);
 }

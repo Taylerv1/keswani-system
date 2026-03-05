@@ -125,6 +125,7 @@ class RentStore {
     search?: string;
     type?: string;
     status?: "full" | "vacant";
+    usage?: "rent" | "electricity" | "all";
   }) {
     return stableKey({
       page: params.page ?? 1,
@@ -132,6 +133,7 @@ class RentStore {
       search: params.search ?? "",
       type: params.type ?? "",
       status: params.status ?? "",
+      usage: params.usage ?? "rent",
     });
   }
 
@@ -141,6 +143,7 @@ class RentStore {
     search?: string;
     type?: string;
     status?: "full" | "vacant";
+    usage?: "rent" | "electricity" | "all";
   }) {
     return this.propertyPages.get(this.propertyKey(params)) ?? null;
   }
@@ -152,6 +155,7 @@ class RentStore {
       search?: string;
       type?: string;
       status?: "full" | "vacant";
+      usage?: "rent" | "electricity" | "all";
     },
     options?: { force?: boolean }
   ) {
