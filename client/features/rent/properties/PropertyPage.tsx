@@ -106,6 +106,8 @@ export function PropertyPage() {
               { value: "all", label: `${t("all")} - ${t("propertyType")}` },
               { value: "building", label: t("building") },
               { value: "house", label: t("house") },
+              { value: "commercial", label: "Commercial" },
+              { value: "land", label: t("land") },
             ]}
             placeholder={`${t("all")} - ${t("propertyType")}`}
             noResultsLabel={t("noResults")}

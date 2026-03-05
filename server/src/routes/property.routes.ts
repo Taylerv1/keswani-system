@@ -3,6 +3,7 @@ import {
     getProperties,
     getPropertyById,
     getPropertiesLookup,
+    getElectricityBuildings,
     createProperty,
     updateProperty,
     deleteProperty,
@@ -17,6 +18,7 @@ router.use(authenticate);
 
 // Lookup (before /:id to avoid conflict)
 router.get("/lookup", getPropertiesLookup);
+router.get("/electricity/buildings", requireAccess("electricity"), getElectricityBuildings);
 
 // CRUD
 router.get("/", getProperties);

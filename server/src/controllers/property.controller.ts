@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import prisma from "../config/prisma";
 import {
     createPropertySchema,
+    electricityBuildingsQuerySchema,
+    propertyLookupQuerySchema,
     updatePropertySchema,
     propertyQuerySchema,
 } from "../validators/property.validator";
@@ -17,6 +19,12 @@ async function computeRentedCount(propertyId: string): Promise<number> {
             deleted_at: null,
         },
     });
+}
+
+function toNumber(value: unknown): number {
+    if (value === null || value === undefined) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
 }
 
 // Shared include for property queries
@@ -54,11 +62,16 @@ export const getProperties = async (
             return;
         }
 
-        const { page, limit, search, type, status } = parsed.data;
+        const { page, limit, search, type, status, usage } = parsed.data;
         const skip = (page - 1) * limit;
 
         const where: Prisma.propertiesWhereInput = { deleted_at: null };
         if (type) where.type = type;
+        if (usage === "rent") {
+            (where as any).is_for_rent = true;
+        } else if (usage === "electricity") {
+            (where as any).is_for_electricity = true;
+        }
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
@@ -83,6 +96,8 @@ export const getProperties = async (
                     address: prop.address,
                     city: prop.city,
                     type: prop.type,
+                    is_for_rent: (prop as any).is_for_rent ?? true,
+                    is_for_electricity: (prop as any).is_for_electricity ?? true,
                     managed_by: prop.managed_by,
                     manager_name: prop.manager?.full_name || null,
                     owner_notes: prop.owner_notes,
@@ -153,6 +168,8 @@ export const getPropertyById = async (
                 address: property.address,
                 city: property.city,
                 type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? true,
+                is_for_electricity: (property as any).is_for_electricity ?? true,
                 managed_by: property.managed_by,
                 manager_name: property.manager?.full_name || null,
                 owner_notes: property.owner_notes,
@@ -179,8 +196,21 @@ export const getPropertiesLookup = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        const parsed = propertyLookupQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Invalid query params", details: parsed.error.flatten().fieldErrors });
+            return;
+        }
+
+        const where: Prisma.propertiesWhereInput = { deleted_at: null };
+        if (parsed.data.usage === "rent") {
+            (where as any).is_for_rent = true;
+        } else if (parsed.data.usage === "electricity") {
+            (where as any).is_for_electricity = true;
+        }
+
         const properties = await prisma.properties.findMany({
-            where: { deleted_at: null },
+            where,
             orderBy: { name: "asc" },
             select: {
                 id: true,
@@ -195,6 +225,150 @@ export const getPropertiesLookup = async (
         });
 
         res.json({ success: true, data: properties } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /api/properties/electricity/buildings
+ * Electricity buildings with subscriber and consumption aggregates.
+ */
+export const getElectricityBuildings = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const parsed = electricityBuildingsQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({
+                success: false,
+                error: "Invalid query params",
+                details: parsed.error.flatten().fieldErrors,
+            });
+            return;
+        }
+
+        const { page, limit, search } = parsed.data;
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.propertiesWhereInput = {
+            deleted_at: null,
+            type: { not: "land" },
+            ...( { is_for_electricity: true } as any ),
+        };
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { address: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { city: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+            ];
+        }
+
+        const [total, properties] = await Promise.all([
+            prisma.properties.count({ where }),
+            prisma.properties.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: "desc" },
+                include: {
+                    units: {
+                        where: { deleted_at: null },
+                        select: { id: true },
+                    },
+                },
+            }),
+        ]);
+
+        const propertyIds = properties.map((property) => property.id);
+
+        const subscribers = propertyIds.length > 0
+            ? await prisma.subscribers.findMany({
+                where: {
+                    deleted_at: null,
+                    is_active: true,
+                    property_id: { in: propertyIds },
+                },
+                select: {
+                    id: true,
+                    property_id: true,
+                },
+            })
+            : [];
+
+        const subscriberIds = subscribers.map((subscriber) => subscriber.id);
+
+        const consumptionBySubscriber = new Map<string, number>();
+        if (subscriberIds.length > 0) {
+            const billSums = await prisma.bills.groupBy({
+                by: ["subscriber_id"],
+                where: {
+                    deleted_at: null,
+                    subscriber_id: { in: subscriberIds },
+                },
+                _sum: {
+                    consumption_kwh: true,
+                },
+            });
+
+            for (const row of billSums) {
+                consumptionBySubscriber.set(
+                    row.subscriber_id,
+                    toNumber(row._sum.consumption_kwh)
+                );
+            }
+        }
+
+        const subscriberCountByProperty = new Map<string, number>();
+        const consumptionByProperty = new Map<string, number>();
+
+        for (const subscriber of subscribers) {
+            const propertyId = subscriber.property_id;
+            if (!propertyId) continue;
+
+            subscriberCountByProperty.set(
+                propertyId,
+                (subscriberCountByProperty.get(propertyId) ?? 0) + 1
+            );
+
+            const subscriberConsumption =
+                consumptionBySubscriber.get(subscriber.id) ?? 0;
+            consumptionByProperty.set(
+                propertyId,
+                (consumptionByProperty.get(propertyId) ?? 0) + subscriberConsumption
+            );
+        }
+
+        const items = properties.map((property) => ({
+            id: property.id,
+            name: property.name,
+            address: property.address,
+            city: property.city,
+            type: property.type,
+            total_units: property.units.length,
+            subscriber_count: subscriberCountByProperty.get(property.id) ?? 0,
+            total_consumption_kwh: consumptionByProperty.get(property.id) ?? 0,
+            is_for_rent: (property as any).is_for_rent ?? true,
+            is_for_electricity: (property as any).is_for_electricity ?? true,
+            created_at: property.created_at,
+            updated_at: property.updated_at,
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    total_pages: Math.max(1, Math.ceil(total / limit)),
+                },
+            },
+        } as ApiResponse);
     } catch (err) {
         next(err);
     }
@@ -216,13 +390,24 @@ export const createProperty = async (
             return;
         }
 
-        const { units, managed_by, ...rest } = parsed.data;
+        const { units, managed_by, is_for_rent, is_for_electricity, ...rest } = parsed.data;
+        const isForRent = is_for_rent ?? true;
+        const isForElectricity = is_for_electricity ?? true;
+
+        if (!isForRent && !isForElectricity) {
+            res.status(400).json({
+                success: false,
+                error: "Property must be enabled for rent, electricity, or both",
+            });
+            return;
+        }
 
         const createData: Prisma.propertiesCreateInput = {
             name: rest.name,
             address: rest.address,
             city: rest.city,
             type: rest.type,
+            ...( { is_for_rent: isForRent, is_for_electricity: isForElectricity } as any),
             owner_notes: rest.owner_notes,
         };
 
@@ -260,6 +445,8 @@ export const createProperty = async (
                 address: property.address,
                 city: property.city,
                 type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? isForRent,
+                is_for_electricity: (property as any).is_for_electricity ?? isForElectricity,
                 managed_by: property.managed_by,
                 manager_name: property.manager?.full_name || null,
                 owner_notes: property.owner_notes,
@@ -304,8 +491,32 @@ export const updateProperty = async (
             return;
         }
 
-        const { managed_by, units, ...rest } = parsed.data as any;
-        const updateData: Prisma.propertiesUpdateInput = { ...rest };
+        const {
+            managed_by,
+            units,
+            is_for_rent,
+            is_for_electricity,
+            ...rest
+        } = parsed.data as any;
+
+        const currentIsForRent = (existing as any).is_for_rent ?? true;
+        const currentIsForElectricity = (existing as any).is_for_electricity ?? true;
+        const nextIsForRent = is_for_rent ?? currentIsForRent;
+        const nextIsForElectricity = is_for_electricity ?? currentIsForElectricity;
+
+        if (!nextIsForRent && !nextIsForElectricity) {
+            res.status(400).json({
+                success: false,
+                error: "Property must be enabled for rent, electricity, or both",
+            });
+            return;
+        }
+
+        const updateData: Prisma.propertiesUpdateInput = {
+            ...rest,
+            ...(is_for_rent !== undefined ? ({ is_for_rent: nextIsForRent } as any) : {}),
+            ...(is_for_electricity !== undefined ? ({ is_for_electricity: nextIsForElectricity } as any) : {}),
+        };
         if (managed_by !== undefined) {
             if (managed_by === null) {
                 updateData.manager = { disconnect: true };
@@ -487,6 +698,8 @@ export const updateProperty = async (
                 address: property.address,
                 city: property.city,
                 type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? nextIsForRent,
+                is_for_electricity: (property as any).is_for_electricity ?? nextIsForElectricity,
                 managed_by: property.managed_by,
                 manager_name: property.manager?.full_name || null,
                 owner_notes: property.owner_notes,
