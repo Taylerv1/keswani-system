@@ -343,11 +343,16 @@ const ar: Record<string, string> = {
   meterStatus: "الحالة",
   digital: "رقمي",
   analog: "تناظري",
+  meterResidential: "سكني",
+  meterCommercial: "تجاري",
   faulty: "معطل",
   installDate: "تاريخ التركيب",
   lastReadingDate: "آخر قراءة",
   linkToSubscriber: "ربط بمشترك",
   meterDetails: "تفاصيل العداد",
+  meterCreatedSuccess: "تم إنشاء العداد بنجاح",
+  meterUpdatedSuccess: "تم تحديث العداد بنجاح",
+  meterDeletedSuccess: "تم حذف العداد بنجاح",
 
   // Electricity Readings
   readingManagement: "إدارة القراءات",
@@ -361,6 +366,9 @@ const ar: Record<string, string> = {
   generateBill: "إنشاء فاتورة",
   inputReadings: "إدخال القراءات",
   computeConsumption: "حساب الاستهلاك",
+  readingCreatedSuccess: "تم تسجيل القراءة بنجاح",
+  readingValueMustBeGreaterThanPrevious: "يجب أن تكون القراءة الحالية أكبر من القراءة السابقة",
+  billGeneratedSuccess: "تم إنشاء الفاتورة بنجاح",
 
   // Electricity Bills
   billManagement: "الفواتير",

@@ -343,11 +343,16 @@ const en = {
   meterStatus: "Status",
   digital: "Digital",
   analog: "Analog",
+  meterResidential: "Residential",
+  meterCommercial: "Commercial",
   faulty: "Faulty",
   installDate: "Install Date",
   lastReadingDate: "Last Reading",
   linkToSubscriber: "Link to Subscriber",
   meterDetails: "Meter Details",
+  meterCreatedSuccess: "Meter created successfully",
+  meterUpdatedSuccess: "Meter updated successfully",
+  meterDeletedSuccess: "Meter deleted successfully",
 
   // Electricity Readings
   readingManagement: "Reading Management",
@@ -361,6 +366,9 @@ const en = {
   generateBill: "Generate Bill",
   inputReadings: "Input Readings",
   computeConsumption: "Compute Consumption",
+  readingCreatedSuccess: "Reading created successfully",
+  readingValueMustBeGreaterThanPrevious: "Current reading must be greater than previous reading",
+  billGeneratedSuccess: "Bill generated successfully",
 
   // Electricity Bills
   billManagement: "Bills & Invoices",
