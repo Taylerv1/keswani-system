@@ -10,6 +10,7 @@ import rentRoutes from "./rent.routes";
 import lookupRoutes from "./lookup.routes";
 import notificationRoutes from "./notification.routes";
 import customerRoutes from "./customer.routes";
+import pricingRoutes from "./pricing.routes";
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.use("/payments", paymentRoutes);
 router.use("/rent", rentRoutes);
 router.use("/lookups", lookupRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/pricing", pricingRoutes);
 
 // Future route modules:
 // router.use("/employees", employeeRoutes);
