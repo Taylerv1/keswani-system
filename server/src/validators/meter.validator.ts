@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 const YYYY_MM_DD_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const UUID_LIKE_REGEX =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const idSchema = z.string().regex(UUID_LIKE_REGEX, "Invalid UUID");
 
 export const meterStatusEnum = z.enum(["active", "inactive"]);
 export const meterTypeEnum = z.enum(["residential", "commercial"]);
@@ -11,11 +14,11 @@ export const meterQuerySchema = z.object({
     search: z.string().optional(),
     status: meterStatusEnum.optional(),
     meter_type: meterTypeEnum.optional(),
-    subscriber_id: z.string().uuid().optional(),
+    subscriber_id: idSchema.optional(),
 });
 
 export const createMeterSchema = z.object({
-    subscriber_id: z.string().uuid(),
+    subscriber_id: idSchema,
     meter_number: z.string().min(1).max(100),
     meter_type: meterTypeEnum.default("residential"),
     installation_date: z.string().regex(YYYY_MM_DD_REGEX).nullable().optional(),
@@ -24,7 +27,7 @@ export const createMeterSchema = z.object({
 
 export const updateMeterSchema = z
     .object({
-        subscriber_id: z.string().uuid().optional(),
+        subscriber_id: idSchema.optional(),
         meter_number: z.string().min(1).max(100).optional(),
         meter_type: meterTypeEnum.optional(),
         installation_date: z.string().regex(YYYY_MM_DD_REGEX).nullable().optional(),
