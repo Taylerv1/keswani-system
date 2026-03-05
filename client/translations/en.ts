@@ -312,6 +312,10 @@ const en = {
   subscriberBills: "Bills",
   subscriberPayments: "Payments",
   suspended: "Suspended",
+  subscriberCreatedSuccess: "Subscriber created successfully",
+  subscriberUpdatedSuccess: "Subscriber updated successfully",
+  subscriberAccessInviteSent: "Subscriber access link sent successfully",
+  clientEmailRequiredForAccess: "Client email is required before sending access link",
 
   // Electricity Buildings
   buildingManagement: "Building Management",

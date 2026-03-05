@@ -1,10 +1,10 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import {
   createSubscriber,
-  deleteSubscriber,
   getSubscriberById,
   getSubscriberProperties,
   getSubscribers,
+  inviteSubscriberAccess,
   updateSubscriber,
 } from "./api";
 import type {
@@ -72,17 +72,52 @@ class SubscribersStore {
   actionLoading = false;
   detailLoading = false;
   error = "";
+  success = "";
 
   modalOpen = false;
   editItem: SubscriberListItem | null = null;
   form: SubscriberFormState = { ...EMPTY_SUBSCRIBER_FORM };
-  deleteId: string | null = null;
 
   detailOpen = false;
   detailData: SubscriberDetail | null = null;
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
+  private flashVersion = 0;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
+  }
+
+  private clearFlashTimer() {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
+  }
+
+  private scheduleFlashClear(durationMs = 3000) {
+    const currentVersion = ++this.flashVersion;
+    this.clearFlashTimer();
+
+    this.flashTimer = setTimeout(() => {
+      runInAction(() => {
+        if (this.flashVersion !== currentVersion) return;
+        this.error = "";
+        this.success = "";
+        this.flashTimer = null;
+      });
+    }, durationMs);
+  }
+
+  private showError(message: string) {
+    this.error = message;
+    this.success = "";
+    this.scheduleFlashClear();
+  }
+
+  private showSuccess(message: string) {
+    this.success = message;
+    this.error = "";
+    this.scheduleFlashClear();
   }
 
   private buildSubscriberCacheKey(page: number) {
@@ -116,10 +151,10 @@ class SubscribersStore {
       actionLoading: this.actionLoading,
       detailLoading: this.detailLoading,
       error: this.error,
+      success: this.success,
       modalOpen: this.modalOpen,
       editItem: this.editItem,
       form: this.form,
-      deleteId: this.deleteId,
       detailOpen: this.detailOpen,
       detailData: this.detailData,
     };
@@ -133,7 +168,7 @@ class SubscribersStore {
   }
 
   setError(message: string) {
-    this.error = message;
+    this.showError(message);
   }
 
   setSearch(value: string) {
@@ -148,10 +183,6 @@ class SubscribersStore {
 
   setPage(value: number) {
     this.page = value;
-  }
-
-  setDeleteId(value: string | null) {
-    this.deleteId = value;
   }
 
   setDetailOpen(value: boolean) {
@@ -272,7 +303,7 @@ class SubscribersStore {
         });
       } catch (error) {
         runInAction(() => {
-          this.error = getErrorMessage(error, options.errorFallback);
+          this.showError(getErrorMessage(error, options.errorFallback));
           this.subscribers = [];
           this.totalItems = 0;
           this.totalPages = 1;
@@ -317,7 +348,7 @@ class SubscribersStore {
         runInAction(() => {
           this.properties = [];
           this.propertiesLoaded = false;
-          this.error = getErrorMessage(error, options.errorFallback);
+          this.showError(getErrorMessage(error, options.errorFallback));
         });
       }
     })();
@@ -334,18 +365,19 @@ class SubscribersStore {
   async save(options: {
     fullNameRequiredMessage: string;
     subscriptionRequiredMessage: string;
+    successMessage: string;
     errorFallback: string;
   }): Promise<boolean> {
     const fullName = this.form.full_name.trim();
     const subscriptionNumber = this.form.subscription_number.trim();
 
     if (!fullName) {
-      this.error = options.fullNameRequiredMessage;
+      this.showError(options.fullNameRequiredMessage);
       return false;
     }
 
     if (!subscriptionNumber) {
-      this.error = options.subscriptionRequiredMessage;
+      this.showError(options.subscriptionRequiredMessage);
       return false;
     }
 
@@ -382,42 +414,11 @@ class SubscribersStore {
       }
 
       runInAction(() => {
+        const targetPage = this.editItem ? this.page : 1;
         this.closeModal();
-        this.page = 1;
+        this.page = targetPage;
         this.invalidateSubscriberCache();
-      });
-
-      await this.loadSubscribers({
-        errorFallback: options.errorFallback,
-        targetPage: 1,
-        force: true,
-      });
-
-      return true;
-    } catch (error) {
-      runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
-      });
-      return false;
-    } finally {
-      runInAction(() => {
-        this.actionLoading = false;
-      });
-    }
-  }
-
-  async removeSelected(options: { errorFallback: string }): Promise<boolean> {
-    if (!this.deleteId) return false;
-
-    try {
-      this.actionLoading = true;
-      this.error = "";
-
-      await deleteSubscriber(this.deleteId);
-
-      runInAction(() => {
-        this.deleteId = null;
-        this.invalidateSubscriberCache();
+        this.showSuccess(options.successMessage);
       });
 
       await this.loadSubscribers({
@@ -429,7 +430,70 @@ class SubscribersStore {
       return true;
     } catch (error) {
       runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
+        this.showError(getErrorMessage(error, options.errorFallback));
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
+    }
+  }
+
+  async inviteSubscriberPortalAccess(
+    subscriber: {
+      id: string;
+      client: {
+        id: string;
+        email: string | null;
+        auth_user_id: string | null;
+      };
+    },
+    options: { errorFallback: string; emailRequiredMessage: string; successMessage: string }
+  ): Promise<boolean> {
+    const email = subscriber.client.email?.trim();
+    if (!email) {
+      this.showError(options.emailRequiredMessage);
+      return false;
+    }
+
+    try {
+      this.actionLoading = true;
+      this.error = "";
+
+      const response = await inviteSubscriberAccess(subscriber.client.id);
+      const authUserId = response.data?.auth_user_id ?? subscriber.client.auth_user_id;
+
+      runInAction(() => {
+        this.subscribers = this.subscribers.map((item) =>
+          item.id === subscriber.id
+            ? {
+                ...item,
+                client: {
+                  ...item.client,
+                  auth_user_id: authUserId,
+                },
+              }
+            : item
+        );
+
+        if (this.detailData?.id === subscriber.id) {
+          this.detailData = {
+            ...this.detailData,
+            client: {
+              ...this.detailData.client,
+              auth_user_id: authUserId,
+            },
+          };
+        }
+
+        this.showSuccess(response.message || options.successMessage);
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.showError(getErrorMessage(error, options.errorFallback));
       });
       return false;
     } finally {
@@ -455,7 +519,7 @@ class SubscribersStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.error = getErrorMessage(error, options.errorFallback);
+        this.showError(getErrorMessage(error, options.errorFallback));
       });
     } finally {
       runInAction(() => {

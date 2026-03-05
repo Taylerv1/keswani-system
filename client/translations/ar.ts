@@ -312,6 +312,10 @@ const ar: Record<string, string> = {
   subscriberBills: "الفواتير",
   subscriberPayments: "المدفوعات",
   suspended: "موقوف",
+  subscriberCreatedSuccess: "تم إنشاء المشترك بنجاح",
+  subscriberUpdatedSuccess: "تم تحديث بيانات المشترك بنجاح",
+  subscriberAccessInviteSent: "تم إرسال رابط الدخول للمشترك بنجاح",
+  clientEmailRequiredForAccess: "البريد الإلكتروني للمشترك مطلوب قبل إرسال رابط الدخول",
 
   // Electricity Buildings
   buildingManagement: "إدارة المباني",

@@ -17,6 +17,7 @@ export interface PaginatedResponse<T> {
 
 export interface SubscriberClient {
   id: string;
+  auth_user_id: string | null;
   full_name: string;
   email: string | null;
   phone: string | null;
@@ -154,6 +155,13 @@ export interface UpdateSubscriberInput {
   unit_id?: string | null;
   is_active?: boolean;
   notes?: string | null;
+}
+
+export interface InviteAccessResponse {
+  client_id: string;
+  email: string;
+  auth_user_id: string;
+  delivery?: "invite" | "reset";
 }
 
 export interface PropertyLookup {

@@ -71,6 +71,46 @@ export const requireAccess = (permission: string) => {
 };
 
 /**
+ * Require the employee to have at least one of the specified access permissions.
+ * Owner/admin bypass checks.
+ * Usage: requireAnyAccess("rent", "electricity")
+ */
+export const requireAnyAccess = (...permissions: string[]) => {
+    return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+        if (!req.user) {
+            res.status(401).json({ success: false, error: "Not authenticated" });
+            return;
+        }
+
+        if (req.user.user_type !== "employee") {
+            res.status(403).json({
+                success: false,
+                error: "This endpoint is only accessible to employees",
+            });
+            return;
+        }
+
+        if (req.user.role === "owner" || req.user.role === "admin") {
+            return next();
+        }
+
+        const hasAnyPermission = permissions.some(
+            (permission) => Boolean(req.user?.access?.[permission])
+        );
+
+        if (!hasAnyPermission) {
+            res.status(403).json({
+                success: false,
+                error: `You need one of these permissions: ${permissions.join(", ")}`,
+            });
+            return;
+        }
+
+        next();
+    };
+};
+
+/**
  * Require either a client user, or an employee with the specified access permission.
  * Owner/admin bypass checks.
  */

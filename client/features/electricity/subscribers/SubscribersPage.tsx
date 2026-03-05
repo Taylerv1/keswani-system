@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { autorun } from "mobx";
-import { Eye, FileDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, FileDown, Mail, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import {
-  ConfirmDialog,
   LoadingLottie,
   Modal,
   Pagination,
@@ -76,6 +75,11 @@ export default function SubscribersPage() {
           {store.error}
         </div>
       )}
+      {store.success && (
+        <div className="mb-4 p-3 rounded-lg bg-card-green-light border border-card-green/20 text-card-green text-sm">
+          {store.success}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex-1">
@@ -118,6 +122,7 @@ export default function SubscribersPage() {
                   <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriberBuilding")}</th>
                   <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriberUnit")}</th>
                   <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriberPhone")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriberEmail")}</th>
                   <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("status")}</th>
                   <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("actions")}</th>
                 </tr>
@@ -125,7 +130,7 @@ export default function SubscribersPage() {
               <tbody>
                 {store.subscribers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-text-muted">
+                    <td colSpan={8} className="px-4 py-8 text-center text-text-muted">
                       {t("noResults")}
                     </td>
                   </tr>
@@ -150,6 +155,9 @@ export default function SubscribersPage() {
                       <td className="px-4 py-3 text-text-secondary">
                         {subscriber.client.phone ?? "-"}
                       </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {subscriber.client.email ?? "-"}
+                      </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={subscriber.is_active ? "active" : "inactive"} />
                       </td>
@@ -163,18 +171,25 @@ export default function SubscribersPage() {
                             <Eye size={15} />
                           </button>
                           <button
+                            onClick={() =>
+                              void store.inviteSubscriberPortalAccess(subscriber, {
+                                errorFallback: t("error"),
+                                emailRequiredMessage: t("clientEmailRequiredForAccess"),
+                                successMessage: t("subscriberAccessInviteSent"),
+                              })
+                            }
+                            disabled={store.actionLoading || !subscriber.client.email}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-green hover:bg-card-green-light transition-colors cursor-pointer bg-transparent border-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={t("sendAccessLink")}
+                          >
+                            <Mail size={15} />
+                          </button>
+                          <button
                             onClick={() => store.openEdit(subscriber)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0"
                             title={t("edit")}
                           >
                             <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={() => store.setDeleteId(subscriber.id)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-red hover:bg-card-red-light transition-colors cursor-pointer bg-transparent border-0"
-                            title={t("delete")}
-                          >
-                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>
@@ -294,7 +309,10 @@ export default function SubscribersPage() {
               onClick={() =>
                 void store.save({
                   fullNameRequiredMessage: t("fullNameRequired"),
-                  subscriptionRequiredMessage: `${t("subscriptionNumber")} is required`,
+                  subscriptionRequiredMessage: `${t("subscriptionNumber")} ${t("isRequired")}`,
+                  successMessage: store.editItem
+                    ? t("subscriberUpdatedSuccess")
+                    : t("subscriberCreatedSuccess"),
                   errorFallback: t("error"),
                 })
               }
@@ -320,36 +338,63 @@ export default function SubscribersPage() {
         ) : !store.detailData ? (
           <div className="py-8 text-center text-text-muted text-sm">{t("noData")}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {[
-              [t("subscriberName"), store.detailData.client.full_name],
-              [t("subscriptionNumber"), store.detailData.subscription_number],
-              [t("subscriberPhone"), store.detailData.client.phone ?? "-"],
-              [t("subscriberEmail"), store.detailData.client.email ?? "-"],
-              [t("subscriberBuilding"), store.detailData.property?.name ?? "-"],
-              [t("subscriberUnit"), store.detailData.unit?.unit_number ?? "-"],
-              [t("status"), t(store.detailData.is_active ? "active" : "inactive")],
-              [t("notes"), store.detailData.notes ?? "-"],
-              [t("createdAt"), formatDate(store.detailData.created_at, locale)],
-              [t("totalAmountBill"), `$${store.detailData.summary.total_billed.toFixed(2)}`],
-              [t("totalPaid"), `$${store.detailData.summary.total_paid.toFixed(2)}`],
-              [t("totalDebt"), `$${store.detailData.summary.outstanding_balance.toFixed(2)}`],
-            ].map(([label, value]) => (
-              <div key={String(label)} className="bg-background rounded-lg p-3">
-                <p className="text-xs text-text-muted">{label}</p>
-                <p className="text-sm font-medium text-text-primary">{value}</p>
-              </div>
-            ))}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {[
+                [t("subscriberName"), store.detailData.client.full_name],
+                [t("subscriptionNumber"), store.detailData.subscription_number],
+                [t("subscriberPhone"), store.detailData.client.phone ?? "-"],
+                [t("subscriberEmail"), store.detailData.client.email ?? "-"],
+                [
+                  t("portalAccess"),
+                  store.detailData.client.auth_user_id ? t("portalLinked") : t("portalNotLinked"),
+                ],
+                [t("subscriberBuilding"), store.detailData.property?.name ?? "-"],
+                [t("subscriberUnit"), store.detailData.unit?.unit_number ?? "-"],
+                [t("status"), t(store.detailData.is_active ? "active" : "inactive")],
+                [t("notes"), store.detailData.notes ?? "-"],
+                [t("createdAt"), formatDate(store.detailData.created_at, locale)],
+                [t("totalAmountBill"), `$${store.detailData.summary.total_billed.toFixed(2)}`],
+                [t("totalPaid"), `$${store.detailData.summary.total_paid.toFixed(2)}`],
+                [t("totalDebt"), `$${store.detailData.summary.outstanding_balance.toFixed(2)}`],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="bg-background rounded-lg p-3">
+                  <p className="text-xs text-text-muted">{label}</p>
+                  <p className="text-sm font-medium text-text-primary">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  if (!store.detailData) return;
+
+                  void store.inviteSubscriberPortalAccess(
+                    {
+                      id: store.detailData.id,
+                      client: {
+                        id: store.detailData.client.id,
+                        auth_user_id: store.detailData.client.auth_user_id,
+                        email: store.detailData.client.email,
+                      },
+                    },
+                    {
+                      errorFallback: t("error"),
+                      emailRequiredMessage: t("clientEmailRequiredForAccess"),
+                      successMessage: t("subscriberAccessInviteSent"),
+                    }
+                  );
+                }}
+                disabled={store.actionLoading || !store.detailData.client.email}
+                className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-card-green hover:border-card-green transition-colors text-sm font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t("sendAccessLink")}
+              </button>
+            </div>
           </div>
         )}
       </Modal>
-
-      <ConfirmDialog
-        open={Boolean(store.deleteId)}
-        onClose={() => store.setDeleteId(null)}
-        onConfirm={() => void store.removeSelected({ errorFallback: t("error") })}
-        loading={store.actionLoading}
-      />
     </div>
   );
 }

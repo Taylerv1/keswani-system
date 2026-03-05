@@ -1,6 +1,7 @@
 import type {
   ApiResponse,
   CreateSubscriberInput,
+  InviteAccessResponse,
   PaginatedResponse,
   PropertyLookup,
   SubscriberDetail,
@@ -74,6 +75,14 @@ export async function updateSubscriber(
 export async function deleteSubscriber(id: string): Promise<ApiResponse> {
   return fetchApi(`/api/subscribers/${id}`, {
     method: "DELETE",
+  });
+}
+
+export async function inviteSubscriberAccess(
+  clientId: string
+): Promise<ApiResponse<InviteAccessResponse>> {
+  return fetchApi(`/api/clients/${clientId}/invite`, {
+    method: "POST",
   });
 }
 

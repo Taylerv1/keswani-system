@@ -12,6 +12,7 @@ const subscriberListInclude = {
     client: {
         select: {
             id: true,
+            auth_user_id: true,
             full_name: true,
             email: true,
             phone: true,
@@ -35,6 +36,7 @@ const subscriberDetailInclude = {
     client: {
         select: {
             id: true,
+            auth_user_id: true,
             full_name: true,
             email: true,
             phone: true,
@@ -98,6 +100,7 @@ const mapSubscriberListItem = (
     updated_at: subscriber.updated_at,
     client: {
         id: subscriber.client.id,
+        auth_user_id: subscriber.client.auth_user_id,
         full_name: subscriber.client.full_name,
         email: subscriber.client.email,
         phone: subscriber.client.phone,
