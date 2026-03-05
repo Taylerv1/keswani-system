@@ -1,11 +1,17 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import {
   createElectricityBuilding,
+  getElectricityBuildingById,
   getElectricityBuildings,
   updateElectricityBuilding,
   type ElectricityBuildingItem,
   type ElectricityBuildingType,
 } from "./api";
+import {
+  EMPTY_UNIT,
+  sanitizeUnit,
+  type CreateUnitInput,
+} from "@/features/rent/properties/utils";
 
 export interface BuildingFormState {
   name: string;
@@ -58,8 +64,10 @@ class BuildingsStore {
   error = "";
   detailItem: ElectricityBuildingItem | null = null;
   modalOpen = false;
+  modalLoading = false;
   editItem: ElectricityBuildingItem | null = null;
   form: BuildingFormState = { ...EMPTY_BUILDING_FORM };
+  units: CreateUnitInput[] = [];
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -90,8 +98,10 @@ class BuildingsStore {
       error: this.error,
       detailItem: this.detailItem,
       modalOpen: this.modalOpen,
+      modalLoading: this.modalLoading,
       editItem: this.editItem,
       form: this.form,
+      units: this.units,
     };
   }
 
@@ -115,30 +125,118 @@ class BuildingsStore {
     this.form = { ...this.form, [key]: value };
   }
 
+  setBuildingType(value: ElectricityBuildingType) {
+    this.form = { ...this.form, type: value };
+
+    if (value === "house") {
+      if (this.units.length > 0) {
+        const base = this.units[0];
+        this.units = [{ ...base, unit_number: base.unit_number || "HOUSE" }];
+      } else {
+        this.units = [{ ...EMPTY_UNIT, unit_number: "HOUSE" }];
+      }
+      return;
+    }
+
+    if (value === "building") {
+      this.units = this.units.length > 1 ? this.units : [];
+      return;
+    }
+
+    this.units = [];
+  }
+
+  updateUnitField<K extends keyof CreateUnitInput>(
+    index: number,
+    key: K,
+    value: CreateUnitInput[K]
+  ) {
+    this.units = this.units.map((unit, currentIndex) =>
+      currentIndex === index ? { ...unit, [key]: value } : unit
+    );
+  }
+
+  addUnit() {
+    this.units = [...this.units, { ...EMPTY_UNIT }];
+  }
+
+  removeUnit(index: number) {
+    this.units = this.units.filter((_, currentIndex) => currentIndex !== index);
+  }
+
   openAdd() {
     this.editItem = null;
     this.form = { ...EMPTY_BUILDING_FORM };
+    this.units = [];
     this.modalOpen = true;
   }
 
-  openEdit(item: ElectricityBuildingItem) {
-    this.editItem = item;
-    this.form = {
-      name: item.name,
-      type: item.type === "land" ? "building" : item.type,
-      address: item.address ?? "",
-      city: item.city ?? "",
-      owner_notes: "",
-      is_for_rent: item.is_for_rent ?? true,
-      is_for_electricity: item.is_for_electricity ?? true,
-    };
-    this.modalOpen = true;
+  async openEdit(item: ElectricityBuildingItem, options: { errorFallback: string }) {
+    try {
+      this.modalLoading = true;
+      this.error = "";
+
+      const response = await getElectricityBuildingById(item.id);
+      const detail = response.data;
+      if (!detail) {
+        this.error = options.errorFallback;
+        return;
+      }
+
+      const mappedUnits: CreateUnitInput[] = (detail.units ?? []).map((unit) => ({
+        id: unit.id,
+        unit_number: unit.unit_number,
+        floor: unit.floor ?? undefined,
+        bedrooms: unit.bedrooms ?? undefined,
+        bathrooms: unit.bathrooms ?? undefined,
+        area_sqm:
+          unit.area_sqm !== null && unit.area_sqm !== undefined
+            ? Number(unit.area_sqm)
+            : undefined,
+        description: unit.description ?? undefined,
+      }));
+
+      if (detail.type === "house" && mappedUnits.length === 0) {
+        mappedUnits.push({ ...EMPTY_UNIT, unit_number: "HOUSE" });
+      }
+
+      runInAction(() => {
+        this.editItem = item;
+        this.form = {
+          name: detail.name,
+          type:
+            detail.type === "building" ||
+            detail.type === "house" ||
+            detail.type === "commercial"
+              ? detail.type
+              : "building",
+          address: detail.address ?? "",
+          city: detail.city ?? "",
+          owner_notes: detail.owner_notes ?? "",
+          is_for_rent: detail.is_for_rent ?? true,
+          is_for_electricity: detail.is_for_electricity ?? true,
+        };
+        this.units =
+          detail.type === "building" || detail.type === "house" ? mappedUnits : [];
+        this.modalOpen = true;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = getErrorMessage(error, options.errorFallback);
+      });
+    } finally {
+      runInAction(() => {
+        this.modalLoading = false;
+      });
+    }
   }
 
   closeModal() {
     this.modalOpen = false;
     this.editItem = null;
+    this.modalLoading = false;
     this.form = { ...EMPTY_BUILDING_FORM };
+    this.units = [];
   }
 
   async bootstrap(errorFallback: string): Promise<void> {
@@ -257,6 +355,35 @@ class BuildingsStore {
       this.actionLoading = true;
       this.error = "";
 
+      const sanitizedUnits = this.units
+        .map((unit) => sanitizeUnit(unit))
+        .filter((unit): unit is CreateUnitInput => unit !== null);
+
+      const houseBase = this.units[0] ?? { ...EMPTY_UNIT };
+      const houseUnit: CreateUnitInput = {
+        unit_number: (houseBase.unit_number || "HOUSE").trim() || "HOUSE",
+      };
+      if (typeof houseBase.id === "string") houseUnit.id = houseBase.id;
+      if (typeof houseBase.floor === "number") houseUnit.floor = houseBase.floor;
+      if (typeof houseBase.bedrooms === "number") {
+        houseUnit.bedrooms = houseBase.bedrooms;
+      }
+      if (typeof houseBase.bathrooms === "number") {
+        houseUnit.bathrooms = houseBase.bathrooms;
+      }
+      if (typeof houseBase.area_sqm === "number") {
+        houseUnit.area_sqm = houseBase.area_sqm;
+      }
+      const houseDescription = houseBase.description?.trim();
+      if (houseDescription) houseUnit.description = houseDescription;
+
+      const unitsPayload =
+        this.form.type === "house"
+          ? [houseUnit]
+          : this.form.type === "building"
+            ? sanitizedUnits
+            : undefined;
+
       const payload = {
         name,
         type: this.form.type,
@@ -265,6 +392,7 @@ class BuildingsStore {
         owner_notes: this.form.owner_notes.trim() || undefined,
         is_for_rent: this.form.is_for_rent,
         is_for_electricity: this.form.is_for_electricity,
+        units: unitsPayload,
       };
 
       if (this.editItem) {

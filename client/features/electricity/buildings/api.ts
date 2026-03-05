@@ -32,6 +32,36 @@ export interface ElectricityBuildingItem {
 
 export type ElectricityBuildingType = "building" | "house" | "commercial";
 
+export interface ElectricityBuildingUnitInput {
+  id?: string;
+  unit_number: string;
+  floor?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  area_sqm?: number;
+  description?: string;
+}
+
+export interface ElectricityBuildingDetail {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  type: "building" | "house" | "land" | "commercial";
+  is_for_rent: boolean;
+  is_for_electricity: boolean;
+  owner_notes: string | null;
+  units: {
+    id: string;
+    unit_number: string;
+    floor: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    area_sqm: number | string | null;
+    description: string | null;
+  }[];
+}
+
 export interface UpsertElectricityBuildingInput {
   name: string;
   address?: string;
@@ -40,6 +70,7 @@ export interface UpsertElectricityBuildingInput {
   owner_notes?: string | null;
   is_for_rent?: boolean;
   is_for_electricity?: boolean;
+  units?: ElectricityBuildingUnitInput[];
 }
 
 async function fetchApi<T>(
@@ -95,4 +126,10 @@ export async function updateElectricityBuilding(
     method: "PATCH",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getElectricityBuildingById(
+  id: string
+): Promise<ApiResponse<ElectricityBuildingDetail>> {
+  return fetchApi(`/api/properties/${id}`);
 }
