@@ -83,22 +83,32 @@ const emptySettings: ElecSettings = {
   pdfFooterTextAr: "",
 };
 
+const initialData: ElectricityData = {
+  subscribers: [],
+  buildings: [],
+  meters: [],
+  readings: [],
+  bills: [],
+  payments: [],
+  pricing: [],
+  employees: [],
+  alerts: [],
+  settings: emptySettings,
+};
+
 export function ElectricityProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<ElectricityData>({
-    subscribers: [],
-    buildings: [],
-    meters: [],
-    readings: [],
-    bills: [],
-    payments: [],
-    pricing: [],
-    employees: [],
-    alerts: [],
-    settings: emptySettings,
-  });
+  const [data, setData] = useState<ElectricityData>(initialData);
 
   useEffect(() => {
-    setData(mockData as unknown as ElectricityData);
+    const incoming = mockData as Partial<ElectricityData>;
+    setData({
+      ...initialData,
+      ...incoming,
+      settings: {
+        ...emptySettings,
+        ...(incoming.settings ?? {}),
+      },
+    });
   }, []);
 
   // ---- Subscribers ----
