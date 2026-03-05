@@ -1,5 +1,31 @@
 import { makeAutoObservable, runInAction } from "mobx";
-import { getElectricityBuildings, type ElectricityBuildingItem } from "./api";
+import {
+  createElectricityBuilding,
+  getElectricityBuildings,
+  updateElectricityBuilding,
+  type ElectricityBuildingItem,
+  type ElectricityBuildingType,
+} from "./api";
+
+export interface BuildingFormState {
+  name: string;
+  type: ElectricityBuildingType;
+  address: string;
+  city: string;
+  owner_notes: string;
+  is_for_rent: boolean;
+  is_for_electricity: boolean;
+}
+
+const EMPTY_BUILDING_FORM: BuildingFormState = {
+  name: "",
+  type: "building",
+  address: "",
+  city: "",
+  owner_notes: "",
+  is_for_rent: true,
+  is_for_electricity: true,
+};
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim().length > 0) {
@@ -28,11 +54,19 @@ class BuildingsStore {
   totalItems = 0;
   totalPages = 1;
   loading = false;
+  actionLoading = false;
   error = "";
   detailItem: ElectricityBuildingItem | null = null;
+  modalOpen = false;
+  editItem: ElectricityBuildingItem | null = null;
+  form: BuildingFormState = { ...EMPTY_BUILDING_FORM };
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
+  }
+
+  private invalidateCache() {
+    this.pageCache.clear();
   }
 
   private buildCacheKey(page: number) {
@@ -52,8 +86,12 @@ class BuildingsStore {
       totalItems: this.totalItems,
       totalPages: this.totalPages,
       loading: this.loading,
+      actionLoading: this.actionLoading,
       error: this.error,
       detailItem: this.detailItem,
+      modalOpen: this.modalOpen,
+      editItem: this.editItem,
+      form: this.form,
     };
   }
 
@@ -68,6 +106,39 @@ class BuildingsStore {
 
   setDetailItem(value: ElectricityBuildingItem | null) {
     this.detailItem = value;
+  }
+
+  setFormField<K extends keyof BuildingFormState>(
+    key: K,
+    value: BuildingFormState[K]
+  ) {
+    this.form = { ...this.form, [key]: value };
+  }
+
+  openAdd() {
+    this.editItem = null;
+    this.form = { ...EMPTY_BUILDING_FORM };
+    this.modalOpen = true;
+  }
+
+  openEdit(item: ElectricityBuildingItem) {
+    this.editItem = item;
+    this.form = {
+      name: item.name,
+      type: item.type === "land" ? "building" : item.type,
+      address: item.address ?? "",
+      city: item.city ?? "",
+      owner_notes: "",
+      is_for_rent: item.is_for_rent ?? true,
+      is_for_electricity: item.is_for_electricity ?? true,
+    };
+    this.modalOpen = true;
+  }
+
+  closeModal() {
+    this.modalOpen = false;
+    this.editItem = null;
+    this.form = { ...EMPTY_BUILDING_FORM };
   }
 
   async bootstrap(errorFallback: string): Promise<void> {
@@ -163,6 +234,68 @@ class BuildingsStore {
       await requestPromise;
     } finally {
       this.inFlightPages.delete(cacheKey);
+    }
+  }
+
+  async save(options: {
+    propertyNameRequiredMessage: string;
+    usageRequiredMessage: string;
+    errorFallback: string;
+  }): Promise<boolean> {
+    const name = this.form.name.trim();
+    if (!name) {
+      this.error = options.propertyNameRequiredMessage;
+      return false;
+    }
+
+    if (!this.form.is_for_rent && !this.form.is_for_electricity) {
+      this.error = options.usageRequiredMessage;
+      return false;
+    }
+
+    try {
+      this.actionLoading = true;
+      this.error = "";
+
+      const payload = {
+        name,
+        type: this.form.type,
+        address: this.form.address.trim() || undefined,
+        city: this.form.city.trim() || undefined,
+        owner_notes: this.form.owner_notes.trim() || undefined,
+        is_for_rent: this.form.is_for_rent,
+        is_for_electricity: this.form.is_for_electricity,
+      };
+
+      if (this.editItem) {
+        await updateElectricityBuilding(this.editItem.id, payload);
+      } else {
+        await createElectricityBuilding(payload);
+      }
+
+      runInAction(() => {
+        const targetPage = this.editItem ? this.page : 1;
+        this.closeModal();
+        this.page = targetPage;
+        this.invalidateCache();
+      });
+
+      await this.loadBuildings({
+        errorFallback: options.errorFallback,
+        targetPage: this.page,
+        force: true,
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.error = getErrorMessage(error, options.errorFallback);
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
     }
   }
 }

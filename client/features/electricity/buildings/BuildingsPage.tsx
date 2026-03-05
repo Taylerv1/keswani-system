@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { autorun } from "mobx";
-import { Building2, Eye } from "lucide-react";
+import { Building2, Eye, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { LoadingLottie, Modal, Pagination, SearchBar } from "@/components/ui";
 import { buildingsStore } from "./store";
@@ -42,12 +42,21 @@ export default function BuildingsPage() {
           </h1>
           <p className="text-text-secondary text-sm mt-1">{subtitle}</p>
         </div>
-        <Link
-          href="/admin-dashboard/rent/properties"
-          className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium inline-flex items-center gap-2 hover:bg-background transition-colors"
-        >
-          {t("rentProperties")}
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={store.openAdd}
+            className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
+          >
+            <Plus size={16} />
+            {t("addProperty")}
+          </button>
+          <Link
+            href="/admin-dashboard/rent/properties"
+            className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium inline-flex items-center gap-2 hover:bg-background transition-colors"
+          >
+            {t("rentProperties")}
+          </Link>
+        </div>
       </div>
 
       {store.error && (
@@ -86,12 +95,20 @@ export default function BuildingsPage() {
                   <div className="w-10 h-10 rounded-xl bg-card-blue-light text-card-blue flex items-center justify-center">
                     <Building2 size={20} />
                   </div>
-                  <button
-                    onClick={() => store.setDetailItem(item)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0"
-                  >
-                    <Eye size={15} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => store.setDetailItem(item)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-card-blue hover:bg-card-blue-light transition-colors cursor-pointer bg-transparent border-0"
+                    >
+                      <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={() => store.openEdit(item)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer bg-transparent border-0"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  </div>
                 </div>
                 <h3 className="text-base font-semibold text-text-primary">
                   {item.name}
@@ -140,6 +157,128 @@ export default function BuildingsPage() {
           });
         }}
       />
+
+      <Modal
+        open={store.modalOpen}
+        onClose={store.closeModal}
+        title={store.editItem ? t("editProperty") : t("addProperty")}
+        maxWidth="max-w-xl"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t("propertyName")}
+            </label>
+            <input
+              value={store.form.name}
+              onChange={(event) => store.setFormField("name", event.target.value)}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                {t("propertyType")}
+              </label>
+              <select
+                value={store.form.type}
+                onChange={(event) =>
+                  store.setFormField(
+                    "type",
+                    event.target.value as "building" | "house" | "commercial"
+                  )
+                }
+                className="w-full h-10 rounded-lg border border-surface-border bg-background text-sm text-text-primary px-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="building">{t("building")}</option>
+                <option value="house">{t("house")}</option>
+                <option value="commercial">{t("commercial")}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                {t("city")}
+              </label>
+              <input
+                value={store.form.city}
+                onChange={(event) => store.setFormField("city", event.target.value)}
+                className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t("address")}
+            </label>
+            <input
+              value={store.form.address}
+              onChange={(event) => store.setFormField("address", event.target.value)}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-surface-border p-3">
+            <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
+              <input
+                type="checkbox"
+                checked={store.form.is_for_rent}
+                onChange={(event) =>
+                  store.setFormField("is_for_rent", event.target.checked)
+                }
+                className="h-4 w-4 rounded border-surface-border"
+              />
+              {t("rent")}
+            </label>
+            <label className="flex items-center gap-3 text-sm text-text-primary opacity-70">
+              <input
+                type="checkbox"
+                checked={store.form.is_for_electricity}
+                disabled
+                className="h-4 w-4 rounded border-surface-border"
+              />
+              {t("electricity")}
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">
+              {t("priceNotes")}
+            </label>
+            <textarea
+              value={store.form.owner_notes}
+              onChange={(event) =>
+                store.setFormField("owner_notes", event.target.value)
+              }
+              rows={3}
+              className="w-full rounded-lg border border-surface-border bg-background px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={store.closeModal}
+              className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              onClick={() =>
+                void store.save({
+                  propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
+                  usageRequiredMessage: "Select at least one usage",
+                  errorFallback: t("error"),
+                })
+              }
+              disabled={store.actionLoading}
+              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {store.actionLoading ? t("saving") : t("save")}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={!!store.detailItem}

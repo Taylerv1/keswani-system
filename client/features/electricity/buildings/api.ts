@@ -30,6 +30,18 @@ export interface ElectricityBuildingItem {
   updated_at: string;
 }
 
+export type ElectricityBuildingType = "building" | "house" | "commercial";
+
+export interface UpsertElectricityBuildingInput {
+  name: string;
+  address?: string;
+  city?: string;
+  type: ElectricityBuildingType;
+  owner_notes?: string | null;
+  is_for_rent?: boolean;
+  is_for_electricity?: boolean;
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -64,4 +76,23 @@ export async function getElectricityBuildings(params?: {
   return fetchApi(
     `/api/electricity/buildings${queryString ? `?${queryString}` : ""}`
   );
+}
+
+export async function createElectricityBuilding(
+  payload: UpsertElectricityBuildingInput
+): Promise<ApiResponse<ElectricityBuildingItem>> {
+  return fetchApi("/api/electricity/buildings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateElectricityBuilding(
+  id: string,
+  payload: UpsertElectricityBuildingInput
+): Promise<ApiResponse<ElectricityBuildingItem>> {
+  return fetchApi(`/api/electricity/buildings/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

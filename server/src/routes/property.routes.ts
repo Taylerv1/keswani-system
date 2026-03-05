@@ -4,6 +4,8 @@ import {
     getPropertyById,
     getPropertiesLookup,
     getElectricityBuildings,
+    createElectricityBuilding,
+    updateElectricityBuilding,
     createProperty,
     updateProperty,
     deleteProperty,
@@ -19,6 +21,8 @@ router.use(authenticate);
 // Lookup (before /:id to avoid conflict)
 router.get("/lookup", getPropertiesLookup);
 router.get("/electricity/buildings", requireAccess("electricity"), getElectricityBuildings);
+router.post("/electricity/buildings", requireAccess("electricity"), createElectricityBuilding);
+router.patch("/electricity/buildings/:id", requireAccess("electricity"), updateElectricityBuilding);
 
 // CRUD
 router.get("/", getProperties);

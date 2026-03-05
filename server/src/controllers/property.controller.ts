@@ -465,6 +465,23 @@ export const createProperty = async (
 };
 
 /**
+ * POST /api/properties/electricity/buildings
+ * Create property from electricity module (always electricity-enabled).
+ */
+export const createElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    req.body = {
+        ...(req.body ?? {}),
+        is_for_electricity: true,
+    };
+
+    await createProperty(req, res, next);
+};
+
+/**
  * PATCH /api/properties/:id
  * Update property fields.
  */
@@ -715,6 +732,23 @@ export const updateProperty = async (
     } catch (err) {
         next(err);
     }
+};
+
+/**
+ * PATCH /api/properties/electricity/buildings/:id
+ * Update property from electricity module (always electricity-enabled).
+ */
+export const updateElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    req.body = {
+        ...(req.body ?? {}),
+        is_for_electricity: true,
+    };
+
+    await updateProperty(req, res, next);
 };
 
 /**
