@@ -94,7 +94,7 @@ export async function getSubscriberProperties(): Promise<PropertyLookup[]> {
         name: string;
         units?: Array<{ id: string; unit_number: string }>;
       }>
-    >(`/api/properties?page=${page}&limit=${PAGE_LIMIT}`);
+    >(`/api/properties?page=${page}&limit=${PAGE_LIMIT}&usage=electricity`);
 
     const items = response.data?.items ?? [];
     const pagination = response.data?.pagination;

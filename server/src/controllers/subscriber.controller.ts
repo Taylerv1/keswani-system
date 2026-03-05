@@ -132,6 +132,21 @@ async function ensurePropertyExists(propertyId: string): Promise<void> {
         error.statusCode = 404;
         throw error;
     }
+
+    const electricityEnabledProperty = await prisma.properties.findFirst({
+        where: {
+            id: propertyId,
+            deleted_at: null,
+            ...( { is_for_electricity: true } as any ),
+        },
+        select: { id: true },
+    });
+
+    if (!electricityEnabledProperty) {
+        const error = new Error("Property is not enabled for electricity subscriptions") as Error & { statusCode?: number };
+        error.statusCode = 400;
+        throw error;
+    }
 }
 
 async function ensureUnitExists(unitId: string): Promise<{ id: string; property_id: string }> {
