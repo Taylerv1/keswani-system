@@ -144,6 +144,33 @@ async function getClientsLookupData(context: LookupContext) {
     });
 }
 
+async function getEmployeesLookupData() {
+    const employees = await prisma.employees.findMany({
+        where: {
+            deleted_at: null,
+            is_active: true,
+        },
+        orderBy: { full_name: "asc" },
+        select: {
+            id: true,
+            full_name: true,
+            email: true,
+            phone: true,
+            role: true,
+            access: true,
+        },
+    });
+
+    return employees.map((employee) => ({
+        id: employee.id,
+        full_name: employee.full_name,
+        email: employee.email,
+        phone: employee.phone,
+        role: employee.role,
+        access: employee.access,
+    }));
+}
+
 function parseResources(resourcesParam?: string): LookupResource[] {
     if (!resourcesParam || resourcesParam.trim().length === 0) {
         return ["properties", "clients"];
@@ -212,6 +239,10 @@ export const getLookups = async (
 
                 if (resource === "clients") {
                     data.clients = await getClientsLookupData(context);
+                }
+
+                if (resource === "employees") {
+                    data.employees = await getEmployeesLookupData();
                 }
             })
         );

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const lookupResourceEnum = z.enum(["properties", "clients"]);
+export const lookupResourceEnum = z.enum(["properties", "clients", "employees"]);
 export const lookupContextEnum = z.enum(["contract", "maintenance", "electricity"]);
 
 export const lookupQuerySchema = z.object({
