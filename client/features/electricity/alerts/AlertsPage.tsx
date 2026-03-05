@@ -146,7 +146,7 @@ export default function AlertsPage() {
 
       {loading ? (
         <div className="min-h-[30vh] flex items-center justify-center">
-          <LoadingLottie size={80} className="p-4" />
+          <LoadingLottie size={150} className="p-4" />
         </div>
       ) : (
         <>
