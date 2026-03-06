@@ -13,6 +13,9 @@ import customerRoutes from "./customer.routes";
 import pricingRoutes from "./pricing.routes";
 import meterRoutes from "./meter.routes";
 import readingRoutes from "./reading.routes";
+import billRoutes from "./bill.routes";
+import billPaymentRoutes from "./bill-payment.routes";
+import electricityRoutes from "./electricity.routes";
 
 const router = Router();
 
@@ -40,6 +43,9 @@ router.use("/notifications", notificationRoutes);
 router.use("/pricing", pricingRoutes);
 router.use("/meters", meterRoutes);
 router.use("/readings", readingRoutes);
+router.use("/bills", billRoutes);
+router.use("/bill-payments", billPaymentRoutes);
+router.use("/electricity", electricityRoutes);
 
 // Future route modules:
 // router.use("/employees", employeeRoutes);
