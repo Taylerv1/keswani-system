@@ -390,6 +390,7 @@ const en = {
   registerPayment: "Register Payment",
   collectedBy: "Collected By",
   paymentAmount: "Amount Paid",
+  paymentCreatedSuccess: "Payment recorded successfully",
   subscriber: "Subscriber",
   bill: "Bill",
   selectBill: "Select Bill",

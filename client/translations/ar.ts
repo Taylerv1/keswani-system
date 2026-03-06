@@ -390,6 +390,7 @@ const ar: Record<string, string> = {
   registerPayment: "تسجيل دفعة",
   collectedBy: "حصّلها",
   paymentAmount: "المبلغ المدفوع",
+  paymentCreatedSuccess: "تم تسجيل الدفعة بنجاح",
   subscriber: "المشترك",
   bill: "الفاتورة",
   selectBill: "اختر فاتورة",

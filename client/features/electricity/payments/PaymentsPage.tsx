@@ -1,87 +1,52 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Plus, CreditCard, FileDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { autorun } from "mobx";
+import { CreditCard, FileDown, Plus } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { useElectricity } from "@/features/electricity/context/electricity-context";
-import { SearchBar, Pagination, Modal, KpiCard } from "@/components/ui";
+import {
+  KpiCard,
+  LoadingLottie,
+  Modal,
+  Pagination,
+  SearchBar,
+  StatusBadge,
+} from "@/components/ui";
+import { electricityPaymentsStore } from "./store";
 
-const PAGE_SIZE = 8;
+function useMobxRender() {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const dispose = autorun(() => {
+      void electricityPaymentsStore.observerSnapshot;
+      setTick((prev) => prev + 1);
+    });
+
+    return () => dispose();
+  }, []);
+}
+
+function formatMoney(value: number, currency: string): string {
+  return `${currency} ${value.toFixed(2)}`;
+}
+
+function formatDate(value: string | null | undefined, locale: string): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(locale === "ar" ? "ar-LB" : "en-US");
+}
 
 export default function ElecPaymentsPage() {
   const { t, locale } = useTranslation();
-  const { data, addPayment, updateBill } = useElectricity();
+  const store = electricityPaymentsStore;
 
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
+  useMobxRender();
 
-  const [form, setForm] = useState({
-    subscriberId: "",
-    billId: "",
-    amount: 0,
-    collectedBy: "",
-  });
-
-  const resetForm = () => setForm({ subscriberId: "", billId: "", amount: 0, collectedBy: "" });
-
-  const getSubscriberName = useCallback((id: string) => {
-    const s = data.subscribers.find((x) => x.id === id);
-    return s ? (locale === "ar" ? s.nameAr : s.name) : id;
-  }, [data.subscribers, locale]);
-
-  const getEmployeeName = (id: string) => {
-    if (!id) return "—";
-    const e = data.employees.find((x) => x.id === id);
-    return e ? (locale === "ar" ? e.nameAr : e.name) : id;
-  };
-
-  const unpaidBillsForSubscriber = form.subscriberId
-    ? data.bills.filter((b) => b.subscriberId === form.subscriberId && (b.status === "unpaid" || b.status === "partial"))
-    : [];
-
-  const handleSave = () => {
-    const receiptNumber = `EREC-${Date.now()}`;
-    addPayment({
-      billId: form.billId,
-      subscriberId: form.subscriberId,
-      amount: form.amount,
-      date: new Date().toISOString().split("T")[0],
-      collectedBy: form.collectedBy || null,
-      receiptNumber,
-    });
-
-    // Check if bill is fully paid
-    const bill = data.bills.find((b) => b.id === form.billId);
-    if (bill) {
-      const existingPayments = data.payments.filter((p) => p.billId === form.billId).reduce((s, p) => s + p.amount, 0);
-      const totalPaid = existingPayments + form.amount;
-      if (totalPaid >= bill.totalAmount) {
-        updateBill(form.billId, { status: "paid" });
-      } else {
-        updateBill(form.billId, { status: "partial" });
-      }
-    }
-
-    setModalOpen(false);
-    resetForm();
-  };
-
-  const totalCollected = data.payments.reduce((s, p) => s + p.amount, 0);
-
-  const filtered = useMemo(() => {
-    let items = [...data.payments].sort((a, b) => b.date.localeCompare(a.date));
-    if (search) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (p) => getSubscriberName(p.subscriberId).toLowerCase().includes(q) || p.receiptNumber.toLowerCase().includes(q)
-      );
-    }
-    return items;
-  }, [data.payments, search, getSubscriberName]);
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => {
+    void store.bootstrap(t("error"));
+  }, [store, t]);
 
   return (
     <div className="@container">
@@ -91,127 +56,300 @@ export default function ElecPaymentsPage() {
           <p className="text-text-secondary text-xs @md:text-sm mt-1">{t("paymentHistory")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => alert("PDF export mock")} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary hover:text-primary hover:border-primary/40 transition-colors text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2">
+          <button
+            disabled
+            className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-xs @md:text-sm font-medium cursor-not-allowed flex items-center gap-1.5 @md:gap-2 opacity-70"
+          >
             <FileDown size={15} />
             {t("exportPdf")}
           </button>
-          <button onClick={() => { resetForm(); setModalOpen(true); }} className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all">
+          <button
+            onClick={store.openAdd}
+            className="h-9 @md:h-10 px-3 @md:px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-xs @md:text-sm font-medium cursor-pointer flex items-center gap-1.5 @md:gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
+          >
             <Plus size={15} />
             {t("registerPayment")}
           </button>
         </div>
       </div>
 
+      {store.error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {store.error}
+        </div>
+      )}
+      {store.success && (
+        <div className="mb-4 p-3 rounded-lg bg-card-green-light border border-card-green/20 text-card-green text-sm">
+          {store.success}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 @sm:grid-cols-2 gap-3 @md:gap-5 mb-5">
-        <KpiCard label={t("totalCollected")} value={`$${totalCollected.toFixed(2)}`} icon={<CreditCard size={22} />} color="text-card-green" bgColor="bg-card-green-light" />
-        <KpiCard label={t("elecPayments")} value={data.payments.length} icon={<CreditCard size={22} />} color="text-card-blue" bgColor="bg-card-blue-light" />
+        <KpiCard
+          label={t("totalCollected")}
+          value={formatMoney(store.totalCollected, "USD")}
+          icon={<CreditCard size={22} />}
+          color="text-card-green"
+          bgColor="bg-card-green-light"
+        />
+        <KpiCard
+          label={t("elecPayments")}
+          value={store.totalPayments}
+          icon={<CreditCard size={22} />}
+          color="text-card-blue"
+          bgColor="bg-card-blue-light"
+        />
       </div>
 
       <div className="flex flex-col @xs:flex-row gap-3 mb-5">
         <div className="flex-1">
-          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+          <SearchBar
+            value={store.search}
+            onChange={(value) => {
+              store.setSearch(value);
+              void store.loadPayments({ errorFallback: t("error") });
+            }}
+          />
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
-        {/* Desktop table */}
-        <div className="hidden @3xl:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-surface-border bg-background">
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriber")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("date")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentAmount")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("collectedBy")}</th>
-                <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("receiptNumber")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-text-muted">{t("noResults")}</td></tr>
-              ) : (
-                paginated.map((p) => (
-                  <tr key={p.id} className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-text-primary">{getSubscriberName(p.subscriberId)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{p.date}</td>
-                    <td className="px-4 py-3 font-medium text-card-green">${p.amount.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-text-secondary">{getEmployeeName(p.collectedBy ?? "")}</td>
-                    <td className="px-4 py-3 text-text-muted text-xs">{p.receiptNumber}</td>
+      {store.loading ? (
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center">
+          <LoadingLottie size={150} className="p-6" />
+        </div>
+      ) : (
+        <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
+          <div className="hidden @3xl:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-border bg-background">
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("subscriber")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("billMonth")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentDate")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("paymentAmount")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("collectedBy")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("receiptNumber")}</th>
+                  <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("status")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {store.items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-text-muted">
+                      {t("noResults")}
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {/* Mobile cards */}
-        <div className="@3xl:hidden divide-y divide-surface-border">
-          {paginated.length === 0 ? (
-            <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
-          ) : (
-            paginated.map((p) => (
-              <div key={p.id} className="p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-text-primary text-sm">{getSubscriberName(p.subscriberId)}</span>
-                  <span className="font-semibold text-card-green text-sm">${p.amount.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-muted">{p.date}</span>
-                  <span className="text-text-muted">{getEmployeeName(p.collectedBy ?? "")}</span>
-                </div>
-                <div className="flex items-center justify-end text-xs">
-                  <span className="text-text-muted font-mono">{p.receiptNumber}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <Pagination currentPage={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
-
-      {/* Register Payment Modal */}
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); resetForm(); }} title={t("registerPayment")} maxWidth="max-w-md">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("selectSubscriber")}</label>
-            <select value={form.subscriberId} onChange={(e) => setForm({ ...form, subscriberId: e.target.value, billId: "" })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-              <option value="">--</option>
-              {data.subscribers.map((s) => (
-                <option key={s.id} value={s.id}>{locale === "ar" ? s.nameAr : s.name}</option>
-              ))}
-            </select>
+                ) : (
+                  store.items.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b border-surface-border last:border-0 hover:bg-background/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium text-text-primary">
+                        {payment.subscriber_name}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {payment.bill.billing_period_end?.slice(0, 7) || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {formatDate(payment.payment_date, locale)}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-card-green">
+                        {formatMoney(payment.amount, payment.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">
+                        {payment.collector_name ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-text-muted text-xs">
+                        {payment.receipt_number ?? "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={payment.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-          {form.subscriberId && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">{t("selectBill")}</label>
-              <select value={form.billId} onChange={(e) => {
-                const bill = data.bills.find((b) => b.id === e.target.value);
-                const existingPaid = bill ? data.payments.filter((p) => p.billId === bill.id).reduce((s, p) => s + p.amount, 0) : 0;
-                setForm({ ...form, billId: e.target.value, amount: bill ? Math.round((bill.totalAmount - existingPaid) * 100) / 100 : 0 });
-              }} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="">--</option>
-                {unpaidBillsForSubscriber.map((b) => (
-                  <option key={b.id} value={b.id}>{b.month} - ${b.totalAmount.toFixed(2)}</option>
-                ))}
-              </select>
+
+          <div className="@3xl:hidden divide-y divide-surface-border">
+            {store.items.length === 0 ? (
+              <div className="px-4 py-8 text-center text-text-muted">{t("noResults")}</div>
+            ) : (
+              store.items.map((payment) => (
+                <div key={payment.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-text-primary text-sm">
+                      {payment.subscriber_name}
+                    </span>
+                    <span className="font-semibold text-card-green text-sm">
+                      {formatMoney(payment.amount, payment.currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-muted">
+                      {formatDate(payment.payment_date, locale)}
+                    </span>
+                    <StatusBadge status={payment.status} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-text-muted">{payment.collector_name ?? "-"}</span>
+                    <span className="text-text-muted font-mono">{payment.receipt_number ?? "-"}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      <Pagination
+        currentPage={store.page}
+        totalPages={store.totalPages}
+        totalItems={store.totalItems}
+        pageSize={store.PAGE_SIZE}
+        onPageChange={(nextPage) => {
+          store.setPage(nextPage);
+          void store.loadPayments({
+            errorFallback: t("error"),
+            targetPage: nextPage,
+          });
+        }}
+      />
+
+      <Modal
+        open={store.modalOpen}
+        onClose={store.closeModal}
+        title={t("registerPayment")}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          {store.error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {store.error}
             </div>
           )}
+
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("paymentAmount")}</label>
-            <input type="number" min={0} step={0.01} value={form.amount} onChange={(e) => setForm({ ...form, amount: +e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{t("collectedBy")}</label>
-            <select value={form.collectedBy} onChange={(e) => setForm({ ...form, collectedBy: e.target.value })} className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
+            <label className="block text-sm font-medium text-text-secondary mb-1">{t("selectSubscriber")}</label>
+            <select
+              value={store.form.subscriber_id}
+              onChange={(event) => {
+                void store.onSubscriberSelected(event.target.value, t("error"));
+              }}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
               <option value="">--</option>
-              {data.employees.filter((e) => (e.role === "collector" || e.role === "admin") && e.status === "active").map((e) => (
-                <option key={e.id} value={e.id}>{locale === "ar" ? e.nameAr : e.name}</option>
+              {store.subscriberOptions.map((subscriber) => (
+                <option key={subscriber.id} value={subscriber.id}>
+                  {subscriber.client_name} ({subscriber.subscription_number})
+                </option>
               ))}
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{t("selectBill")}</label>
+            <select
+              value={store.form.bill_id}
+              onChange={(event) => store.onBillSelected(event.target.value)}
+              disabled={!store.form.subscriber_id || store.lookupLoading}
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <option value="">--</option>
+              {store.openBillOptions.map((bill) => (
+                <option key={bill.id} value={bill.id}>
+                  {bill.month} - {bill.meter_number} - {formatMoney(bill.outstanding_amount, bill.currency)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {store.selectedBill && (
+            <div className="bg-card-orange-light rounded-lg p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">{t("totalAmountBill")}</span>
+                <span className="font-medium text-text-primary">
+                  {formatMoney(store.selectedBill.total_amount, store.selectedBill.currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">{t("totalCollected")}</span>
+                <span className="font-medium text-card-green">
+                  {formatMoney(store.selectedBill.paid_amount, store.selectedBill.currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">{t("totalOutstanding")}</span>
+                <span className="font-semibold text-card-red">
+                  {formatMoney(store.selectedBill.outstanding_amount, store.selectedBill.currency)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{t("paymentAmount")}</label>
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              value={store.form.amount}
+              onChange={(event) =>
+                store.setForm((prev) => ({
+                  ...prev,
+                  amount: Number(event.target.value),
+                }))
+              }
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{t("collectedBy")}</label>
+            <select
+              value={store.form.collected_by}
+              onChange={(event) =>
+                store.setForm((prev) => ({
+                  ...prev,
+                  collected_by: event.target.value,
+                }))
+              }
+              className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="">--</option>
+              {store.collectorOptions.map((collector) => (
+                <option key={collector.id} value={collector.id}>
+                  {collector.full_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setModalOpen(false); resetForm(); }} className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors">{t("cancel")}</button>
-            <button onClick={handleSave} disabled={!form.billId || form.amount <= 0} className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{t("save")}</button>
+            <button
+              onClick={store.closeModal}
+              disabled={store.actionLoading}
+              className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              onClick={() =>
+                void store.save({
+                  billRequiredMessage: `${t("bill")} ${t("isRequired")}`,
+                  amountRequiredMessage: `${t("paymentAmount")} ${t("isRequired")}`,
+                  amountExceededMessage: t("paymentAmount") + " > " + t("totalOutstanding"),
+                  createdSuccessMessage: t("paymentCreatedSuccess"),
+                  errorFallback: t("error"),
+                })
+              }
+              disabled={!store.form.bill_id || store.actionLoading}
+              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {store.actionLoading ? t("saving") : t("save")}
+            </button>
           </div>
         </div>
       </Modal>
