@@ -2,6 +2,7 @@
 
 import { observer } from "mobx-react-lite";
 import { Edit2 } from "lucide-react";
+import { useTranslation } from "@/lib/translation";
 import { pricingStore } from "@/stores/pricingStore";
 import type { PricingPlan } from "@/services/pricingService";
 
@@ -10,12 +11,13 @@ interface PricingListProps {
 }
 
 function PricingListComponent({ onEdit }: PricingListProps) {
+  const { t } = useTranslation();
   const sortedPlans = [...pricingStore.plans].sort((a, b) => b.price - a.price);
 
   if (sortedPlans.length === 0) {
     return (
       <div className="bg-surface rounded-xl border border-surface-border p-6 text-sm text-text-muted">
-        No pricing plans found.
+        {t("noPricingPlansFound")}
       </div>
     );
   }
@@ -23,18 +25,18 @@ function PricingListComponent({ onEdit }: PricingListProps) {
   return (
     <div className="bg-surface rounded-xl border border-surface-border overflow-hidden">
       <div className="px-5 py-4 border-b border-surface-border">
-        <h2 className="text-sm font-semibold text-text-primary">Pricing History</h2>
+        <h2 className="text-sm font-semibold text-text-primary">{t("pricingHistory")}</h2>
       </div>
 
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-border bg-background">
-              <th className="text-start px-4 py-3 font-semibold text-text-secondary">Name</th>
-              <th className="text-start px-4 py-3 font-semibold text-text-secondary">Price</th>
-              <th className="text-start px-4 py-3 font-semibold text-text-secondary">Description</th>
-              <th className="text-start px-4 py-3 font-semibold text-text-secondary">Features</th>
-              <th className="text-start px-4 py-3 font-semibold text-text-secondary">Actions</th>
+              <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("name")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("priceLabel")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("description")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("features")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-text-secondary">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>

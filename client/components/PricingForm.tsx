@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { observer } from "mobx-react-lite";
 import { LoadingLottie, Modal } from "@/components/ui";
+import { useTranslation } from "@/lib/translation";
 import { pricingStore } from "@/stores/pricingStore";
 import type { PricingPlan, PricingPlanPayload } from "@/services/pricingService";
 
@@ -38,6 +39,7 @@ function createInitialForm(editingPlan: PricingPlan | null) {
 }
 
 function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) {
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => createInitialForm(editingPlan));
   const isEditing = Boolean(editingPlan);
@@ -68,12 +70,12 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
     <Modal
       open={open}
       onClose={onClose}
-      title={editingPlan ? "Edit Pricing" : "Add Pricing"}
+      title={editingPlan ? t("editPricing") : t("addPricing")}
       maxWidth="max-w-md"
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Plan Name</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("planName")}</label>
           <input
             type="text"
             value={form.name}
@@ -83,7 +85,7 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Price ($)</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">($) {t("priceLabel")}</label>
           <input
             type="number"
             min={0}
@@ -94,12 +96,12 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
             className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:bg-surface"
           />
           {isEditing && (
-            <p className="mt-1 text-xs text-text-muted">Price cannot be changed while editing a plan.</p>
+            <p className="mt-1 text-xs text-text-muted">{t("priceCannotBeChangedOnEdit")}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Description</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">{t("description")}</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -109,7 +111,7 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
 
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">
-            Features (one per line)
+            {t("featuresOnePerLine")}
           </label>
           <textarea
             value={form.features}
@@ -123,7 +125,7 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
             onClick={onClose}
             className="h-10 px-5 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:bg-background transition-colors"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -132,7 +134,7 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
             }
             className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-24"
           >
-            {saving ? <LoadingLottie size={28} /> : "Save"}
+            {saving ? <LoadingLottie size={28} /> : t("save")}
           </button>
         </div>
       </div>

@@ -6,10 +6,12 @@ import { Plus, Zap, DollarSign } from "lucide-react";
 import { LoadingLottie, KpiCard } from "@/components/ui";
 import { PricingList } from "@/components/PricingList";
 import { PricingForm } from "@/components/PricingForm";
+import { useTranslation } from "@/lib/translation";
 import { pricingStore } from "@/stores/pricingStore";
 import type { PricingPlan } from "@/services/pricingService";
 
 function PricingPageComponent() {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
 
@@ -24,9 +26,9 @@ function PricingPageComponent() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Pricing Management</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{t("pricingManagement")}</h1>
           <p className="text-text-secondary text-sm mt-1">
-            Manage pricing plans and keep plan changes in sync with the backend.
+            {t("pricingDescription")}
           </p>
         </div>
 
@@ -38,7 +40,7 @@ function PricingPageComponent() {
           className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
         >
           <Plus size={16} />
-          Add Pricing
+          {t("addPricing")}
         </button>
       </div>
 
@@ -57,14 +59,14 @@ function PricingPageComponent() {
           {currentPrice && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
               <KpiCard
-                label="Current Price / kWh"
+                label={t("currentPriceKwh")}
                 value={`$${currentPrice.price.toFixed(2)}`}
                 icon={<Zap size={22} />}
                 color="text-card-orange"
                 bgColor="bg-card-orange-light"
               />
               <KpiCard
-                label="Current Plan"
+                label={t("currentPlan")}
                 value={currentPrice.name}
                 icon={<DollarSign size={22} />}
                 color="text-card-blue"
