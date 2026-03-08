@@ -40,11 +40,13 @@ function createInitialForm(editingPlan: PricingPlan | null) {
 function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => createInitialForm(editingPlan));
+  const isEditing = Boolean(editingPlan);
 
   const handleSubmit = async () => {
     const payload: PricingPlanPayload = {
       name: form.name.trim(),
-      price: form.price,
+      // Keep price immutable when editing an existing pricing plan.
+      price: editingPlan ? editingPlan.price : form.price,
       description: form.description.trim(),
       features: parseFeatures(form.features),
     };
@@ -88,8 +90,12 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
             step={0.01}
             value={form.price}
             onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            disabled={isEditing}
+            className="w-full h-10 rounded-lg border border-surface-border bg-background px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:bg-surface"
           />
+          {isEditing && (
+            <p className="mt-1 text-xs text-text-muted">Price cannot be changed while editing a plan.</p>
+          )}
         </div>
 
         <div>
