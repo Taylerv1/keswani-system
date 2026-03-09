@@ -25,6 +25,218 @@ function formatMoney(value: number): string {
   return `USD ${value.toFixed(2)}`;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function ConsumptionChart({
+  data,
+}: {
+  data: Array<{ month: string; consumption_kwh: number }>;
+}) {
+  if (!data.length) {
+    return <div className="text-sm text-text-muted">No data</div>;
+  }
+
+  const width = Math.max(640, data.length * 90);
+  const height = 300;
+  const paddingLeft = 56;
+  const paddingRight = 24;
+  const paddingTop = 24;
+  const paddingBottom = 54;
+  const plotWidth = width - paddingLeft - paddingRight;
+  const plotHeight = height - paddingTop - paddingBottom;
+  const maxValue = Math.max(...data.map((item) => item.consumption_kwh), 1);
+
+  const points = data.map((item, index) => {
+    const x =
+      data.length === 1
+        ? paddingLeft + plotWidth / 2
+        : paddingLeft + (index * plotWidth) / (data.length - 1);
+    const y = paddingTop + (1 - item.consumption_kwh / maxValue) * plotHeight;
+    return { x, y, label: item.month, value: item.consumption_kwh };
+  });
+
+  const linePath = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${
+    paddingTop + plotHeight
+  } L ${points[0].x} ${paddingTop + plotHeight} Z`;
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Consumption chart"
+      >
+        <defs>
+          <linearGradient id="consumptionArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#f97316" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {[0, 1, 2, 3, 4].map((step) => {
+          const y = paddingTop + (step * plotHeight) / 4;
+          const value = Math.round(((4 - step) * maxValue) / 4);
+          return (
+            <g key={`grid-${step}`}>
+              <line
+                x1={paddingLeft}
+                y1={y}
+                x2={width - paddingRight}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeDasharray="4 4"
+              />
+              <text
+                x={paddingLeft - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="10"
+                fill="#6b7280"
+              >
+                {value}
+              </text>
+            </g>
+          );
+        })}
+
+        <path d={areaPath} fill="url(#consumptionArea)" />
+        <path d={linePath} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
+
+        {points.map((point) => (
+          <g key={point.label}>
+            <circle cx={point.x} cy={point.y} r="4.5" fill="#f97316" />
+            <text x={point.x} y={point.y - 10} textAnchor="middle" fontSize="10" fill="#374151">
+              {point.value.toFixed(0)}
+            </text>
+            <text
+              x={point.x}
+              y={height - 18}
+              textAnchor="middle"
+              fontSize="10"
+              fill="#6b7280"
+            >
+              {point.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function RevenueChart({
+  data,
+}: {
+  data: Array<{ month: string; billed_amount: number; collected_amount: number }>;
+}) {
+  if (!data.length) {
+    return <div className="text-sm text-text-muted">No data</div>;
+  }
+
+  const width = Math.max(680, data.length * 96);
+  const height = 320;
+  const paddingLeft = 56;
+  const paddingRight = 24;
+  const paddingTop = 24;
+  const paddingBottom = 64;
+  const plotWidth = width - paddingLeft - paddingRight;
+  const plotHeight = height - paddingTop - paddingBottom;
+  const maxValue = Math.max(
+    ...data.map((item) => Math.max(item.billed_amount, item.collected_amount)),
+    1
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Revenue chart"
+      >
+        {[0, 1, 2, 3, 4].map((step) => {
+          const y = paddingTop + (step * plotHeight) / 4;
+          const value = ((4 - step) * maxValue) / 4;
+          return (
+            <g key={`rev-grid-${step}`}>
+              <line
+                x1={paddingLeft}
+                y1={y}
+                x2={width - paddingRight}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeDasharray="4 4"
+              />
+              <text
+                x={paddingLeft - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="10"
+                fill="#6b7280"
+              >
+                {value.toFixed(0)}
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((item, index) => {
+          const groupWidth = plotWidth / data.length;
+          const xStart = paddingLeft + index * groupWidth + groupWidth * 0.18;
+          const barWidth = Math.max(12, groupWidth * 0.26);
+          const billedHeight = (item.billed_amount / maxValue) * plotHeight;
+          const collectedHeight = (item.collected_amount / maxValue) * plotHeight;
+          const billedY = paddingTop + plotHeight - billedHeight;
+          const collectedY = paddingTop + plotHeight - collectedHeight;
+
+          return (
+            <g key={`group-${item.month}`}>
+              <rect
+                x={xStart}
+                y={billedY}
+                width={barWidth}
+                height={billedHeight}
+                rx="4"
+                fill="#3b82f6"
+              />
+              <rect
+                x={xStart + barWidth + groupWidth * 0.12}
+                y={collectedY}
+                width={barWidth}
+                height={collectedHeight}
+                rx="4"
+                fill="#10b981"
+              />
+              <text
+                x={xStart + barWidth}
+                y={height - 24}
+                textAnchor="middle"
+                fontSize="10"
+                fill="#6b7280"
+              >
+                {item.month}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const { t } = useTranslation();
   const store = electricityReportsStore;
@@ -50,6 +262,138 @@ export default function ReportsPage() {
     { type: "subscriber", icon: <Users size={18} />, label: t("subscriberReport") },
   ];
 
+  const exportCurrentReportPdf = () => {
+    const reportLabel = reports.find((item) => item.type === store.reportType)?.label ?? t("elecReports");
+    const generatedAt = new Date();
+    const dateRangeLabel = `${store.fromMonth || "-"} → ${store.toMonth || "-"}`;
+
+    let headers: string[] = [];
+    let rows: string[][] = [];
+
+    if (store.reportType === "consumption") {
+      headers = [t("month"), t("totalConsumption"), t("totalBills")];
+      rows = store.consumptionByMonth.map((item) => [
+        item.month,
+        `${item.consumption_kwh.toFixed(2)} ${t("kwh")}`,
+        String(item.bills_count),
+      ]);
+    } else if (store.reportType === "revenue") {
+      headers = [t("month"), t("totalBilled"), t("totalCollected"), t("totalOutstanding")];
+      rows = store.revenueByMonth.map((item) => [
+        item.month,
+        formatMoney(item.billed_amount),
+        formatMoney(item.collected_amount),
+        formatMoney(Math.max(0, item.billed_amount - item.collected_amount)),
+      ]);
+    } else if (store.reportType === "debt") {
+      headers = [t("month"), t("totalBilled"), t("totalCollected"), t("totalOutstanding")];
+      rows = store.revenueByMonth.map((item) => [
+        item.month,
+        formatMoney(item.billed_amount),
+        formatMoney(item.collected_amount),
+        formatMoney(Math.max(0, item.billed_amount - item.collected_amount)),
+      ]);
+    } else if (store.reportType === "building") {
+      headers = [t("buildingName"), t("totalSubscribers"), t("totalConsumption"), t("totalRevenue")];
+      rows = store.buildingBreakdown.map((item) => [
+        item.property_name,
+        String(item.total_subscribers),
+        `${item.total_consumption.toFixed(2)} ${t("kwh")}`,
+        formatMoney(item.total_revenue),
+      ]);
+    } else {
+      headers = [t("subscriber"), t("totalConsumption"), t("totalBilled"), t("totalPaid"), t("totalOutstanding")];
+      rows = store.subscriberBreakdown.map((item) => [
+        item.subscriber_name,
+        `${item.total_consumption.toFixed(2)} ${t("kwh")}`,
+        formatMoney(item.total_billed),
+        formatMoney(item.total_paid),
+        formatMoney(item.total_outstanding),
+      ]);
+    }
+
+    const summaryRows = [
+      [t("totalConsumption"), `${store.totalConsumption.toFixed(2)} ${t("kwh")}`],
+      [t("totalBilled"), formatMoney(store.totalBilled)],
+      [t("totalPaid"), formatMoney(store.totalPaid)],
+      [t("totalOutstanding"), formatMoney(store.totalOutstanding)],
+      [t("collectionRate"), `${store.collectionRate.toFixed(2)}%`],
+    ];
+
+    const html = `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(reportLabel)} - ${escapeHtml(t("exportPdf"))}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
+      h1 { margin: 0 0 6px; font-size: 20px; }
+      p { margin: 0 0 6px; color: #6b7280; font-size: 12px; }
+      .section-title { margin: 16px 0 8px; font-size: 14px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 12px; text-align: left; }
+      th { background: #f9fafb; }
+      .summary td:first-child { width: 30%; font-weight: 600; background: #f9fafb; }
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(reportLabel)}</h1>
+    <p>${escapeHtml(t("elecReports"))}</p>
+    <p>${escapeHtml(t("date"))}: ${escapeHtml(generatedAt.toISOString().slice(0, 19).replace("T", " "))}</p>
+    <p>${escapeHtml(t("fromMonth"))} / ${escapeHtml(t("toMonth"))}: ${escapeHtml(dateRangeLabel)}</p>
+
+    <div class="section-title">${escapeHtml(t("debtSummary"))}</div>
+    <table class="summary">
+      <tbody>
+        ${summaryRows
+          .map(
+            ([label, value]) =>
+              `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+
+    <div class="section-title">${escapeHtml(reportLabel)}</div>
+    <table>
+      <thead>
+        <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr>
+      </thead>
+      <tbody>
+        ${
+          rows.length
+            ? rows
+                .map(
+                  (row) =>
+                    `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`
+                )
+                .join("")
+            : `<tr><td colspan="${headers.length}">${escapeHtml(t("noData"))}</td></tr>`
+        }
+      </tbody>
+    </table>
+  </body>
+</html>
+`.trim();
+
+    const popup = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+    if (!popup) {
+      store.setError(t("error"));
+      return;
+    }
+
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+
+    setTimeout(() => {
+      popup.focus();
+      popup.print();
+      popup.close();
+    }, 300);
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -58,8 +402,8 @@ export default function ReportsPage() {
           <p className="text-text-secondary text-sm mt-1">{t("reportsDescription")}</p>
         </div>
         <button
-          disabled
-          className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-not-allowed flex items-center gap-2 opacity-70"
+          onClick={exportCurrentReportPdf}
+          className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:text-primary hover:border-primary/40 transition-colors flex items-center gap-2"
         >
           <FileDown size={16} />
           {t("exportPdf")}
@@ -140,23 +484,7 @@ export default function ReportsPage() {
               />
               <div className="bg-surface rounded-xl border border-surface-border p-5">
                 <h3 className="text-sm font-semibold text-text-primary mb-4">{t("consumptionReport")}</h3>
-                <div className="flex items-end gap-3 h-48">
-                  {store.consumptionByMonth.map((item) => {
-                    const h = (item.consumption_kwh / store.maxConsumption) * 100;
-                    return (
-                      <div key={item.month} className="flex-1 flex flex-col items-center gap-1">
-                        <span className="text-xs font-bold text-text-primary">
-                          {item.consumption_kwh.toLocaleString()}
-                        </span>
-                        <div
-                          className="w-full rounded-t-lg bg-gradient-to-t from-card-orange to-card-yellow transition-all duration-500"
-                          style={{ height: `${h}%` }}
-                        />
-                        <span className="text-[10px] text-text-muted">{item.month}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ConsumptionChart data={store.consumptionByMonth} />
               </div>
             </div>
           )}
@@ -188,26 +516,7 @@ export default function ReportsPage() {
               </div>
               <div className="bg-surface rounded-xl border border-surface-border p-5">
                 <h3 className="text-sm font-semibold text-text-primary mb-4">{t("revenueReport")}</h3>
-                <div className="flex items-end gap-4 h-48">
-                  {store.revenueByMonth.map((item) => (
-                    <div key={item.month} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] font-bold text-text-primary">
-                        {formatMoney(item.billed_amount)}
-                      </span>
-                      <div className="w-full flex gap-1 items-end" style={{ height: "85%" }}>
-                        <div
-                          className="flex-1 rounded-t-md bg-card-blue transition-all duration-500"
-                          style={{ height: `${(item.billed_amount / store.maxRevenue) * 100}%` }}
-                        />
-                        <div
-                          className="flex-1 rounded-t-md bg-card-green transition-all duration-500"
-                          style={{ height: `${(item.collected_amount / store.maxRevenue) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-text-muted">{item.month}</span>
-                    </div>
-                  ))}
-                </div>
+                <RevenueChart data={store.revenueByMonth} />
                 <div className="flex items-center gap-4 mt-3 justify-center">
                   <span className="flex items-center gap-1 text-xs text-text-muted">
                     <span className="w-3 h-3 rounded-sm bg-card-blue inline-block" /> {t("totalBilled")}

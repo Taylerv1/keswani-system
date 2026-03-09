@@ -85,27 +85,6 @@ function listMonths(fromMonth: string, toMonth: string): string[] {
     return result;
 }
 
-async function getPaidAmountByBillIds(billIds: string[]) {
-    if (billIds.length === 0) return new Map<string, number>();
-
-    const rows = await prisma.bill_payments.groupBy({
-        by: ["bill_id"],
-        where: {
-            bill_id: { in: billIds },
-            deleted_at: null,
-            status: { in: SETTLED_PAYMENT_STATUSES },
-        },
-        _sum: { amount: true },
-    });
-
-    const paidByBillId = new Map<string, number>();
-    for (const row of rows) {
-        paidByBillId.set(row.bill_id, toNumber(row._sum?.amount));
-    }
-
-    return paidByBillId;
-}
-
 /**
  * GET /api/electricity/debts
  * Debt summary grouped by subscriber.
@@ -127,8 +106,25 @@ export const getElectricityDebts = async (
             include: debtBillInclude,
         });
 
-        const billIds = bills.map((bill) => bill.id);
-        const paidByBillId = await getPaidAmountByBillIds(billIds);
+        const paidRows = await prisma.bill_payments.groupBy({
+            by: ["bill_id"],
+            where: {
+                deleted_at: null,
+                status: { in: SETTLED_PAYMENT_STATUSES },
+                bill: {
+                    deleted_at: null,
+                    status: { in: OPEN_BILL_STATUSES },
+                    meter: { deleted_at: null },
+                    subscriber: { deleted_at: null },
+                },
+            },
+            _sum: { amount: true },
+        });
+
+        const paidByBillId = new Map<string, number>();
+        for (const row of paidRows) {
+            paidByBillId.set(row.bill_id, toNumber(row._sum?.amount));
+        }
 
         const bySubscriber = new Map<
             string,
@@ -329,20 +325,25 @@ export const getElectricityReports = async (
             include: debtBillInclude,
         });
 
-        const billIds = bills.map((bill) => bill.id);
-        const payments = billIds.length
-            ? await prisma.bill_payments.findMany({
-                where: {
-                    bill_id: { in: billIds },
+        const payments = await prisma.bill_payments.findMany({
+            where: {
+                deleted_at: null,
+                status: { in: SETTLED_PAYMENT_STATUSES },
+                bill: {
                     deleted_at: null,
-                    status: { in: SETTLED_PAYMENT_STATUSES },
+                    billing_period_end: {
+                        gte: fromDate,
+                        lt: toDateExclusive,
+                    },
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
                 },
-                select: {
-                    bill_id: true,
-                    amount: true,
-                },
-            })
-            : [];
+            },
+            select: {
+                bill_id: true,
+                amount: true,
+            },
+        });
 
         const paidByBillId = new Map<string, number>();
         for (const payment of payments) {
