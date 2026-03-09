@@ -25,8 +25,8 @@ function formatMoney(value: number): string {
   return `USD ${value.toFixed(2)}`;
 }
 
-function escapeHtml(value: string): string {
-  return value
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -377,21 +377,25 @@ export default function ReportsPage() {
 </html>
 `.trim();
 
-    const popup = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
-    if (!popup) {
+    try {
+      const popup = window.open("", "_blank", "width=1024,height=768");
+      if (!popup) {
+        store.setError(t("error"));
+        return;
+      }
+
+      popup.document.open();
+      popup.document.write(html);
+      popup.document.close();
+
+      setTimeout(() => {
+        popup.focus();
+        popup.print();
+        popup.close();
+      }, 300);
+    } catch {
       store.setError(t("error"));
-      return;
     }
-
-    popup.document.open();
-    popup.document.write(html);
-    popup.document.close();
-
-    setTimeout(() => {
-      popup.focus();
-      popup.print();
-      popup.close();
-    }, 300);
   };
 
   return (
