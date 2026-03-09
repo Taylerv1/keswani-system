@@ -265,7 +265,7 @@ export default function ReportsPage() {
   const exportCurrentReportPdf = () => {
     const reportLabel = reports.find((item) => item.type === store.reportType)?.label ?? t("elecReports");
     const generatedAt = new Date();
-    const dateRangeLabel = `${store.fromMonth || "-"} → ${store.toMonth || "-"}`;
+    const dateRangeLabel = `${store.fromMonth || "-"} -> ${store.toMonth || "-"}`;
 
     let headers: string[] = [];
     let rows: string[][] = [];
