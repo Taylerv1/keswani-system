@@ -1,6 +1,6 @@
 "use client";
 
-import { observer } from "mobx-react-lite";
+
 import { Edit2 } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { pricingStore } from "@/stores/pricingStore";
@@ -104,4 +104,4 @@ function PricingListComponent({ onEdit }: PricingListProps) {
   );
 }
 
-export const PricingList = observer(PricingListComponent);
+export const PricingList = PricingListComponent;

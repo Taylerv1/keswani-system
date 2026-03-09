@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { observer } from "mobx-react-lite";
 import { Plus, Zap, DollarSign } from "lucide-react";
 import { LoadingLottie, KpiCard } from "@/components/ui";
 import { PricingList } from "@/components/PricingList";
@@ -95,4 +94,4 @@ function PricingPageComponent() {
   );
 }
 
-export default observer(PricingPageComponent);
+export default PricingPageComponent;

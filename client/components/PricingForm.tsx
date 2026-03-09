@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { observer } from "mobx-react-lite";
 import { LoadingLottie, Modal } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
 import { pricingStore } from "@/stores/pricingStore";
@@ -142,4 +141,4 @@ function PricingFormComponent({ open, editingPlan, onClose }: PricingFormProps) 
   );
 }
 
-export const PricingForm = observer(PricingFormComponent);
+export const PricingForm = PricingFormComponent;
