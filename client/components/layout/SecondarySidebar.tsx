@@ -9,11 +9,9 @@ import {
   FileText,
   CreditCard,
   Wrench,
-  Bell,
   Gauge,
   BookOpen,
   Receipt,
-  AlertTriangle,
   DollarSign,
   BarChart3,
   Settings,
@@ -35,12 +33,10 @@ const rentSubNav: SubNavItem[] = [
   { key: "rentContracts", href: "/admin-dashboard/rent/contracts", icon: <FileText size={16} /> },
   { key: "rentPayments", href: "/admin-dashboard/rent/payments", icon: <CreditCard size={16} /> },
   { key: "rentMaintenance", href: "/admin-dashboard/rent/maintenance", icon: <Wrench size={16} /> },
-  { key: "rentNotifications", href: "/admin-dashboard/rent/notifications", icon: <Bell size={16} /> },
 ];
 
 const electricitySubNav: SubNavItem[] = [
   { key: "elecDashboard", href: "/admin-dashboard/electricity", icon: <LayoutDashboard size={16} /> },
-  { key: "elecAlerts", href: "/admin-dashboard/electricity/alerts", icon: <AlertTriangle size={16} /> },
   { key: "elecIssues", href: "/admin-dashboard/electricity/issues", icon: <Wrench size={16} /> },
   { key: "elecBuildings", href: "/admin-dashboard/electricity/buildings", icon: <Building2 size={16} /> },
   { key: "elecSubscribers", href: "/admin-dashboard/electricity/subscribers", icon: <Users size={16} /> },

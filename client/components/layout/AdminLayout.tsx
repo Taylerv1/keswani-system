@@ -177,7 +177,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       return;
     }
 
-    router.push("/admin-dashboard/rent/notifications#notifications");
+    router.push("/admin-dashboard/notifications");
   };
 
   const welcomeBackText = locale === "ar" ? "أهلًا بعودتك" : "Welcome back";
