@@ -23,7 +23,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 class SupportStore {
-  PAGE_SIZE = 8;
+  PAGE_SIZE = 3;
   private pageCache = new Map<
     string,
     { items: SupportItem[]; totalItems: number; totalPages: number }
