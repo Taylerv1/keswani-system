@@ -148,6 +148,7 @@ export const employees = [
         address: "Beirut, Hamra Street 45",
         role: "owner" as const,
         access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        salary_amount: 0,
         is_active: true,
     },
     {
@@ -158,6 +159,7 @@ export const employees = [
         address: "Beirut, Achrafieh",
         role: "admin" as const,
         access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        salary_amount: 2500,
         is_active: true,
     },
     {
@@ -168,6 +170,7 @@ export const employees = [
         address: "Beirut, Hamra St. Office 3",
         role: "employee" as const,
         access: { rent: true, electricity: false, expenses: false },
+        salary_amount: 1200,
         is_active: true,
     },
     {
@@ -178,6 +181,7 @@ export const employees = [
         address: "Tripoli, Mina Road 12",
         role: "employee" as const,
         access: { rent: false, electricity: true, expenses: false },
+        salary_amount: 1300,
         is_active: true,
     },
     {
@@ -188,6 +192,7 @@ export const employees = [
         address: "Sidon, Old City Office",
         role: "employee" as const,
         access: { rent: true, electricity: true, expenses: true },
+        salary_amount: 1400,
         is_active: false, // soft deactivated
     },
     {
@@ -198,6 +203,7 @@ export const employees = [
         address: "Beirut, Verdun",
         role: "owner" as const,
         access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        salary_amount: 0,
         is_active: true,
     },
     {
@@ -208,6 +214,7 @@ export const employees = [
         address: "Jounieh, Corniche Blvd",
         role: "owner" as const,
         access: { rent: true, electricity: true, expenses: true, employees: true, clients: true },
+        salary_amount: 0,
         is_active: true,
     },
 ];

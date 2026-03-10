@@ -58,10 +58,13 @@ CREATE TABLE employees (
   address       TEXT,
   role          employee_role NOT NULL DEFAULT 'employee',
   access        JSONB NOT NULL DEFAULT '{}'::jsonb,          -- fine-grained permissions
+  salary_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   is_active     BOOLEAN NOT NULL DEFAULT true,
   deleted_at    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_employee_salary_non_negative CHECK (salary_amount >= 0)
 );
 
 -- -----------------------------------------------
