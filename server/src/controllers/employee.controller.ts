@@ -41,6 +41,8 @@ const FULL_ACCESS: EmployeeAccess = {
     clients: true,
 };
 
+const START_MONTH_COUNT = 6;
+
 const normalizeOptionalString = (
     value: string | null | undefined
 ): string | null | undefined => {
@@ -53,6 +55,40 @@ const normalizeOptionalString = (
 const isObject = (value: unknown): value is Record<string, unknown> =>
     typeof value === "object" && value !== null;
 
+const toNumber = (value: unknown): number => {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const toMonth = (value: Date): string => value.toISOString().slice(0, 7);
+
+const parseMonthStart = (month: string): Date => new Date(`${month}-01T00:00:00.000Z`);
+
+const incrementMonth = (value: Date): Date => {
+    const next = new Date(value);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    return next;
+};
+
+const shiftMonth = (value: Date, offset: number): Date => {
+    const shifted = new Date(value);
+    shifted.setUTCMonth(shifted.getUTCMonth() + offset);
+    return shifted;
+};
+
+const listMonths = (fromMonth: string, toMonthValue: string): string[] => {
+    const result: string[] = [];
+    let cursor = parseMonthStart(fromMonth);
+    const end = parseMonthStart(toMonthValue);
+
+    while (cursor <= end) {
+        result.push(toMonth(cursor));
+        cursor = incrementMonth(cursor);
+    }
+
+    return result;
+};
+
 const normalizeStoredAccess = (value: unknown): EmployeeAccess => {
     const normalized: EmployeeAccess = { ...EMPTY_ACCESS };
     if (!isObject(value)) return normalized;
@@ -64,6 +100,12 @@ const normalizeStoredAccess = (value: unknown): EmployeeAccess => {
     }
 
     return normalized;
+};
+
+const readLegacySalaryAmount = (value: unknown): number => {
+    if (!isObject(value)) return 0;
+    const salary = toNumber(value.salary_amount);
+    return salary >= 0 ? salary : 0;
 };
 
 const buildCreateAccess = (
@@ -90,6 +132,7 @@ const mapEmployee = (employee: {
     address: string | null;
     role: EmployeeRole;
     access: unknown;
+    salary_amount: unknown;
     is_active: boolean;
     created_at: Date;
     updated_at: Date;
@@ -101,6 +144,9 @@ const mapEmployee = (employee: {
     address: employee.address ?? "",
     role: employee.role,
     access: normalizeStoredAccess(employee.access),
+    salary_amount: Number(
+        toNumber(employee.salary_amount ?? readLegacySalaryAmount(employee.access)).toFixed(2)
+    ),
     is_active: employee.is_active,
     created_at: employee.created_at,
     updated_at: employee.updated_at,
@@ -180,6 +226,7 @@ export const getEmployees = async (
                     address: true,
                     role: true,
                     access: true,
+                    salary_amount: true,
                     is_active: true,
                     created_at: true,
                     updated_at: true,
@@ -230,6 +277,7 @@ export const getEmployeeById = async (
                 address: true,
                 role: true,
                 access: true,
+                salary_amount: true,
                 is_active: true,
                 created_at: true,
                 updated_at: true,
@@ -324,6 +372,7 @@ export const createEmployee = async (
         const address = normalizeOptionalString(parsed.data.address) ?? null;
         const role = parsed.data.role as EmployeeRole;
         const access = buildCreateAccess(role, parsed.data.access);
+        const salaryAmount = parsed.data.salary_amount ?? 0;
         const isActive = parsed.data.is_active ?? true;
 
         if (email) {
@@ -363,6 +412,7 @@ export const createEmployee = async (
                 address,
                 role,
                 access,
+                salary_amount: Number(salaryAmount.toFixed(2)),
                 is_active: isActive,
             },
             select: {
@@ -373,6 +423,7 @@ export const createEmployee = async (
                 address: true,
                 role: true,
                 access: true,
+                salary_amount: true,
                 is_active: true,
                 created_at: true,
                 updated_at: true,
@@ -411,6 +462,7 @@ export const updateEmployee = async (
                 email: true,
                 role: true,
                 access: true,
+                salary_amount: true,
             },
         });
 
@@ -494,6 +546,10 @@ export const updateEmployee = async (
             data.access = mergedAccess;
         }
 
+        if (parsed.data.salary_amount !== undefined) {
+            data.salary_amount = Number(parsed.data.salary_amount.toFixed(2));
+        }
+
         const updated = await prisma.employees.update({
             where: { id },
             data,
@@ -505,6 +561,7 @@ export const updateEmployee = async (
                 address: true,
                 role: true,
                 access: true,
+                salary_amount: true,
                 is_active: true,
                 created_at: true,
                 updated_at: true,
@@ -515,6 +572,155 @@ export const updateEmployee = async (
             success: true,
             data: mapEmployee(updated),
             message: "Employee updated successfully",
+        } as ApiResponse);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * GET /api/employees/salary-overview
+ * Salary + earnings overview for owner/admin.
+ */
+export const getEmployeeSalaryOverview = async (
+    _req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const now = new Date();
+        const currentMonth = toMonth(now);
+        const startMonth = toMonth(shiftMonth(parseMonthStart(currentMonth), -(START_MONTH_COUNT - 1)));
+        const months = listMonths(startMonth, currentMonth);
+        const startDate = parseMonthStart(startMonth);
+        const endDateExclusive = incrementMonth(parseMonthStart(currentMonth));
+
+        const [employees, rentPayments, electricityPayments] = await Promise.all([
+            prisma.employees.findMany({
+                where: {
+                    deleted_at: null,
+                },
+                select: {
+                    id: true,
+                    full_name: true,
+                    role: true,
+                    access: true,
+                    salary_amount: true,
+                    is_active: true,
+                },
+                orderBy: [{ role: "asc" }, { full_name: "asc" }],
+            }),
+            prisma.rent_payments.findMany({
+                where: {
+                    deleted_at: null,
+                    status: "paid",
+                    payment_date: {
+                        gte: startDate,
+                        lt: endDateExclusive,
+                    },
+                },
+                select: {
+                    amount: true,
+                    payment_date: true,
+                },
+            }),
+            prisma.bill_payments.findMany({
+                where: {
+                    deleted_at: null,
+                    status: { in: ["paid", "partial"] },
+                    payment_date: {
+                        gte: startDate,
+                        lt: endDateExclusive,
+                    },
+                },
+                select: {
+                    amount: true,
+                    payment_date: true,
+                },
+            }),
+        ]);
+
+        const payrollEmployees = employees
+            .filter((employee) => employee.is_active)
+            .map((employee) => {
+                const salaryAmount = Number(
+                    toNumber(employee.salary_amount ?? readLegacySalaryAmount(employee.access)).toFixed(2)
+                );
+                return {
+                    id: employee.id,
+                    full_name: employee.full_name,
+                    role: employee.role,
+                    is_active: employee.is_active,
+                    salary_amount: salaryAmount,
+                };
+            })
+            .sort((a, b) => b.salary_amount - a.salary_amount);
+
+        const monthlyPayroll = payrollEmployees.reduce(
+            (sum, employee) => sum + employee.salary_amount,
+            0
+        );
+
+        const rentByMonth = new Map<string, number>();
+        const electricityByMonth = new Map<string, number>();
+        for (const month of months) {
+            rentByMonth.set(month, 0);
+            electricityByMonth.set(month, 0);
+        }
+
+        for (const payment of rentPayments) {
+            const month = toMonth(payment.payment_date);
+            if (!rentByMonth.has(month)) continue;
+            rentByMonth.set(month, (rentByMonth.get(month) ?? 0) + toNumber(payment.amount));
+        }
+
+        for (const payment of electricityPayments) {
+            const month = toMonth(payment.payment_date);
+            if (!electricityByMonth.has(month)) continue;
+            electricityByMonth.set(
+                month,
+                (electricityByMonth.get(month) ?? 0) + toNumber(payment.amount)
+            );
+        }
+
+        const monthly = months.map((month) => {
+            const rentIncome = rentByMonth.get(month) ?? 0;
+            const electricityIncome = electricityByMonth.get(month) ?? 0;
+            const totalIncome = rentIncome + electricityIncome;
+            const payrollCost = monthlyPayroll;
+            const netEarning = totalIncome - payrollCost;
+
+            return {
+                month,
+                rent_income: Number(rentIncome.toFixed(2)),
+                electricity_income: Number(electricityIncome.toFixed(2)),
+                total_income: Number(totalIncome.toFixed(2)),
+                payroll_cost: Number(payrollCost.toFixed(2)),
+                net_earning: Number(netEarning.toFixed(2)),
+            };
+        });
+
+        const totalIncome = monthly.reduce((sum, item) => sum + item.total_income, 0);
+        const totalPayroll = monthly.reduce((sum, item) => sum + item.payroll_cost, 0);
+        const totalNet = monthly.reduce((sum, item) => sum + item.net_earning, 0);
+
+        res.json({
+            success: true,
+            data: {
+                range: {
+                    from_month: startMonth,
+                    to_month: currentMonth,
+                },
+                summary: {
+                    active_employees: payrollEmployees.length,
+                    monthly_payroll: Number(monthlyPayroll.toFixed(2)),
+                    total_income: Number(totalIncome.toFixed(2)),
+                    total_payroll: Number(totalPayroll.toFixed(2)),
+                    net_earning: Number(totalNet.toFixed(2)),
+                },
+                employees: payrollEmployees,
+                monthly,
+            },
         } as ApiResponse);
     } catch (error) {
         next(error);
@@ -540,6 +746,7 @@ export const deleteEmployee = async (
             },
             select: {
                 id: true,
+                role: true,
             },
         });
 
@@ -552,6 +759,14 @@ export const deleteEmployee = async (
             res.status(409).json({
                 success: false,
                 error: "You cannot delete your own employee account",
+            });
+            return;
+        }
+
+        if (existing.role === "owner") {
+            res.status(409).json({
+                success: false,
+                error: "Owner account cannot be deleted",
             });
             return;
         }

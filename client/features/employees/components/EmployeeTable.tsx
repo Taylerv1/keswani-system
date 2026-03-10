@@ -50,6 +50,9 @@ export function EmployeeTable({
               {t("role")}
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
+              {t("monthlySalary")}
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
               {t("status")}
             </th>
             <th className="px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase">
@@ -75,6 +78,9 @@ export function EmployeeTable({
               <td className="px-4 py-3 text-sm">
                 <StatusBadge status={employee.role} variant="info" />
               </td>
+              <td className="px-4 py-3 text-sm font-medium text-text-primary">
+                USD {employee.salary_amount.toFixed(2)}
+              </td>
               <td className="px-4 py-3 text-sm">
                 <StatusBadge
                   status={employee.is_active ? "active" : "inactive"}
@@ -90,14 +96,16 @@ export function EmployeeTable({
                   >
                     <Edit2 size={16} />
                   </button>
-                  <button
-                    onClick={() => onDelete(employee)}
-                    disabled={isLoading}
-                    className="p-1.5 rounded-lg text-text-secondary hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
-                    title={t("delete")}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {employee.role !== "owner" && (
+                    <button
+                      onClick={() => onDelete(employee)}
+                      disabled={isLoading}
+                      className="p-1.5 rounded-lg text-text-secondary hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50 cursor-pointer"
+                      title={t("delete")}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

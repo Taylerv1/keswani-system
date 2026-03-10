@@ -47,6 +47,12 @@ export function EmployeeMobileCard({
           </span>
         </div>
         <div className="flex justify-between">
+          <span className="text-text-secondary">{t("monthlySalary")}:</span>
+          <span className="text-text-primary font-medium">
+            USD {employee.salary_amount.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between">
           <span className="text-text-secondary">{t("address")}:</span>
           <span className="text-text-primary font-medium text-right max-w-xs">
             {employee.address}
@@ -63,14 +69,16 @@ export function EmployeeMobileCard({
           <Edit2 size={14} />
           {t("edit")}
         </button>
-        <button
-          onClick={() => onDelete(employee)}
-          disabled={isLoading}
-          className="flex-1 py-2 rounded-lg bg-red-50 text-red-500 text-sm font-medium hover:bg-red-100 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-        >
-          <Trash2 size={14} />
-          {t("delete")}
-        </button>
+        {employee.role !== "owner" && (
+          <button
+            onClick={() => onDelete(employee)}
+            disabled={isLoading}
+            className="flex-1 py-2 rounded-lg bg-red-50 text-red-500 text-sm font-medium hover:bg-red-100 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <Trash2 size={14} />
+            {t("delete")}
+          </button>
+        )}
       </div>
     </div>
   );

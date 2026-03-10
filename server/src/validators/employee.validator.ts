@@ -24,6 +24,7 @@ export const createEmployeeSchema = z.object({
     phone: z.string().optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
     role: employeeRoleSchema.default("employee"),
+    salary_amount: z.coerce.number().min(0).optional(),
     access: employeeAccessSchema.optional(),
     is_active: z.boolean().optional(),
 });
@@ -34,6 +35,7 @@ export const updateEmployeeSchema = z.object({
     phone: z.string().nullable().optional(),
     address: z.string().nullable().optional(),
     role: employeeRoleSchema.optional(),
+    salary_amount: z.coerce.number().min(0).optional(),
     access: employeeAccessSchema.optional(),
     is_active: z.boolean().optional(),
 });

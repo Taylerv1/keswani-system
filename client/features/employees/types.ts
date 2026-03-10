@@ -20,6 +20,7 @@ export interface EmployeeDto {
   address: string;
   role: EmployeeRole;
   access: EmployeeAccessPermissions;
+  salary_amount: number;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -31,6 +32,7 @@ export interface CreateEmployeeInput {
   phone: string;
   address: string;
   role: EmployeeRole;
+  salary_amount?: number;
 }
 
 export interface UpdateEmployeeInput {
@@ -39,6 +41,7 @@ export interface UpdateEmployeeInput {
   phone?: string;
   address?: string;
   role?: EmployeeRole;
+  salary_amount?: number;
   access?: EmployeeAccessPermissions;
   is_active?: boolean;
 }

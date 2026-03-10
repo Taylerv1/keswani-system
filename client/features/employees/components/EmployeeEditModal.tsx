@@ -32,6 +32,7 @@ export function EmployeeEditModal({
     phone: "",
     address: "",
     role: "employee" as EmployeeRole,
+    salary_amount: 0,
     is_active: true,
   });
 
@@ -43,6 +44,7 @@ export function EmployeeEditModal({
         phone: employee.phone,
         address: employee.address,
         role: employee.role,
+        salary_amount: employee.salary_amount ?? 0,
         is_active: employee.is_active,
       });
     }
@@ -54,7 +56,12 @@ export function EmployeeEditModal({
 
     setFormState((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        name === "salary_amount"
+          ? Number(value)
+          : type === "checkbox"
+            ? checked
+            : value,
     }));
   };
 
@@ -72,6 +79,7 @@ export function EmployeeEditModal({
         phone: formState.phone,
         address: formState.address,
         role: formState.role,
+        salary_amount: Number(formState.salary_amount) || 0,
         is_active: formState.is_active,
       });
 
@@ -193,6 +201,23 @@ export function EmployeeEditModal({
               {t("active")}
             </span>
           </label>
+        </div>
+
+        {/* Monthly Salary */}
+        <div>
+          <label className="block text-sm font-medium text-text-primary mb-1">
+            {t("monthlySalary")}
+          </label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            name="salary_amount"
+            value={formState.salary_amount}
+            onChange={handleChange}
+            disabled={actionLoading}
+            className="w-full px-3 py-2 border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          />
         </div>
 
         {/* Footer */}

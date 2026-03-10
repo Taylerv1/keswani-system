@@ -30,6 +30,7 @@ export function EmployeeCreateModal({
     phone: "",
     address: "",
     role: "employee" as EmployeeRole,
+    salary_amount: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -38,7 +39,12 @@ export function EmployeeCreateModal({
 
     setFormState((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        name === "salary_amount"
+          ? Number(value)
+          : type === "checkbox"
+            ? checked
+            : value,
     }));
   };
 
@@ -54,6 +60,7 @@ export function EmployeeCreateModal({
         phone: formState.phone,
         address: formState.address,
         role: formState.role,
+        salary_amount: Number(formState.salary_amount) || 0,
       });
 
       setFormState({
@@ -62,6 +69,7 @@ export function EmployeeCreateModal({
         phone: "",
         address: "",
         role: "employee",
+        salary_amount: 0,
       });
 
       onClose();
@@ -171,6 +179,23 @@ export function EmployeeCreateModal({
             <option value="admin">{t("roleAdmin")}</option>
             <option value="owner">{t("roleOwner")}</option>
           </select>
+        </div>
+
+        {/* Monthly Salary */}
+        <div>
+          <label className="block text-sm font-medium text-text-primary mb-1">
+            {t("monthlySalary")}
+          </label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            name="salary_amount"
+            value={formState.salary_amount}
+            onChange={handleChange}
+            disabled={actionLoading}
+            className="w-full px-3 py-2 border border-surface-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+          />
         </div>
 
         {/* Footer */}

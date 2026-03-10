@@ -111,7 +111,12 @@ export interface ElecSettings {
   generatorName: string;
   generatorNameAr: string;
   generatorCapacity: string;
+  fuelType: string;
   operatingHours: string;
+  generatorMonthlyOperatingHours: number;
+  generatorFuelConsumptionPerHour: number;
+  generatorFuelCostPerLiter: number;
+  generatorMaintenanceCostMonthly: number;
   billDueDays: number;
   lateFeePercentage: number;
   additionalFees: number;
