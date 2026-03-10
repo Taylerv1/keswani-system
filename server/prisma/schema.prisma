@@ -16,6 +16,7 @@ model employees {
   phone                  String?
   role                   employee_role          @default(employee)
   access                 Json                   @default("{}")
+  salary_amount          Decimal                @default(0) @db.Decimal(12, 2)
   is_active              Boolean                @default(true)
   deleted_at             DateTime?              @db.Timestamptz(6)
   created_at             DateTime               @default(now()) @db.Timestamptz(6)
