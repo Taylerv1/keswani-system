@@ -77,11 +77,16 @@ async function notifyRentEmployeesOfNewMaintenanceRequest(
     if (recipientIds.length === 0) return;
 
     const requesterName = request.requester?.full_name || "Tenant";
-    const location = `${request.unit.property.name}, Unit ${request.unit.unit_number}`;
+    const locationEn = `${request.unit.property.name}, Unit ${request.unit.unit_number}`;
+    const locationAr = `${request.unit.property.name}، وحدة ${request.unit.unit_number}`;
     const description = request.title.trim();
-    const estimatedCostText =
+    const estimatedCostTextEn =
         request.estimated_cost != null
             ? ` Estimated cost: ${Number(request.estimated_cost).toLocaleString()} USD.`
+            : "";
+    const estimatedCostTextAr =
+        request.estimated_cost != null
+            ? ` التكلفة التقديرية: ${Number(request.estimated_cost).toLocaleString()} دولار.`
             : "";
 
     await prisma.notifications.createMany({
@@ -92,7 +97,10 @@ async function notifyRentEmployeesOfNewMaintenanceRequest(
             section: "rent",
             notification_type: "maintenance",
             subject: "New Maintenance Request",
-            body: `${requesterName} submitted "${description}" at ${location}.${estimatedCostText}`,
+            body: JSON.stringify({
+                en: `${requesterName} submitted "${description}" at ${locationEn}.${estimatedCostTextEn}`,
+                ar: `قدّم ${requesterName} طلب صيانة: "${description}" في ${locationAr}.${estimatedCostTextAr}`,
+            }),
             related_entity_type: "maintenance_request",
             related_entity_id: request.id,
             status: "sent",
@@ -111,27 +119,45 @@ async function notifyRequesterMaintenanceUpdated(
 ): Promise<void> {
     if (!request.requested_by) return;
 
-    const details: string[] = [];
+    const details_en: string[] = [];
+    const details_ar: string[] = [];
+
+    const statusArMap: Record<string, string> = {
+        pending: "قيد الانتظار", in_progress: "قيد التنفيذ", completed: "مكتمل", cancelled: "ملغى",
+    };
+    const priorityArMap: Record<string, string> = {
+        critical: "بالغ الأهمية", urgent: "عاجل", high: "عالية", medium: "متوسطة", low: "منخفضة",
+    };
 
     if (options.statusChanged) {
-        details.push(`Status: ${formatMaintenanceStatus(request.status)}`);
+        details_en.push(`Status: ${formatMaintenanceStatus(request.status)}`);
+        details_ar.push(`الحالة: ${statusArMap[request.status] ?? request.status}`);
     }
     if (options.priorityChanged) {
-        details.push(`Priority: ${formatMaintenancePriority(request.priority)}`);
+        details_en.push(`Priority: ${formatMaintenancePriority(request.priority)}`);
+        details_ar.push(`الأولوية: ${priorityArMap[request.priority] ?? request.priority}`);
     }
     if (options.assigneeChanged) {
-        details.push(
+        details_en.push(
             request.assignee?.full_name
                 ? `Assigned To: ${request.assignee.full_name}`
                 : "Assigned To: Unassigned"
         );
+        details_ar.push(
+            request.assignee?.full_name
+                ? `المسؤول: ${request.assignee.full_name}`
+                : "المسؤول: غير محدد"
+        );
     }
     if (options.actualCostChanged && request.actual_cost != null) {
-        details.push(`Cost: ${Number(request.actual_cost).toLocaleString()} USD`);
+        details_en.push(`Cost: ${Number(request.actual_cost).toLocaleString()} USD`);
+        details_ar.push(`التكلفة: ${Number(request.actual_cost).toLocaleString()} دولار`);
     }
 
-    const detailsText =
-        details.length > 0 ? ` ${details.join(" | ")}.` : " Please check latest updates.";
+    const detailsTextEn =
+        details_en.length > 0 ? ` ${details_en.join(" | ")}.` : " Please check latest updates.";
+    const detailsTextAr =
+        details_ar.length > 0 ? ` ${details_ar.join(" | ")}.` : " يرجى مراجعة آخر التحديثات.";
 
     await prisma.notifications.create({
         data: {
@@ -141,7 +167,10 @@ async function notifyRequesterMaintenanceUpdated(
             section: "rent",
             notification_type: "maintenance",
             subject: "Maintenance Request Updated",
-            body: `Your maintenance request "${request.title}" was updated.${detailsText}`,
+            body: JSON.stringify({
+                en: `Your maintenance request "${request.title}" was updated.${detailsTextEn}`,
+                ar: `تم تحديث طلب الصيانة الخاص بك "${request.title}".${detailsTextAr}`,
+            }),
             related_entity_type: "maintenance_request",
             related_entity_id: request.id,
             status: "sent",

@@ -83,7 +83,17 @@ async function notifyElectricityEmployeesOfNewIssue(
 
     const clientName = issue.client?.full_name || "Subscriber";
     const subscriptionNumber = issue.subscriber?.subscription_number || "N/A";
-    const category = formatIssueCategory(issue.category);
+    const categoryEn = formatIssueCategory(issue.category);
+    const categoryAr: Record<string, string> = {
+        billing: "فوترة",
+        meter: "عداد",
+        connection: "توصيل",
+        other: "أخرى",
+    };
+    const categoryArText = categoryAr[issue.category] ?? categoryEn;
+
+    const bodyEn = `${clientName} reported a ${categoryEn} issue: "${issue.title}" (Subscription: ${subscriptionNumber}).`;
+    const bodyAr = `أبلغ ${clientName} عن مشكلة ${categoryArText}: "${issue.title}" (رقم الاشتراك: ${subscriptionNumber}).`;
 
     await prisma.notifications.createMany({
         data: recipientIds.map((recipientId) => ({
@@ -93,7 +103,7 @@ async function notifyElectricityEmployeesOfNewIssue(
             section: "electricity",
             notification_type: "electricity_issue",
             subject: "New Electricity Issue",
-            body: `${clientName} reported a ${category} issue: "${issue.title}" (Subscription: ${subscriptionNumber}).`,
+            body: JSON.stringify({ en: bodyEn, ar: bodyAr }),
             related_entity_type: "electricity_issue",
             related_entity_id: issue.id,
             status: "sent" as const,
@@ -111,24 +121,41 @@ async function notifyRequesterIssueUpdated(
 ): Promise<void> {
     if (!issue.client_id) return;
 
-    const details: string[] = [];
+    const details_en: string[] = [];
+    const details_ar: string[] = [];
+
+    const statusArMap: Record<string, string> = {
+        open: "مفتوح", in_progress: "قيد التنفيذ", resolved: "تم الحل", closed: "مغلق",
+    };
+    const priorityArMap: Record<string, string> = {
+        high: "عالية", medium: "متوسطة", low: "منخفضة",
+    };
 
     if (options.statusChanged) {
-        details.push(`Status: ${formatIssueStatus(issue.status)}`);
+        details_en.push(`Status: ${formatIssueStatus(issue.status)}`);
+        details_ar.push(`الحالة: ${statusArMap[issue.status] ?? issue.status}`);
     }
     if (options.priorityChanged) {
-        details.push(`Priority: ${formatIssuePriority(issue.priority)}`);
+        details_en.push(`Priority: ${formatIssuePriority(issue.priority)}`);
+        details_ar.push(`الأولوية: ${priorityArMap[issue.priority] ?? issue.priority}`);
     }
     if (options.assigneeChanged) {
-        details.push(
+        details_en.push(
             issue.assignee?.full_name
                 ? `Assigned To: ${issue.assignee.full_name}`
                 : "Assigned To: Unassigned"
         );
+        details_ar.push(
+            issue.assignee?.full_name
+                ? `المسؤول: ${issue.assignee.full_name}`
+                : "المسؤول: غير محدد"
+        );
     }
 
-    const detailsText =
-        details.length > 0 ? ` ${details.join(" | ")}.` : " Please check latest updates.";
+    const detailsTextEn =
+        details_en.length > 0 ? ` ${details_en.join(" | ")}.` : " Please check latest updates.";
+    const detailsTextAr =
+        details_ar.length > 0 ? ` ${details_ar.join(" | ")}.` : " يرجى مراجعة آخر التحديثات.";
 
     await prisma.notifications.create({
         data: {
@@ -138,7 +165,10 @@ async function notifyRequesterIssueUpdated(
             section: "electricity",
             notification_type: "electricity_issue",
             subject: "Electricity Issue Updated",
-            body: `Your issue "${issue.title}" was updated.${detailsText}`,
+            body: JSON.stringify({
+                en: `Your issue "${issue.title}" was updated.${detailsTextEn}`,
+                ar: `تم تحديث بلاغك "${issue.title}".${detailsTextAr}`,
+            }),
             related_entity_type: "electricity_issue",
             related_entity_id: issue.id,
             status: "sent",
