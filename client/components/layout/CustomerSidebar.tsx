@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     Home,
-    FileText,
+    LifeBuoy,
     Zap,
     User,
     LogOut,
@@ -71,9 +71,9 @@ export default function CustomerSidebar({
             ]
             : []),
         {
-            key: "custReports",
-            href: "/dashboard/reports",
-            icon: <FileText size={20} />,
+            key: "custSupport",
+            href: "/dashboard/support",
+            icon: <LifeBuoy size={20} />,
         },
         {
             key: "custProfile",
