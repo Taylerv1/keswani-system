@@ -5,9 +5,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
-import { SearchBar, Pagination, SelectMenu } from "@/components/ui";
+import { LoadingLottie, SearchBar, Pagination, SelectMenu } from "@/components/ui";
 import { useEmployeeState } from "./hooks";
 import { EmployeeTable } from "./components/EmployeeTable";
 import { EmployeeMobileCard } from "./components/EmployeeMobileCard";
@@ -60,6 +61,10 @@ export function EmployeeOverviewPage() {
   };
 
   const handleOpenDelete = (employee: EmployeeDto) => {
+    if (employee.role === "owner") {
+      state.setError(t("ownerCannotBeDeleted"));
+      return;
+    }
     setSelectedEmployee(employee);
     setDeleteModalOpen(true);
   };
@@ -114,6 +119,12 @@ export function EmployeeOverviewPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin-dashboard/employees/salaries"
+            className="h-10 px-4 rounded-lg border border-surface-border bg-surface text-text-secondary text-sm font-medium cursor-pointer hover:text-primary hover:border-primary/40 transition-colors flex items-center"
+          >
+            {t("salaryOverview")}
+          </Link>
           <button
             onClick={handleOpenCreate}
             className="h-10 px-4 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer flex items-center gap-2 border-0 hover:shadow-lg hover:shadow-primary/25 transition-all"
@@ -164,8 +175,8 @@ export function EmployeeOverviewPage() {
 
       {/* Desktop Table */}
       {state.loading && state.employees.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-text-secondary">{t("loading")}...</p>
+        <div className="bg-surface rounded-xl border border-surface-border p-12 flex justify-center">
+          <LoadingLottie size={140} className="p-6" />
         </div>
       ) : (
         <>
