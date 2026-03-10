@@ -15,7 +15,6 @@ import {
   Receipt,
   AlertTriangle,
   DollarSign,
-  UserCog,
   BarChart3,
   Settings,
   Zap,
@@ -42,6 +41,7 @@ const rentSubNav: SubNavItem[] = [
 const electricitySubNav: SubNavItem[] = [
   { key: "elecDashboard", href: "/admin-dashboard/electricity", icon: <LayoutDashboard size={16} /> },
   { key: "elecAlerts", href: "/admin-dashboard/electricity/alerts", icon: <AlertTriangle size={16} /> },
+  { key: "elecIssues", href: "/admin-dashboard/electricity/issues", icon: <Wrench size={16} /> },
   { key: "elecBuildings", href: "/admin-dashboard/electricity/buildings", icon: <Building2 size={16} /> },
   { key: "elecSubscribers", href: "/admin-dashboard/electricity/subscribers", icon: <Users size={16} /> },
   { key: "elecMeters", href: "/admin-dashboard/electricity/meters", icon: <Gauge size={16} /> },
@@ -72,9 +72,10 @@ export default function SecondarySidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
+  const safePathname = pathname ?? "";
   const { t, dir } = useTranslation();
 
-  const nav = getSubNav(pathname);
+  const nav = getSubNav(safePathname);
   if (!nav) return null;
 
   const navContent = (
@@ -97,11 +98,11 @@ export default function SecondarySidebar({
       {/* Nav items */}
       <nav className="scrollbar-primary flex-1 px-2 space-y-0.5 overflow-y-auto">
         {nav.items.map((item) => {
-          const isExact = pathname === item.href;
+          const isExact = safePathname === item.href;
           const isActive =
             item.href === "/admin-dashboard/rent" || item.href === "/admin-dashboard/electricity"
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
+              ? safePathname === item.href
+              : safePathname.startsWith(item.href);
           const active = isExact || isActive;
 
           return (

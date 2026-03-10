@@ -50,10 +50,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { t, dir, locale, toggleLocale } = useTranslation();
   const pathname = usePathname();
+  const safePathname = pathname ?? "";
 
   const hasSecondaryNav =
-    pathname.startsWith("/admin-dashboard/rent") ||
-    pathname.startsWith("/admin-dashboard/electricity");
+    safePathname.startsWith("/admin-dashboard/rent") ||
+    safePathname.startsWith("/admin-dashboard/electricity");
 
   useEffect(() => {
     let isMounted = true;

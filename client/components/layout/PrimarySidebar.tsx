@@ -41,6 +41,7 @@ export default function PrimarySidebar({
   onMobileClose,
 }: PrimarySidebarProps) {
   const pathname = usePathname();
+  const safePathname = pathname ?? "";
   const router = useRouter();
   const { t, dir } = useTranslation();
 
@@ -95,7 +96,7 @@ export default function PrimarySidebar({
       {/* Navigation */}
       <nav className="scrollbar-primary flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = safePathname.startsWith(item.href);
           return (
             <Link
               key={item.key}
