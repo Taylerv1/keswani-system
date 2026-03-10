@@ -37,6 +37,8 @@ class NotificationsStore {
   private inFlightEntities = new Map<string, Promise<void>>();
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
   private flashVersion = 0;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private pollRefCount = 0;
 
   items: NotificationItem[] = [];
   tab: TabFilter = "all";
@@ -51,6 +53,10 @@ class NotificationsStore {
   actionLoading = false;
   entityLoading = false;
   entityDetail: MaintenanceDetail | IssueDetail | null = null;
+  recentItems: NotificationItem[] = [];
+  recentLoading = false;
+  hasNewNotifications = false;
+  newNotificationsBurst = 0;
   error = "";
   success = "";
 
@@ -125,6 +131,9 @@ class NotificationsStore {
       actionLoading: this.actionLoading,
       entityLoading: this.entityLoading,
       entityDetail: this.entityDetail,
+      recentItems: this.recentItems,
+      recentLoading: this.recentLoading,
+      hasNewNotifications: this.hasNewNotifications,
       error: this.error,
       success: this.success,
     };
@@ -198,8 +207,40 @@ class NotificationsStore {
 
         if (item.section === "rent") {
           const res = await fetch(`/api/maintenance/${item.relatedId}`, { cache: "no-store" });
-          const data = await res.json() as { success: boolean; data?: MaintenanceDetail };
-          detail = data.success && data.data ? data.data : null;
+          // getMaintenanceById returns nested objects; flatten to match MaintenanceDetail
+          const data = await res.json() as {
+            success: boolean;
+            data?: {
+              id: string;
+              title: string;
+              description: string | null;
+              status: string;
+              priority: string;
+              estimated_cost: string | number | null;
+              created_at: string;
+              updated_at: string;
+              requester?: { full_name?: string | null } | null;
+              assignee?: { full_name?: string | null } | null;
+              unit?: { unit_number?: string | null; property?: { name?: string | null } | null } | null;
+            };
+          };
+          if (data.success && data.data) {
+            const d = data.data;
+            detail = {
+              id: d.id,
+              title: d.title,
+              description: d.description,
+              status: d.status,
+              priority: d.priority,
+              property_name: d.unit?.property?.name ?? null,
+              unit_number: d.unit?.unit_number ?? null,
+              requester_name: d.requester?.full_name ?? null,
+              assignee_name: d.assignee?.full_name ?? null,
+              estimated_cost: d.estimated_cost,
+              created_at: d.created_at,
+              updated_at: d.updated_at,
+            };
+          }
         } else if (item.section === "electricity") {
           const res = await fetch(`/api/electricity-issues/${item.relatedId}`, { cache: "no-store" });
           const data = await res.json() as { success: boolean; data?: IssueDetail };
@@ -361,6 +402,9 @@ class NotificationsStore {
         this.items = this.items.map((item) =>
           item.id === id ? { ...item, read: true } : item
         );
+        this.recentItems = this.recentItems.map((item) =>
+          item.id === id ? { ...item, read: true } : item
+        );
         this.invalidateCache();
         if (this.unreadCount > 0) this.unreadCount--;
       });
@@ -382,6 +426,7 @@ class NotificationsStore {
 
       runInAction(() => {
         this.items = this.items.map((item) => ({ ...item, read: true }));
+        this.recentItems = this.recentItems.map((item) => ({ ...item, read: true }));
         this.invalidateCache();
         this.showSuccess(options.successMessage);
       });
@@ -396,6 +441,70 @@ class NotificationsStore {
         this.actionLoading = false;
       });
     }
+  }
+
+  /* ── Polling engine ─── */
+
+  startPolling(intervalMs = 10_000) {
+    this.pollRefCount++;
+    if (this.pollRefCount > 1) return;
+
+    // Immediate first load (no waiting for first interval)
+    void this.pollOnce();
+
+    this.pollTimer = setInterval(() => {
+      void this.pollOnce();
+    }, intervalMs);
+  }
+
+  stopPolling() {
+    this.pollRefCount = Math.max(0, this.pollRefCount - 1);
+    if (this.pollRefCount === 0 && this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  private async pollOnce(): Promise<void> {
+    const oldCount = this.unreadCount;
+    await this.loadUnreadCount();
+
+    if (this.unreadCount > oldCount) {
+      runInAction(() => {
+        this.hasNewNotifications = true;
+        this.newNotificationsBurst++;
+        this.invalidateCache();
+      });
+      await this.loadRecentItems();
+    }
+  }
+
+  async loadRecentItems(): Promise<void> {
+    try {
+      runInAction(() => {
+        this.recentLoading = true;
+      });
+
+      const response = await fetchNotifications({
+        page: 1,
+        limit: 5,
+      });
+
+      runInAction(() => {
+        const data = response.data as NotificationListResponse | undefined;
+        this.recentItems = data?.items ?? [];
+      });
+    } catch {
+      // silent — dropdown is non-critical
+    } finally {
+      runInAction(() => {
+        this.recentLoading = false;
+      });
+    }
+  }
+
+  consumeNewNotificationsFlag() {
+    this.hasNewNotifications = false;
   }
 }
 
