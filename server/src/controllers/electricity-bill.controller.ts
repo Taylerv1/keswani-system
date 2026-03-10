@@ -4,11 +4,12 @@ import prisma from "../config/prisma";
 import { ApiResponse, AuthenticatedRequest } from "../types";
 import { electricityBillQuerySchema } from "../validators/electricity-bill.validator";
 
-const OPEN_BILL_STATUSES: Array<"pending" | "overdue"> = [
+const OPEN_BILL_STATUSES: Array<"pending" | "partial" | "overdue"> = [
     "pending",
+    "partial",
     "overdue",
 ];
-const SETTLED_PAYMENT_STATUSES: Array<"paid"> = ["paid"];
+const SETTLED_PAYMENT_STATUSES: Array<"paid" | "partial"> = ["paid", "partial"];
 
 const billListInclude = {
     meter: {

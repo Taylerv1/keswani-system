@@ -9,7 +9,7 @@ export interface DebtBillItem {
   bill_id: string;
   month: string;
   meter_number: string;
-  status: "pending" | "paid" | "overdue" | "cancelled";
+  status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
   total_amount: number;
   paid_amount: number;
   outstanding_amount: number;

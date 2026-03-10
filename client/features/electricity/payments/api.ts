@@ -29,7 +29,7 @@ interface BillListItem {
   paid_amount: number;
   outstanding_amount: number;
   currency: string;
-  status: "pending" | "overdue" | "paid" | "cancelled";
+  status: "pending" | "partial" | "overdue" | "paid" | "cancelled";
 }
 
 interface BillListResponse {

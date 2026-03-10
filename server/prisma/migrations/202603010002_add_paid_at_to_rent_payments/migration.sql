@@ -6,4 +6,4 @@ ADD COLUMN "paid_at" DATE;
 UPDATE "rent_payments"
 SET "paid_at" = "payment_date"
 WHERE "paid_at" IS NULL
-  AND "status" IN ('paid');
+  AND "status" IN ('paid', 'partial');

@@ -24,7 +24,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================================
 CREATE TYPE employee_role AS ENUM ('owner', 'admin', 'employee');
 CREATE TYPE contract_status AS ENUM ('pending', 'active', 'expired', 'terminated');
-CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'overdue', 'cancelled');
+CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'partial', 'overdue', 'cancelled');
 CREATE TYPE payment_method AS ENUM ('cash', 'bank_transfer', 'other');
 CREATE TYPE maintenance_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
 CREATE TYPE maintenance_priority AS ENUM ('low', 'medium', 'high', 'urgent', 'critical');

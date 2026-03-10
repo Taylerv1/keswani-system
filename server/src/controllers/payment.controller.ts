@@ -39,11 +39,11 @@ const paymentInclude = {
     },
 } as const;
 
-const SETTLED_PAYMENT_STATUSES = new Set(["paid"]);
-const QUEUE_PAYMENT_STATUSES = ["pending", "overdue"] as const;
+const SETTLED_PAYMENT_STATUSES = new Set(["paid", "partial"]);
+const QUEUE_PAYMENT_STATUSES = ["pending", "overdue", "partial"] as const;
 const HISTORY_PAYMENT_STATUSES = ["paid", "cancelled"] as const;
 
-function isSettledStatus(status: string): status is "paid" {
+function isSettledStatus(status: string): status is "paid" | "partial" {
     return SETTLED_PAYMENT_STATUSES.has(status);
 }
 
@@ -167,7 +167,7 @@ export const getPayments = async (
         // Compute KPI summary (across all payments, not just current page)
         const [paidAgg, overdueCount, activeRentAgg] = await Promise.all([
             prisma.rent_payments.aggregate({
-                where: { status: { in: ["paid"] }, deleted_at: null },
+                where: { status: { in: ["paid", "partial"] }, deleted_at: null },
                 _sum: { amount: true },
             }),
             prisma.rent_payments.count({

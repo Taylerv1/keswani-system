@@ -20,7 +20,7 @@ export interface BillPaymentHistoryItem {
   amount: number;
   currency: string;
   payment_date: string | null;
-  status: "pending" | "paid" | "overdue" | "cancelled";
+  status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
   payment_method: string;
   received_by: string | null;
   collector_name: string | null;
@@ -50,7 +50,7 @@ export interface BillListItem {
   price_per_kwh: number;
   total_amount: number;
   currency: string;
-  status: "pending" | "paid" | "overdue" | "cancelled";
+  status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
   paid_amount: number;
   outstanding_amount: number;
   payment_count: number;
@@ -69,7 +69,7 @@ export interface BillQueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: "pending" | "paid" | "overdue" | "cancelled" | "open";
+  status?: "pending" | "paid" | "partial" | "overdue" | "cancelled" | "open";
   month?: string;
   subscriber_id?: string;
   meter_id?: string;

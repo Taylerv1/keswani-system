@@ -131,10 +131,10 @@ export default function ElecDashboardPage() {
       }
     };
   const collectedAmount = data.payments.reduce((s, p) => s + p.amount, 0);
-  const totalDebt = data.bills.filter((b) => b.status === "unpaid").reduce((s, b) => s + b.totalAmount, 0) -
+  const totalDebt = data.bills.filter((b) => b.status === "unpaid" || b.status === "partial").reduce((s, b) => s + b.totalAmount, 0) -
     data.payments.filter((p) => {
       const bill = data.bills.find((b) => b.id === p.billId);
-      return bill && bill.status === "unpaid";
+      return bill && (bill.status === "unpaid" || bill.status === "partial");
     }).reduce((s, p) => s + p.amount, 0);
 
     void loadOverview();

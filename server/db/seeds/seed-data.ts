@@ -318,7 +318,7 @@ export const rentPayments = [
     { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-02-05", paid_at: "2025-02-05", period_start: "2025-02-01", period_end: "2025-02-28", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
     { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-03-03", paid_at: "2025-03-03", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
     { contract_id: CONTRACT_IDS.ct2, amount: 700, payment_date: "2025-04-07", paid_at: "2025-04-07", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.admin1 },
-    { contract_id: CONTRACT_IDS.ct2, amount: 350, payment_date: "2025-05-10", paid_at: null, period_start: "2025-05-01", period_end: "2025-05-31", status: "pending" as const, received_by: EMPLOYEE_IDS.emp1, notes: "Payment recorded — remaining due" },
+    { contract_id: CONTRACT_IDS.ct2, amount: 350, payment_date: "2025-05-10", paid_at: "2025-05-10", period_start: "2025-05-01", period_end: "2025-05-31", status: "partial" as const, received_by: EMPLOYEE_IDS.emp1, notes: "Partial payment — remaining due" },
     // Contract 3 (c3, $500/mo) — months 3-5
     { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-03-05", paid_at: "2025-03-05", period_start: "2025-03-01", period_end: "2025-03-31", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
     { contract_id: CONTRACT_IDS.ct3, amount: 500, payment_date: "2025-04-03", paid_at: "2025-04-03", period_start: "2025-04-01", period_end: "2025-04-30", status: "paid" as const, received_by: EMPLOYEE_IDS.emp1 },
@@ -477,7 +477,7 @@ function generateBills() {
         price_per_kwh: number;
         total_amount: number;
         currency: string;
-        status: "paid" | "pending" | "overdue";
+        status: "paid" | "pending" | "partial" | "overdue";
         generated_by: string;
     }> = [];
 
@@ -519,7 +519,7 @@ function generateBills() {
             price_per_kwh: priceQ1,
             total_amount: parseFloat((consumption2 * priceQ1).toFixed(2)),
             currency: "USD",
-            status: i < 10 ? "paid" : "overdue",
+            status: i < 10 ? "paid" : (i < 15 ? "partial" : "overdue"),
             generated_by: EMPLOYEE_IDS.emp2,
         });
     }

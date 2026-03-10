@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-const paymentStatusEnum = z.enum(["pending", "paid", "overdue", "cancelled"]);
-const paymentQueryStatusEnum = z.enum(["pending", "paid", "overdue", "cancelled"]);
+const paymentStatusEnum = z.enum(["pending", "paid", "partial", "overdue", "cancelled"]);
 const paymentViewEnum = z.enum(["all", "queue", "history"]);
 const YYYY_MM_DD_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -54,7 +53,7 @@ export const paymentQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(10),
     search: z.string().optional(),
-    status: paymentQueryStatusEnum.optional(),
+    status: paymentStatusEnum.optional(),
     view: paymentViewEnum.optional(),
 });
 

@@ -7,7 +7,7 @@ import {
     electricityPaymentQuerySchema,
 } from "../validators/electricity-payment.validator";
 
-const SETTLED_PAYMENT_STATUSES: Array<"paid"> = ["paid"];
+const SETTLED_PAYMENT_STATUSES: Array<"paid" | "partial"> = ["paid", "partial"];
 
 const paymentListInclude = {
     bill: {
@@ -194,9 +194,11 @@ async function refreshBillStatusAfterPayment(billId: string): Promise<void> {
     const paidAmount = await getSettledPaidAmountForBill(billId);
     const totalAmount = toNumber(bill.total_amount);
 
-    let nextStatus: "pending" | "paid" = "pending";
+    let nextStatus: "pending" | "partial" | "paid" = "pending";
     if (paidAmount >= totalAmount && totalAmount > 0) {
         nextStatus = "paid";
+    } else if (paidAmount > 0) {
+        nextStatus = "partial";
     }
 
     await prisma.bills.update({
@@ -399,7 +401,7 @@ export const createElectricityPayment = async (
             }
         }
 
-        const isSettled = data.status === "paid";
+        const isSettled = data.status === "paid" || data.status === "partial";
         const paidAmount = await getSettledPaidAmountForBill(bill.id);
         const totalAmount = toNumber(bill.total_amount);
         const outstanding = Math.max(0, totalAmount - paidAmount);

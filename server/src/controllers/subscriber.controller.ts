@@ -552,7 +552,7 @@ export const getSubscriberById = async (
 
         const mappedBills = bills.map((bill) => {
             const paidAmount = bill.bill_payments
-                .filter((payment) => payment.status === "paid")
+                .filter((payment) => payment.status === "paid" || payment.status === "partial")
                 .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
 
             const totalAmount = toNumber(bill.total_amount);

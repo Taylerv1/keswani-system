@@ -18,6 +18,7 @@ export interface PaginatedResponse<T> {
 export type PaymentStatus =
   | "pending"
   | "paid"
+  | "partial"
   | "overdue"
   | "cancelled";
 
