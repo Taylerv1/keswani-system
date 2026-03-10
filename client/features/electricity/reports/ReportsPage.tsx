@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { autorun } from "mobx";
-import { BarChart3, Building2, DollarSign, FileDown, Users, Zap } from "lucide-react";
+import { BarChart3, Building2, DollarSign, FileDown, Gauge, Users, Zap } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { KpiCard, LoadingLottie } from "@/components/ui";
+import { useElectricity } from "@/features/electricity/context/electricity-context";
 import { electricityReportsStore } from "./store";
 import type { ElectricityReportType } from "./types";
 
@@ -237,8 +238,110 @@ function RevenueChart({
   );
 }
 
+function GeneratorEconomicsChart({
+  data,
+}: {
+  data: Array<{ month: string; collected_amount: number; generator_cost: number }>;
+}) {
+  if (!data.length) {
+    return <div className="text-sm text-text-muted">No data</div>;
+  }
+
+  const width = Math.max(680, data.length * 96);
+  const height = 320;
+  const paddingLeft = 56;
+  const paddingRight = 24;
+  const paddingTop = 24;
+  const paddingBottom = 64;
+  const plotWidth = width - paddingLeft - paddingRight;
+  const plotHeight = height - paddingTop - paddingBottom;
+  const maxValue = Math.max(
+    ...data.map((item) => Math.max(item.collected_amount, item.generator_cost)),
+    1
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Generator economics chart"
+      >
+        {[0, 1, 2, 3, 4].map((step) => {
+          const y = paddingTop + (step * plotHeight) / 4;
+          const value = ((4 - step) * maxValue) / 4;
+          return (
+            <g key={`gen-grid-${step}`}>
+              <line
+                x1={paddingLeft}
+                y1={y}
+                x2={width - paddingRight}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeDasharray="4 4"
+              />
+              <text
+                x={paddingLeft - 8}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="10"
+                fill="#6b7280"
+              >
+                {value.toFixed(0)}
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((item, index) => {
+          const groupWidth = plotWidth / data.length;
+          const xStart = paddingLeft + index * groupWidth + groupWidth * 0.18;
+          const barWidth = Math.max(12, groupWidth * 0.26);
+          const collectedHeight = (item.collected_amount / maxValue) * plotHeight;
+          const costHeight = (item.generator_cost / maxValue) * plotHeight;
+          const collectedY = paddingTop + plotHeight - collectedHeight;
+          const costY = paddingTop + plotHeight - costHeight;
+
+          return (
+            <g key={`gen-group-${item.month}`}>
+              <rect
+                x={xStart}
+                y={collectedY}
+                width={barWidth}
+                height={collectedHeight}
+                rx="4"
+                fill="#10b981"
+              />
+              <rect
+                x={xStart + barWidth + groupWidth * 0.12}
+                y={costY}
+                width={barWidth}
+                height={costHeight}
+                rx="4"
+                fill="#f97316"
+              />
+              <text
+                x={xStart + barWidth}
+                y={height - 24}
+                textAnchor="middle"
+                fontSize="10"
+                fill="#6b7280"
+              >
+                {item.month}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const { t } = useTranslation();
+  const { data: electricityData } = useElectricity();
   const store = electricityReportsStore;
   const [draftFromMonth, setDraftFromMonth] = useState("");
   const [draftToMonth, setDraftToMonth] = useState("");
@@ -261,6 +364,32 @@ export default function ReportsPage() {
     { type: "building", icon: <Building2 size={18} />, label: t("buildingReport") },
     { type: "subscriber", icon: <Users size={18} />, label: t("subscriberReport") },
   ];
+
+  const settings = electricityData.settings;
+  const monthCount = Math.max(
+    store.revenueByMonth.length,
+    store.consumptionByMonth.length,
+    1
+  );
+  const monthlyFuelLiters =
+    Math.max(0, settings.generatorMonthlyOperatingHours) *
+    Math.max(0, settings.generatorFuelConsumptionPerHour);
+  const monthlyFuelCost = monthlyFuelLiters * Math.max(0, settings.generatorFuelCostPerLiter);
+  const monthlyGeneratorCost = monthlyFuelCost + Math.max(0, settings.generatorMaintenanceCostMonthly);
+  const estimatedGeneratorCost = monthlyGeneratorCost * monthCount;
+  const estimatedNetAfterGenerator = store.totalPaid - estimatedGeneratorCost;
+  const generatorCostPerKwh =
+    store.totalConsumption > 0 ? estimatedGeneratorCost / store.totalConsumption : 0;
+
+  const generatorEconomicsByMonth = useMemo(
+    () =>
+      store.revenueByMonth.map((item) => ({
+        month: item.month,
+        collected_amount: item.collected_amount,
+        generator_cost: Number(monthlyGeneratorCost.toFixed(2)),
+      })),
+    [monthlyGeneratorCost, store.revenueByMonth]
+  );
 
   const exportCurrentReportPdf = () => {
     const reportLabel = reports.find((item) => item.type === store.reportType)?.label ?? t("elecReports");
@@ -318,6 +447,9 @@ export default function ReportsPage() {
       [t("totalPaid"), formatMoney(store.totalPaid)],
       [t("totalOutstanding"), formatMoney(store.totalOutstanding)],
       [t("collectionRate"), `${store.collectionRate.toFixed(2)}%`],
+      [t("estimatedGeneratorCost"), formatMoney(estimatedGeneratorCost)],
+      [t("estimatedNetAfterGenerator"), formatMoney(estimatedNetAfterGenerator)],
+      [t("generatorCostPerKwh"), `${formatMoney(generatorCostPerKwh)} / ${t("kwh")}`],
     ];
 
     const html = `
@@ -469,6 +601,55 @@ export default function ReportsPage() {
         >
           {t("filter")}
         </button>
+      </div>
+
+      <div className="space-y-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <KpiCard
+            label={t("estimatedGeneratorCost")}
+            value={formatMoney(estimatedGeneratorCost)}
+            icon={<Zap size={22} />}
+            color="text-card-orange"
+            bgColor="bg-card-orange-light"
+          />
+          <KpiCard
+            label={t("estimatedNetAfterGenerator")}
+            value={formatMoney(estimatedNetAfterGenerator)}
+            icon={<DollarSign size={22} />}
+            color={estimatedNetAfterGenerator >= 0 ? "text-card-green" : "text-card-red"}
+            bgColor={estimatedNetAfterGenerator >= 0 ? "bg-card-green-light" : "bg-card-red-light"}
+          />
+          <KpiCard
+            label={t("generatorCostPerKwh")}
+            value={`${formatMoney(generatorCostPerKwh)} / ${t("kwh")}`}
+            icon={<Gauge size={22} />}
+            color="text-card-blue"
+            bgColor="bg-card-blue-light"
+          />
+          <KpiCard
+            label={t("generatorFuelVolume")}
+            value={`${monthlyFuelLiters.toFixed(2)} L`}
+            icon={<BarChart3 size={22} />}
+            color="text-card-blue"
+            bgColor="bg-card-blue-light"
+          />
+        </div>
+
+        <div className="bg-surface rounded-xl border border-surface-border p-5">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">{t("generatorEconomics")}</h3>
+          <p className="text-xs text-text-muted mb-4">
+            {t("generatorEconomicsHint")}
+          </p>
+          <GeneratorEconomicsChart data={generatorEconomicsByMonth} />
+          <div className="flex items-center gap-4 mt-3 justify-center">
+            <span className="flex items-center gap-1 text-xs text-text-muted">
+              <span className="w-3 h-3 rounded-sm bg-card-green inline-block" /> {t("totalCollected")}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-text-muted">
+              <span className="w-3 h-3 rounded-sm bg-card-orange inline-block" /> {t("estimatedGeneratorCost")}
+            </span>
+          </div>
+        </div>
       </div>
 
       {store.loading ? (
