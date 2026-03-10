@@ -36,6 +36,13 @@ CREATE TYPE reading_source AS ENUM ('manual', 'automatic');
 CREATE TYPE property_type AS ENUM ('building', 'house', 'land', 'commercial');
 
 -- ============================================================
+-- 3b. electricity issues enums
+-- ============================================================
+CREATE TYPE issue_status AS ENUM ('open', 'in_progress', 'resolved', 'closed');
+CREATE TYPE issue_priority AS ENUM ('low', 'medium', 'high');
+CREATE TYPE issue_category AS ENUM ('billing', 'meter', 'connection', 'other');
+
+-- ============================================================
 -- 4. SHARED / AUTH TABLES
 -- ============================================================
 
@@ -316,6 +323,25 @@ CREATE TABLE bill_payments (
   CONSTRAINT chk_bill_payment_positive CHECK (amount > 0)
 );
 
+-- -----------------------------------------------
+-- 6g. electricity_issues (issues/complaints logged by subscribers/clients)
+-- -----------------------------------------------
+CREATE TABLE electricity_issues (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subscriber_id UUID NOT NULL REFERENCES subscribers(id) ON DELETE RESTRICT,
+  client_id     UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+  title         TEXT NOT NULL,
+  description   TEXT,
+  category      issue_category NOT NULL DEFAULT 'other',
+  status        issue_status NOT NULL DEFAULT 'open',
+  priority      issue_priority NOT NULL DEFAULT 'medium',
+  assigned_to   UUID REFERENCES employees(id) ON DELETE RESTRICT,
+  resolved_at   TIMESTAMPTZ,
+  deleted_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ============================================================
 -- 7. FINANCIAL TRACKING
 -- ============================================================
@@ -423,6 +449,10 @@ CREATE TRIGGER set_updated_at_bill_payments
   BEFORE UPDATE ON bill_payments
   FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
 
+CREATE TRIGGER set_updated_at_electricity_issues
+  BEFORE UPDATE ON electricity_issues
+  FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
 CREATE TRIGGER set_updated_at_expenses
   BEFORE UPDATE ON expenses
   FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
@@ -498,6 +528,12 @@ CREATE INDEX idx_notifications_recipient ON notifications (recipient_type, recip
 CREATE INDEX idx_notifications_status ON notifications (status);
 CREATE INDEX idx_notifications_scheduled ON notifications (scheduled_at) WHERE status = 'pending';
 
+-- ---------- Electricity issues indexes ----------
+CREATE INDEX idx_electricity_issues_subscriber_id ON electricity_issues (subscriber_id);
+CREATE INDEX idx_electricity_issues_client_id ON electricity_issues (client_id);
+CREATE INDEX idx_electricity_issues_assigned_to ON electricity_issues (assigned_to);
+CREATE INDEX idx_electricity_issues_status ON electricity_issues (status);
+
 -- ============================================================
 -- 11. ROW LEVEL SECURITY — Enable on all tables (policies TBD)
 -- ============================================================
@@ -517,6 +553,7 @@ ALTER TABLE bills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bill_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE electricity_issues ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- 12. HELPER VIEWS — Profit & Loss computation
