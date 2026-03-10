@@ -29,6 +29,37 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface EmployeeSalaryOverviewMonthlyItem {
+  month: string;
+  rent_income: number;
+  electricity_income: number;
+  total_income: number;
+  payroll_cost: number;
+  net_earning: number;
+}
+
+export interface EmployeeSalaryOverviewResponse {
+  range: {
+    from_month: string;
+    to_month: string;
+  };
+  summary: {
+    active_employees: number;
+    monthly_payroll: number;
+    total_income: number;
+    total_payroll: number;
+    net_earning: number;
+  };
+  employees: Array<{
+    id: string;
+    full_name: string;
+    role: string;
+    is_active: boolean;
+    salary_amount: number;
+  }>;
+  monthly: EmployeeSalaryOverviewMonthlyItem[];
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -133,6 +164,18 @@ export async function getEmployeeLookup(): Promise<EmployeeLookup[]> {
 
   if (!response.data) {
     throw new Error(response.error || "Failed to fetch employee lookup");
+  }
+
+  return response.data;
+}
+
+export async function getEmployeeSalaryOverview(): Promise<EmployeeSalaryOverviewResponse> {
+  const response = await fetchApi<EmployeeSalaryOverviewResponse>(
+    "/api/employees/salary-overview"
+  );
+
+  if (!response.data) {
+    throw new Error(response.error || "Failed to fetch salary overview");
   }
 
   return response.data;
