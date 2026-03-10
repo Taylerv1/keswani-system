@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
+import { Globe, Bell, Menu, LayoutList } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { autorun, reaction } from "mobx";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
@@ -261,25 +261,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Right: actions */}
           <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="relative hidden md:block">
-              <Search
-                size={16}
-                className="absolute top-1/2 -translate-y-1/2 text-text-muted"
-                style={{ [dir === "rtl" ? "right" : "left"]: "12px" }}
-              />
-              <input
-                type="text"
-                placeholder={t("search")}
-                className="h-9 rounded-lg border border-surface-border bg-background text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                style={{
-                  width: "200px",
-                  [dir === "rtl" ? "paddingRight" : "paddingLeft"]: "36px",
-                  [dir === "rtl" ? "paddingLeft" : "paddingRight"]: "12px",
-                }}
-              />
-            </div>
-
             {/* Language toggle */}
             <button
               onClick={toggleLocale}
