@@ -19,11 +19,7 @@ export default function CustomerProfilePage() {
                 </p>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="py-6 sm:py-10">
-                    <CustomerProfileCard user={data.user} />
-                </div>
-            </div>
+            <CustomerProfileCard user={data.user} />
         </div>
     );
 }
