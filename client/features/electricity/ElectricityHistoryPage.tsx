@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
-import { StatusBadge, KpiCard } from "@/components/ui";
+import { KpiCard, LoadingLottie, StatusBadge } from "@/components/ui";
 import ElectricityBillCard from "@/features/electricity/components/ElectricityBillCard";
 import {
     Zap,
@@ -14,9 +14,178 @@ import {
     TrendingUp,
 } from "lucide-react";
 
+function ConsumptionLineChart({
+    data,
+}: {
+    data: Array<{ month: string; value: number }>;
+}) {
+    if (!data.length) {
+        return <div className="text-sm text-text-muted">No data</div>;
+    }
+
+    const width = Math.max(640, data.length * 88);
+    const height = 300;
+    const paddingLeft = 56;
+    const paddingRight = 24;
+    const paddingTop = 24;
+    const paddingBottom = 54;
+    const plotWidth = width - paddingLeft - paddingRight;
+    const plotHeight = height - paddingTop - paddingBottom;
+    const maxValue = Math.max(...data.map((item) => item.value), 1);
+
+    const points = data.map((item, index) => {
+        const x =
+            data.length === 1
+                ? paddingLeft + plotWidth / 2
+                : paddingLeft + (index * plotWidth) / (data.length - 1);
+        const y = paddingTop + (1 - item.value / maxValue) * plotHeight;
+        return { x, y, label: item.month, value: item.value };
+    });
+
+    const linePath = points
+        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+        .join(" ");
+    const areaPath = `${linePath} L ${points[points.length - 1].x} ${paddingTop + plotHeight} L ${points[0].x} ${
+        paddingTop + plotHeight
+    } Z`;
+
+    return (
+        <div className="overflow-x-auto">
+            <svg
+                width={width}
+                height={height}
+                viewBox={`0 0 ${width} ${height}`}
+                role="img"
+                aria-label="Consumption trend chart"
+            >
+                <defs>
+                    <linearGradient id="historyConsumptionArea" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="#f97316" stopOpacity="0.02" />
+                    </linearGradient>
+                </defs>
+
+                {[0, 1, 2, 3, 4].map((step) => {
+                    const y = paddingTop + (step * plotHeight) / 4;
+                    const value = Math.round(((4 - step) * maxValue) / 4);
+                    return (
+                        <g key={`consumption-grid-${step}`}>
+                            <line
+                                x1={paddingLeft}
+                                y1={y}
+                                x2={width - paddingRight}
+                                y2={y}
+                                stroke="#e5e7eb"
+                                strokeDasharray="4 4"
+                            />
+                            <text x={paddingLeft - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#6b7280">
+                                {value}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                <path d={areaPath} fill="url(#historyConsumptionArea)" />
+                <path d={linePath} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
+
+                {points.map((point) => (
+                    <g key={point.label}>
+                        <circle cx={point.x} cy={point.y} r="4.5" fill="#f97316" />
+                        <text x={point.x} y={point.y - 10} textAnchor="middle" fontSize="10" fill="#374151">
+                            {point.value.toFixed(0)}
+                        </text>
+                        <text x={point.x} y={height - 18} textAnchor="middle" fontSize="10" fill="#6b7280">
+                            {point.label}
+                        </text>
+                    </g>
+                ))}
+            </svg>
+        </div>
+    );
+}
+
+function BillingComparisonChart({
+    data,
+}: {
+    data: Array<{ month: string; billed: number; paid: number }>;
+}) {
+    if (!data.length) {
+        return <div className="text-sm text-text-muted">No data</div>;
+    }
+
+    const width = Math.max(680, data.length * 96);
+    const height = 320;
+    const paddingLeft = 56;
+    const paddingRight = 24;
+    const paddingTop = 24;
+    const paddingBottom = 64;
+    const plotWidth = width - paddingLeft - paddingRight;
+    const plotHeight = height - paddingTop - paddingBottom;
+    const maxValue = Math.max(...data.map((item) => Math.max(item.billed, item.paid)), 1);
+
+    return (
+        <div className="overflow-x-auto">
+            <svg
+                width={width}
+                height={height}
+                viewBox={`0 0 ${width} ${height}`}
+                role="img"
+                aria-label="Billing comparison chart"
+            >
+                {[0, 1, 2, 3, 4].map((step) => {
+                    const y = paddingTop + (step * plotHeight) / 4;
+                    const value = ((4 - step) * maxValue) / 4;
+                    return (
+                        <g key={`revenue-grid-${step}`}>
+                            <line
+                                x1={paddingLeft}
+                                y1={y}
+                                x2={width - paddingRight}
+                                y2={y}
+                                stroke="#e5e7eb"
+                                strokeDasharray="4 4"
+                            />
+                            <text x={paddingLeft - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#6b7280">
+                                {value.toFixed(0)}
+                            </text>
+                        </g>
+                    );
+                })}
+
+                {data.map((item, index) => {
+                    const groupWidth = plotWidth / data.length;
+                    const xStart = paddingLeft + index * groupWidth + groupWidth * 0.18;
+                    const barWidth = Math.max(12, groupWidth * 0.26);
+                    const billedHeight = (item.billed / maxValue) * plotHeight;
+                    const paidHeight = (item.paid / maxValue) * plotHeight;
+                    const billedY = paddingTop + plotHeight - billedHeight;
+                    const paidY = paddingTop + plotHeight - paidHeight;
+
+                    return (
+                        <g key={`revenue-group-${item.month}`}>
+                            <rect x={xStart} y={billedY} width={barWidth} height={billedHeight} rx="4" fill="#3b82f6" />
+                            <rect
+                                x={xStart + barWidth + groupWidth * 0.12}
+                                y={paidY}
+                                width={barWidth}
+                                height={paidHeight}
+                                rx="4"
+                                fill="#10b981"
+                            />
+                            <text x={xStart + barWidth} y={height - 24} textAnchor="middle" fontSize="10" fill="#6b7280">
+                                {item.month}
+                            </text>
+                        </g>
+                    );
+                })}
+            </svg>
+        </div>
+    );
+}
+
 export default function ElectricityHistoryPage() {
     const { t } = useTranslation();
-    const { data } = useCustomer();
+    const { data, loading, error } = useCustomer();
     const electricity = data.electricity;
     const readings = useMemo(() => electricity?.readings ?? [], [electricity]);
     const bills = useMemo(() => electricity?.bills ?? [], [electricity]);
@@ -33,12 +202,49 @@ export default function ElectricityHistoryPage() {
 
     const latestConsumption = readings.length > 0 ? readings[0].consumption : 0;
 
-    // Consumption trend mini-chart data
     const consumptionData = useMemo(
         () => [...readings].reverse().map((r) => ({ month: r.month.slice(5), value: r.consumption })),
         [readings]
     );
-    const maxConsumption = Math.max(...consumptionData.map((c) => c.value), 1);
+
+    const revenueData = useMemo(() => {
+        const billedByMonth = new Map<string, number>();
+        const paidByMonth = new Map<string, number>();
+        const billById = new Map(bills.map((bill) => [bill.id, bill]));
+
+        for (const bill of bills) {
+            billedByMonth.set(bill.month, (billedByMonth.get(bill.month) ?? 0) + bill.totalAmount);
+        }
+
+        for (const payment of payments) {
+            const bill = billById.get(payment.billId);
+            const month = bill?.month ?? payment.date.slice(0, 7);
+            paidByMonth.set(month, (paidByMonth.get(month) ?? 0) + payment.amount);
+        }
+
+        const months = Array.from(new Set([...billedByMonth.keys(), ...paidByMonth.keys()])).sort();
+        return months.map((month) => ({
+            month: month.slice(5),
+            billed: billedByMonth.get(month) ?? 0,
+            paid: paidByMonth.get(month) ?? 0,
+        }));
+    }, [bills, payments]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <LoadingLottie size={140} className="p-6" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+            </div>
+        );
+    }
 
     if (!electricity) {
         return (
@@ -140,28 +346,24 @@ export default function ElectricityHistoryPage() {
                             {t("consumptionTrend")}
                         </h2>
                     </div>
-                    <div className="flex items-end gap-1.5 sm:gap-3 h-32 sm:h-40">
-                        {consumptionData.map((item) => (
-                            <div
-                                key={item.month}
-                                className="flex-1 flex flex-col items-center gap-0.5 sm:gap-1 min-w-0"
-                            >
-                                <span className="text-[10px] sm:text-xs text-text-muted font-medium truncate w-full text-center">
-                                    {item.value}
-                                </span>
-                                <div
-                                    className="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-card-orange to-primary transition-all duration-300"
-                                    style={{
-                                        height: `${(item.value / maxConsumption) * 100}%`,
-                                        minHeight: 4,
-                                    }}
-                                />
-                                <span className="text-[10px] sm:text-xs text-text-secondary font-medium truncate w-full text-center">
-                                    {item.month}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                    <ConsumptionLineChart data={consumptionData} />
+                </div>
+            </div>
+
+            {/* Financial Trend Chart */}
+            <div className="bg-surface rounded-xl border border-surface-border p-4 sm:p-5 mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <CreditCard size={18} className="text-primary" />
+                    <h2 className="text-sm font-semibold text-text-primary">{t("revenueTrend")}</h2>
+                </div>
+                <BillingComparisonChart data={revenueData} />
+                <div className="flex items-center gap-4 mt-3 justify-center">
+                    <span className="flex items-center gap-1 text-xs text-text-muted">
+                        <span className="w-3 h-3 rounded-sm bg-card-blue inline-block" /> {t("totalBilled")}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-text-muted">
+                        <span className="w-3 h-3 rounded-sm bg-card-green inline-block" /> {t("totalPaid")}
+                    </span>
                 </div>
             </div>
 
