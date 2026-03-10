@@ -4,10 +4,38 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Globe, Search, Bell, Menu, LayoutList } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { autorun, reaction } from "mobx";
 import PrimarySidebar from "@/components/layout/PrimarySidebar";
 import SecondarySidebar from "@/components/layout/SecondarySidebar";
 import { useTranslation } from "@/lib/translation";
 import { getUserData } from "@/lib/helpers/auth-client";
+import { notificationsStore } from "@/features/notifications/store";
+import { typeTranslationMap, parseNotificationMessage } from "@/features/notifications/utils";
+import type { NotificationItem } from "@/features/notifications/types";
+
+function timeAgo(dateStr: string, locale: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  if (Number.isNaN(then)) return dateStr;
+
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return locale === "ar" ? "الآن" : "Just now";
+
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return locale === "ar" ? `منذ ${diffMin} د` : `${diffMin}m ago`;
+
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return locale === "ar" ? `منذ ${diffHr} س` : `${diffHr}h ago`;
+
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return locale === "ar" ? "أمس" : "Yesterday";
+  if (diffDay < 7) return locale === "ar" ? `منذ ${diffDay} أيام` : `${diffDay}d ago`;
+
+  return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-LB" : "en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,33 +48,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [displayName, setDisplayName] = useState("");
   const [userEmail, setUserEmail] = useState("No email available");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: "notif-1",
-      title: "Rent payment reminder: due in 2 days.",
-      timestamp: "5 min ago",
-      unread: true,
-    },
-    {
-      id: "notif-2",
-      title: "New electricity bill is available.",
-      timestamp: "1 hour ago",
-      unread: true,
-    },
-    {
-      id: "notif-3",
-      title: "Maintenance report status was updated.",
-      timestamp: "Yesterday",
-      unread: false,
-    },
-    {
-      id: "notif-4",
-      title: "Welcome to your admin dashboard.",
-      timestamp: "2 days ago",
-      unread: false,
-    },
-  ]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [recentItems, setRecentItems] = useState<NotificationItem[]>([]);
   const notificationRootRef = useRef<HTMLDivElement>(null);
+  const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   const { t, dir, locale, toggleLocale } = useTranslation();
   const pathname = usePathname();
@@ -55,6 +60,43 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const hasSecondaryNav =
     safePathname.startsWith("/admin-dashboard/rent") ||
     safePathname.startsWith("/admin-dashboard/electricity");
+
+  // Polling lifecycle
+  useEffect(() => {
+    notificationsStore.startPolling(10_000);
+    return () => notificationsStore.stopPolling();
+  }, []);
+
+  // Preload notification sound
+  useEffect(() => {
+    const audio = new Audio("/notificationSound.wav");
+    audio.preload = "auto";
+    notificationAudioRef.current = audio;
+  }, []);
+
+  // Play sound on every new notification batch
+  useEffect(() => {
+    const dispose = reaction(
+      () => notificationsStore.newNotificationsBurst,
+      () => {
+        const audio = notificationAudioRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+      }
+    );
+    return () => dispose();
+  }, []);
+
+  // MobX reactivity — bridge to React state
+  useEffect(() => {
+    const dispose = autorun(() => {
+      setUnreadCount(notificationsStore.unreadCount);
+      setRecentItems(notificationsStore.recentItems.slice());
+    });
+    return () => dispose();
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -150,33 +192,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const firstChar = displayName.trim().charAt(0);
     return firstChar ? firstChar.toUpperCase() : "A";
   }, [displayName]);
-  const latestNotifications = useMemo(
-    () => notifications.slice(0, 3),
-    [notifications],
-  );
-  const unreadCount = useMemo(
-    () => notifications.filter((notification) => notification.unread).length,
-    [notifications],
-  );
 
-  const handleNotificationClick = (id: string) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id
-          ? { ...notification, unread: false }
-          : notification,
-      ),
-    );
+  const latestNotifications = recentItems.slice(0, 3);
+
+  const handleNotificationClick = (notification: NotificationItem) => {
+    if (!notification.read) {
+      void notificationsStore.markRead(notification.id, { errorFallback: t("error") });
+    }
+    setNotificationsOpen(false);
+    router.push("/admin-dashboard/notifications");
   };
 
   const handleSeeMoreNotifications = () => {
     setNotificationsOpen(false);
-    const notificationsSection = document.getElementById("notifications");
-    if (notificationsSection) {
-      notificationsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
     router.push("/admin-dashboard/notifications");
   };
 
@@ -275,7 +303,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Bell size={16} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-card-red text-white text-[10px] flex items-center justify-center font-bold leading-none">
-                    {unreadCount}
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
@@ -292,7 +320,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                   {latestNotifications.length === 0 ? (
                     <div className="px-4 py-4 text-sm text-text-secondary">
-                      No notifications yet.
+                      {t("noResults")}
                     </div>
                   ) : (
                     <div className="max-h-72 overflow-y-auto">
@@ -301,20 +329,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           key={notification.id}
                           type="button"
                           className={`w-full px-4 py-3 ${dir === "rtl" ? "text-right" : "text-left"} hover:bg-background transition-colors cursor-pointer`}
-                          onClick={() => handleNotificationClick(notification.id)}
+                          onClick={() => handleNotificationClick(notification)}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-start gap-2">
                             <p
-                              className={`m-0 text-[13px] ${notification.unread ? "font-semibold" : "font-normal"} text-text-primary flex-1 leading-5`}
+                              className={`m-0 text-[13px] ${!notification.read ? "font-semibold" : "font-normal"} text-text-primary flex-1 leading-5`}
                             >
-                              {notification.title}
+                              {t(typeTranslationMap[notification.type] ?? "notifications")}
                             </p>
-                            {notification.unread && (
-                              <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            {!notification.read && (
+                              <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
                             )}
                           </div>
-                          <p className="m-0 mt-1 text-[11px] text-text-secondary">
-                            {notification.timestamp}
+                          {notification.message && (
+                            <p className="m-0 mt-0.5 text-[12px] text-text-secondary leading-4 line-clamp-2">
+                              {parseNotificationMessage(notification.message, locale)}
+                            </p>
+                          )}
+                          <p className="m-0 mt-1 text-[11px] text-text-muted">
+                            {timeAgo(notification.createdAt, locale)}
                           </p>
                         </button>
                       ))}
