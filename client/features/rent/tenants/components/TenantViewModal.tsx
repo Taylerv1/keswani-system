@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, StatusBadge } from "@/components/ui";
+import { Modal, StatusBadge, LoadingLottie } from "@/components/ui";
 import type { TenantDetail } from "../types";
 import { formatNullable } from "../utils";
 
@@ -10,6 +10,7 @@ interface TenantViewModalProps {
   onClose: () => void;
   onInvite?: (id: string) => void;
   actionLoading?: boolean;
+  detailLoading?: boolean;
   t: (key: string) => string;
 }
 
@@ -26,6 +27,7 @@ export function TenantViewModal({
   onClose,
   onInvite,
   actionLoading = false,
+  detailLoading = false,
   t,
 }: TenantViewModalProps) {
   return (
@@ -68,96 +70,104 @@ export function TenantViewModal({
             </div>
           )}
 
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-text-primary">{t("contractsSummary")}</h4>
-            {tenant.contracts.length === 0 ? (
-              <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
-            ) : (
+          {detailLoading ? (
+            <div className="flex justify-center py-8">
+                <LoadingLottie size={240} zoom={1} />
+            </div>
+          ) : (
+            <>
               <div className="space-y-2">
-                {tenant.contracts.map((contract) => (
-                  <div
-                    key={contract.id}
-                    className="bg-background rounded-lg p-3 border border-surface-border"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <p className="text-sm font-medium text-text-primary">
-                        {contract.unit.property.name} - {contract.unit.unit_number}
-                      </p>
-                      <StatusBadge status={contract.status} />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-secondary">
-                      <p>
-                        {t("startDate")}: <span className="text-text-primary">{formatDate(contract.start_date)}</span>
-                      </p>
-                      <p>
-                        {t("endDate")}: <span className="text-text-primary">{formatDate(contract.end_date)}</span>
-                      </p>
-                      <p>
-                        {t("monthlyRent")}: <span className="text-text-primary">{String(contract.monthly_rent)} {contract.currency}</span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-text-primary">{t("recentPayments")}</h4>
-            {tenant.contracts.flatMap((contract) => contract.rent_payments).length === 0 ? (
-              <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
-            ) : (
-              <div className="space-y-2">
-                {tenant.contracts
-                  .flatMap((contract) => contract.rent_payments)
-                  .slice(0, 10)
-                  .map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="bg-background rounded-lg p-3 border border-surface-border flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">
-                          {String(payment.amount)} {payment.currency}
-                        </p>
-                        <p className="text-xs text-text-secondary">
-                          {t("dueDate")}: {formatDate(payment.payment_date)}
-                        </p>
-                        <p className="text-xs text-text-secondary">
-                          {t("paymentDate")}: {formatDate(payment.paid_at)}
-                        </p>
+                <h4 className="text-sm font-semibold text-text-primary">{t("contractsSummary")}</h4>
+                {tenant.contracts.length === 0 ? (
+                  <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
+                ) : (
+                  <div className="space-y-2">
+                    {tenant.contracts.map((contract) => (
+                      <div
+                        key={contract.id}
+                        className="bg-background rounded-lg p-3 border border-surface-border"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <p className="text-sm font-medium text-text-primary">
+                            {contract.unit.property.name} - {contract.unit.unit_number}
+                          </p>
+                          <StatusBadge status={contract.status} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-secondary">
+                          <p>
+                            {t("startDate")}: <span className="text-text-primary">{formatDate(contract.start_date)}</span>
+                          </p>
+                          <p>
+                            {t("endDate")}: <span className="text-text-primary">{formatDate(contract.end_date)}</span>
+                          </p>
+                          <p>
+                            {t("monthlyRent")}: <span className="text-text-primary">{String(contract.monthly_rent)} {contract.currency}</span>
+                          </p>
+                        </div>
                       </div>
-                      <StatusBadge status={payment.status} />
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-text-primary">{t("recentMaintenance")}</h4>
-            {tenant.maintenance_requests.length === 0 ? (
-              <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
-            ) : (
-              <div className="space-y-2">
-                {tenant.maintenance_requests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="bg-background rounded-lg p-3 border border-surface-border flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-text-primary">{request.title}</p>
-                      <p className="text-xs text-text-secondary">{formatDate(request.created_at)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={request.priority} />
-                      <StatusBadge status={request.status} />
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-text-primary">{t("recentPayments")}</h4>
+                {tenant.contracts.flatMap((contract) => contract.rent_payments).length === 0 ? (
+                  <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
+                ) : (
+                  <div className="space-y-2">
+                    {tenant.contracts
+                      .flatMap((contract) => contract.rent_payments)
+                      .slice(0, 10)
+                      .map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="bg-background rounded-lg p-3 border border-surface-border flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">
+                              {String(payment.amount)} {payment.currency}
+                            </p>
+                            <p className="text-xs text-text-secondary">
+                              {t("dueDate")}: {formatDate(payment.payment_date)}
+                            </p>
+                            <p className="text-xs text-text-secondary">
+                              {t("paymentDate")}: {formatDate(payment.paid_at)}
+                            </p>
+                          </div>
+                          <StatusBadge status={payment.status} />
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-text-primary">{t("recentMaintenance")}</h4>
+                {tenant.maintenance_requests.length === 0 ? (
+                  <div className="bg-background rounded-lg p-3 text-sm text-text-muted">{t("noDataYet")}</div>
+                ) : (
+                  <div className="space-y-2">
+                    {tenant.maintenance_requests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="bg-background rounded-lg p-3 border border-surface-border flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">{request.title}</p>
+                          <p className="text-xs text-text-secondary">{formatDate(request.created_at)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={request.priority} />
+                          <StatusBadge status={request.status} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </Modal>

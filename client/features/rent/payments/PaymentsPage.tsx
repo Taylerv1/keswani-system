@@ -47,7 +47,6 @@ export function PaymentsPage() {
         baseOption,
         { value: "pending", label: t("pending") },
         { value: "overdue", label: t("overdue") },
-        { value: "partial", label: t("partial") },
       ];
     }
 
@@ -160,7 +159,7 @@ export function PaymentsPage() {
             value={state.statusFilter}
             onChange={(value) => {
               state.setStatusFilter(
-                value as "all" | "pending" | "paid" | "partial" | "overdue" | "cancelled"
+                value as "all" | "pending" | "paid" | "overdue" | "cancelled"
               );
               state.setPage(1);
             }}

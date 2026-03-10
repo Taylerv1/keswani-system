@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Home, Zap } from "lucide-react";
 import { Modal, LoadingLottie, SelectMenu } from "@/components/ui";
 import type { PropertyDto } from "../types";
 import type { CreateUnitInput } from "../utils";
@@ -264,37 +264,76 @@ export function PropertyCreateModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-surface-border p-3">
-            <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.isForRent}
-                onChange={(e) =>
-                  setForm((prev) => {
-                    const nextValue = e.target.checked;
-                    if (!nextValue && !prev.isForElectricity) return prev;
-                    return { ...prev, isForRent: nextValue };
-                  })
-                }
-                className="h-4 w-4 rounded border-surface-border"
-              />
-              {t("rent")}
-            </label>
-            <label className="flex items-center gap-3 text-sm text-text-primary cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.isForElectricity}
-                onChange={(e) =>
-                  setForm((prev) => {
-                    const nextValue = e.target.checked;
-                    if (!nextValue && !prev.isForRent) return prev;
-                    return { ...prev, isForElectricity: nextValue };
-                  })
-                }
-                className="h-4 w-4 rounded border-surface-border"
-              />
-              {t("electricity")}
-            </label>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Rent toggle card */}
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => {
+                  const next = !prev.isForRent;
+                  if (!next && !prev.isForElectricity) return prev;
+                  return { ...prev, isForRent: next };
+                })
+              }
+              className={`relative flex items-center gap-3 p-3 rounded-xl border-2 text-start transition-all duration-150 ${
+                form.isForRent
+                  ? "border-primary bg-primary/5"
+                  : "border-surface-border bg-surface hover:border-primary/40"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                  form.isForRent ? "bg-primary text-white" : "bg-background text-text-muted"
+                }`}
+              >
+                <Home size={15} />
+              </div>
+              <span
+                className={`text-sm font-medium transition-colors ${
+                  form.isForRent ? "text-primary" : "text-text-secondary"
+                }`}
+              >
+                {t("rent")}
+              </span>
+              {form.isForRent && (
+                <div className="absolute top-2 end-2 w-2 h-2 rounded-full bg-primary" />
+              )}
+            </button>
+
+            {/* Electricity toggle card */}
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => {
+                  const next = !prev.isForElectricity;
+                  if (!next && !prev.isForRent) return prev;
+                  return { ...prev, isForElectricity: next };
+                })
+              }
+              className={`relative flex items-center gap-3 p-3 rounded-xl border-2 text-start transition-all duration-150 ${
+                form.isForElectricity
+                  ? "border-primary bg-primary/5"
+                  : "border-surface-border bg-surface hover:border-primary/40"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                  form.isForElectricity ? "bg-primary text-white" : "bg-background text-text-muted"
+                }`}
+              >
+                <Zap size={15} />
+              </div>
+              <span
+                className={`text-sm font-medium transition-colors ${
+                  form.isForElectricity ? "text-primary" : "text-text-secondary"
+                }`}
+              >
+                {t("electricity")}
+              </span>
+              {form.isForElectricity && (
+                <div className="absolute top-2 end-2 w-2 h-2 rounded-full bg-primary" />
+              )}
+            </button>
           </div>
 
           <div>

@@ -25,6 +25,7 @@ model employees {
   generated_bills        bills[]                @relation("BillGenerator")
   paid_expenses          expenses[]             @relation("ExpensePayer")
   assigned_maintenance   maintenance_requests[] @relation("MaintenanceAssignee")
+  assigned_issues        electricity_issues[]   @relation("IssueAssignee")
   set_pricing            pricing_history[]      @relation("PricingSetter")
   managed_properties     properties[]           @relation("PropertyManager")
   recorded_readings      readings[]             @relation("ReadingRecorder")
@@ -45,6 +46,7 @@ model clients {
   updated_at           DateTime               @default(now()) @db.Timestamptz(6)
   contracts            contracts[]
   maintenance_requests maintenance_requests[] @relation("MaintenanceRequester")
+  electricity_issues   electricity_issues[]   @relation("IssueRequester")
   subscribers          subscribers[]
 }
 
@@ -167,6 +169,31 @@ model maintenance_requests {
   @@index([unit_id], map: "idx_maintenance_unit_id")
 }
 
+model electricity_issues {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriber_id String         @db.Uuid
+  client_id     String         @db.Uuid
+  title         String
+  description   String?
+  category      issue_category @default(other)
+  status        issue_status   @default(open)
+  priority      issue_priority @default(medium)
+  assigned_to   String?        @db.Uuid
+  resolved_at   DateTime?      @db.Timestamptz(6)
+  deleted_at    DateTime?      @db.Timestamptz(6)
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
+
+  subscriber    subscribers @relation("IssueSubscriber", fields: [subscriber_id], references: [id], onUpdate: NoAction)
+  client        clients     @relation("IssueRequester", fields: [client_id], references: [id], onUpdate: NoAction)
+  assignee      employees?  @relation("IssueAssignee", fields: [assigned_to], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([subscriber_id], map: "idx_electricity_issues_subscriber_id")
+  @@index([client_id], map: "idx_electricity_issues_client_id")
+  @@index([assigned_to], map: "idx_electricity_issues_assigned_to")
+  @@index([status], map: "idx_electricity_issues_status")
+}
+
 model subscribers {
   id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   client_id           String      @db.Uuid
@@ -180,6 +207,7 @@ model subscribers {
   updated_at          DateTime    @default(now()) @db.Timestamptz(6)
   bills               bills[]
   meters              meters[]
+  electricity_issues  electricity_issues[] @relation("IssueSubscriber")
   client              clients     @relation(fields: [client_id], references: [id], onUpdate: NoAction)
   property            properties? @relation("SubscriberProperty", fields: [property_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   unit                units?      @relation("SubscriberUnit", fields: [unit_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -383,7 +411,6 @@ enum contract_status {
 enum payment_status {
   pending
   paid
-  partial
   overdue
   cancelled
 }
@@ -444,4 +471,24 @@ enum property_type {
   house
   land
   commercial
+}
+
+enum issue_status {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum issue_priority {
+  low
+  medium
+  high
+}
+
+enum issue_category {
+  billing
+  meter
+  connection
+  other
 }

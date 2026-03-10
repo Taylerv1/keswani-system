@@ -164,6 +164,7 @@ export function TenantsPage() {
           void state.inviteTenantPortalAccess(id);
         }}
         actionLoading={state.actionLoading}
+        detailLoading={state.detailLoading}
         t={t}
       />
     </div>

@@ -9,14 +9,24 @@ interface RentHistoryCardProps {
 }
 
 export default function RentHistoryCard({ payment }: RentHistoryCardProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
+
+    const formatMonth = (monthStr: string | null | undefined) => {
+        if (!monthStr) return "-";
+        const date = new Date(monthStr + "T12:00:00");
+        if (isNaN(date.getTime())) return monthStr;
+        return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+            month: "long",
+            year: "numeric",
+        });
+    };
 
     return (
         <div className="bg-surface rounded-xl border border-surface-border p-4 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-text-primary">
-                        {payment.month}
+                        {formatMonth(payment.month)}
                     </span>
                 </div>
                 <StatusBadge status={payment.status} />

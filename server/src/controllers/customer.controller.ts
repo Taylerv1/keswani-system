@@ -143,7 +143,7 @@ export const getCustomerDashboard = async (
                             date: p.paid_at ? (typeof p.paid_at === 'string' ? p.paid_at.split('T')[0] : (p.paid_at instanceof Date ? p.paid_at.toISOString().split("T")[0] : p.paid_at)) : null,
                             status: p.status,
                             month: p.period_start ? (typeof p.period_start === 'string' ? p.period_start : p.period_start.toISOString().split("T")[0]) : null,
-                            receiptNumber: null, // TODO: add to schema if needed
+                            receiptNumber: p.receipt_number ?? null,
                         };
                     } catch (err) {
                         console.error("[Dashboard] Error mapping payment:", p, err);
@@ -215,6 +215,11 @@ export const getCustomerDashboard = async (
                     where: {
                         bill_id: { in: billIds },
                     },
+                    include: {
+                        receiver: {
+                            select: { full_name: true },
+                        },
+                    },
                 });
 
                 // Get current pricing (use Date objects for Date fields)
@@ -235,15 +240,25 @@ export const getCustomerDashboard = async (
                 electricityData = {
                     meterId: meter.id,
                     meterType: meter.meter_type,
-                    readings: readings.map((r: any) => ({
-                        id: r.id,
-                        month: typeof r.reading_date === 'string' ? r.reading_date : r.reading_date.toISOString().split("T")[0],
-                        previousReading: 0, // Calculate from previous reading
-                        currentReading: parseFloat(r.reading_value.toString()),
-                        consumption: 0, // Calculate
-                        readingDate: typeof r.reading_date === 'string' ? r.reading_date : r.reading_date.toISOString().split("T")[0],
-                        readBy: r.recorded_by,
-                    })),
+                    readings: readings.map((r: any, i: number) => {
+                        const prevValue =
+                            i + 1 < readings.length
+                                ? parseFloat(readings[i + 1].reading_value.toString())
+                                : 0;
+                        const currentValue = parseFloat(r.reading_value.toString());
+                        const readingDateStr = typeof r.reading_date === "string"
+                            ? r.reading_date
+                            : r.reading_date.toISOString();
+                        return {
+                            id: r.id,
+                            month: readingDateStr.slice(0, 7), // "YYYY-MM"
+                            previousReading: prevValue,
+                            currentReading: currentValue,
+                            consumption: Math.max(0, currentValue - prevValue),
+                            readingDate: readingDateStr.split("T")[0],
+                            readBy: r.recorded_by,
+                        };
+                    }),
                     bills: bills.map((b: any) => {
                         const payments = billPayments.filter((bp: any) => bp.bill_id === b.id);
                         const totalPaid = payments.reduce(
@@ -269,7 +284,7 @@ export const getCustomerDashboard = async (
                         billId: bp.bill_id,
                         amount: parseFloat(bp.amount.toString()),
                         date: typeof bp.payment_date === 'string' ? bp.payment_date : bp.payment_date.toISOString().split("T")[0],
-                        collectedBy: bp.received_by,
+                        collectedBy: bp.receiver?.full_name ?? null,
                     })),
                     currentPricePerKwh: currentPricing
                         ? parseFloat(currentPricing.price_per_kwh.toString())

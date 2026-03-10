@@ -20,19 +20,17 @@ export default function KpiCard({
   trend,
 }: KpiCardProps) {
   return (
-    <div className="kpi-card bg-surface rounded-xl p-3 md:p-5 border border-surface-border hover:shadow-lg transition-shadow duration-200 flex items-center gap-2.5 md:gap-4">
+    <div className="kpi-card bg-surface rounded-xl p-2.5 md:p-3 border border-surface-border hover:shadow-lg transition-shadow duration-200 flex items-center gap-2 md:gap-2.5">
       <div
-        className={`kpi-icon w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl ${bgColor} ${color} flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-[22px] md:[&>svg]:h-[22px]`}
+        className={`kpi-icon w-7 h-7 md:w-9 md:h-9 rounded-lg ${bgColor} ${color} flex items-center justify-center shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 md:[&>svg]:w-4 md:[&>svg]:h-4`}
       >
         {icon}
       </div>
       <div className="kpi-content min-w-0 flex-1">
-        <div className="kpi-text flex">
-          <p className="kpi-label text-[11px] md:text-sm text-text-secondary leading-snug truncate">{label}</p>
-          <p className="kpi-value text-sm md:text-lg font-semibold text-text-primary leading-tight whitespace-nowrap">{value}</p>
-        </div>
+        <p className="kpi-label text-[9px] md:text-[10px] text-text-secondary leading-snug">{label}</p>
+        <p className="kpi-value text-xs md:text-sm font-semibold text-text-primary leading-tight mt-0.5 truncate">{value}</p>
         {trend && (
-          <p className="kpi-trend text-[10px] md:text-xs text-text-muted mt-0.5 leading-snug truncate">{trend}</p>
+          <p className="kpi-trend text-[8px] md:text-[9px] text-text-muted mt-0.5 leading-snug truncate">{trend}</p>
         )}
       </div>
     </div>

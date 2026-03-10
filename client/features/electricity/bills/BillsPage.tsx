@@ -89,7 +89,6 @@ export default function BillsPage() {
                 | "all"
                 | "open"
                 | "pending"
-                | "partial"
                 | "overdue"
                 | "paid"
                 | "cancelled"
@@ -103,7 +102,6 @@ export default function BillsPage() {
           </option>
           <option value="open">{t("unpaid")}</option>
           <option value="paid">{t("paid")}</option>
-          <option value="partial">{t("partial")}</option>
           <option value="pending">{t("pending")}</option>
           <option value="overdue">{t("overdue")}</option>
         </select>

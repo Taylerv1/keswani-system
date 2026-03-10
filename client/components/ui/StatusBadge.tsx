@@ -25,7 +25,9 @@ const variantMap: Record<string, "success" | "warning" | "danger" | "info"> = {
   in_progress: "warning",
   inProgress: "warning",
   pending: "warning",
+  resolved: "success",
   high: "danger",
+  urgent: "danger",
   medium: "warning",
   low: "info",
   closed: "info",
@@ -33,7 +35,6 @@ const variantMap: Record<string, "success" | "warning" | "danger" | "info"> = {
   underMaintenance: "warning",
   // Electricity-specific statuses
   unpaid: "danger",
-  partial: "warning",
   suspended: "danger",
   digital: "info",
   analog: "info",

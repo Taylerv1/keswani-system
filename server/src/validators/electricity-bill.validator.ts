@@ -9,7 +9,6 @@ const idSchema = z.string().regex(UUID_LIKE_REGEX, "Invalid UUID");
 export const billStatusFilterEnum = z.enum([
     "paid",
     "pending",
-    "partial",
     "overdue",
     "cancelled",
     "open",

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     Home,
-    FileText,
+    LifeBuoy,
     Zap,
     User,
     LogOut,
@@ -36,6 +36,7 @@ export default function CustomerSidebar({
     onMobileClose,
 }: CustomerSidebarProps) {
     const pathname = usePathname();
+    const safePathname = pathname ?? "";
     const router = useRouter();
     const { t, dir } = useTranslation();
     const { hasRentData, hasElectricityData } = useCustomer();
@@ -70,9 +71,9 @@ export default function CustomerSidebar({
             ]
             : []),
         {
-            key: "custReports",
-            href: "/dashboard/reports",
-            icon: <FileText size={20} />,
+            key: "custSupport",
+            href: "/dashboard/support",
+            icon: <LifeBuoy size={20} />,
         },
         {
             key: "custProfile",
@@ -129,8 +130,8 @@ export default function CustomerSidebar({
                 {navItems.map((item) => {
                     const isActive =
                         item.href === "/dashboard"
-                            ? pathname === "/dashboard"
-                            : pathname.startsWith(item.href);
+                            ? safePathname === "/dashboard"
+                            : safePathname.startsWith(item.href);
                     return (
                         <Link
                             key={item.key}

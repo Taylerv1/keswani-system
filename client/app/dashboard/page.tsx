@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Home, Zap, FileText, User } from "lucide-react";
+import { Home, Zap, LifeBuoy, User } from "lucide-react";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
 import { KpiCard, LoadingLottie } from "@/components/ui";
@@ -91,9 +91,9 @@ export default function CustomerDashboardPage() {
             ]
             : []),
         {
-            key: "custReports",
-            href: "/dashboard/reports",
-            icon: <FileText size={20} />,
+            key: "custSupport",
+            href: "/dashboard/support",
+            icon: <LifeBuoy size={20} />,
             color: "text-card-blue",
             bgColor: "bg-card-blue-light",
         },
@@ -119,7 +119,7 @@ export default function CustomerDashboardPage() {
     }
 
     return (
-        <div className="bg-white">
+        <div>
             {error && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-red-700 font-medium">{error}</p>
@@ -179,7 +179,7 @@ export default function CustomerDashboardPage() {
                 <KpiCard
                     label={t("custPendingReports")}
                     value={pendingReports}
-                    icon={<FileText size={22} />}
+                    icon={<LifeBuoy size={22} />}
                     color="text-card-blue"
                     bgColor="bg-card-blue-light"
                 />

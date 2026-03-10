@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Globe, Bell, Menu } from "lucide-react";
+import { Globe, Menu } from "lucide-react";
 import CustomerSidebar from "@/components/layout/CustomerSidebar";
 import { useTranslation } from "@/lib/translation";
 import { useCustomer } from "@/features/profile/context/customer-context";
@@ -73,14 +73,6 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                         >
                             <Globe size={16} />
                             <span className="hidden sm:inline">{t("switchLanguage")}</span>
-                        </button>
-
-                        {/* Notifications placeholder */}
-                        <button className="relative w-9 h-9 rounded-lg border border-surface-border bg-background flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/40 transition-all cursor-pointer">
-                            <Bell size={16} />
-                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-card-red text-white text-[10px] flex items-center justify-center font-bold">
-                                3
-                            </span>
                         </button>
 
                         {/* Avatar */}

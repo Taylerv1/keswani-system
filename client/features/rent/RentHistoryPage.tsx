@@ -274,7 +274,7 @@ export default function RentHistoryPage() {
                                     <tr>
                                         <td colSpan={4} className="px-4 py-10">
                                             <div className="flex justify-center">
-                                                <LoadingLottie size={72} />
+                                                <LoadingLottie size={240} zoom={1} />
                                             </div>
                                         </td>
                                     </tr>

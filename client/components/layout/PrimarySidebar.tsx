@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   Home,
   Zap,
   User,
@@ -11,8 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { autorun } from "mobx";
 import { useTranslation } from "@/lib/translation";
 import { logout } from "@/lib/helpers/auth-client";
+import { notificationsStore } from "@/features/notifications/store";
 
 interface NavItem {
   key: string;
@@ -23,6 +27,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: "rent", href: "/admin-dashboard/rent", icon: <Home size={20} /> },
   { key: "electricity", href: "/admin-dashboard/electricity", icon: <Zap size={20} /> },
+  { key: "notifications", href: "/admin-dashboard/notifications", icon: <Bell size={20} /> },
   { key: "employees", href: "/admin-dashboard/employees", icon: <Users size={20} /> },
   { key: "profile", href: "/admin-dashboard/profile", icon: <User size={20} /> },
 ];
@@ -41,8 +46,18 @@ export default function PrimarySidebar({
   onMobileClose,
 }: PrimarySidebarProps) {
   const pathname = usePathname();
+  const safePathname = pathname ?? "";
   const router = useRouter();
   const { t, dir } = useTranslation();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const dispose = autorun(() => {
+      setUnreadCount(notificationsStore.unreadCount);
+    });
+    return () => dispose();
+  }, []);
 
   const handleLogout = () => {
     router.replace("/login");
@@ -95,7 +110,7 @@ export default function PrimarySidebar({
       {/* Navigation */}
       <nav className="scrollbar-primary flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = safePathname.startsWith(item.href);
           return (
             <Link
               key={item.key}
@@ -112,7 +127,14 @@ export default function PrimarySidebar({
               title={collapsed ? t(item.key) : undefined}
               onClick={onMobileClose}
             >
-              <span className="shrink-0">{item.icon}</span>
+              <span className="shrink-0 relative">
+                {item.icon}
+                {item.key === "notifications" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-card-red text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               <span className={`text-sm font-medium ${collapsed ? "md:hidden" : ""}`}>{t(item.key)}</span>
             </Link>
           );

@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/lib/translation";
 import type { CustomerUser } from "@/features/profile/context/customer-context";
-import { User, Phone, MapPin, Globe, Calendar, Shield } from "lucide-react";
+import { User, Phone, MapPin, Globe, Calendar, Shield, Info } from "lucide-react";
 
 interface CustomerProfileCardProps {
     user: CustomerUser;
@@ -15,94 +15,105 @@ export default function CustomerProfileCard({ user }: CustomerProfileCardProps) 
     const displayAddress = locale === "ar" ? user?.addressAr ?? "" : user?.address ?? "";
     const displayInitial = displayName?.charAt(0) ?? "?";
 
+    const subscriptionLabel = t(
+        user.subscriptionType === "rent_electricity"
+            ? "custSubBoth"
+            : user.subscriptionType === "rent"
+                ? "custSubRent"
+                : "custSubElec"
+    );
+
     const fields = [
         {
-            icon: <User size={16} />,
+            icon: <User size={20} />,
             label: t("name"),
             value: displayName,
+            color: "text-card-blue",
+            bg: "bg-card-blue-light",
         },
         {
-            icon: <Phone size={16} />,
+            icon: <Phone size={20} />,
             label: t("phone"),
             value: user.phone,
+            color: "text-card-green",
+            bg: "bg-card-green-light",
         },
         {
-            icon: <MapPin size={16} />,
+            icon: <MapPin size={20} />,
             label: t("address"),
             value: displayAddress,
+            color: "text-card-orange",
+            bg: "bg-card-orange-light",
         },
         {
-            icon: <Shield size={16} />,
+            icon: <Shield size={20} />,
             label: t("custSubscriptionType"),
-            value: t(
-                user.subscriptionType === "rent_electricity"
-                    ? "custSubBoth"
-                    : user.subscriptionType === "rent"
-                        ? "custSubRent"
-                        : "custSubElec"
-            ),
+            value: subscriptionLabel,
+            color: "text-card-green",
+            bg: "bg-card-green-light",
         },
         {
-            icon: <Globe size={16} />,
+            icon: <Globe size={20} />,
             label: t("languagePreference"),
             value: user.languagePreference === "en" ? "English" : "العربية",
+            color: "text-card-blue",
+            bg: "bg-card-blue-light",
         },
         {
-            icon: <Calendar size={16} />,
+            icon: <Calendar size={20} />,
             label: t("accountCreated"),
             value: user.accountCreated,
+            color: "text-card-orange",
+            bg: "bg-card-orange-light",
         },
     ];
 
     return (
-        <div className="w-full bg-surface rounded-2xl border border-surface-border overflow-hidden shadow-2xl">
-            {/* Header */}
-            <div className="relative h-44 sm:h-56 bg-gradient-to-r from-primary to-primary-hover">
-                <div className="absolute -bottom-16 sm:-bottom-20 left-6 sm:left-12">
-                    <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-white border-4 sm:border-8 flex items-center justify-center shadow-2xl">
-                        <span className="text-4xl sm:text-6xl font-extrabold text-primary">
+        <div className="space-y-4">
+            {/* Profile Header Card */}
+            <div className="bg-surface rounded-xl border border-surface-border p-5 sm:p-6">
+                <div className={`flex items-center gap-4 sm:gap-5 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-card-blue-light flex items-center justify-center shrink-0">
+                        <span className="text-2xl sm:text-3xl font-bold text-card-blue">
                             {displayInitial}
+                        </span>
+                    </div>
+                    <div className={`min-w-0 flex-1 ${dir === "rtl" ? "text-right" : ""}`}>
+                        <h2 className="text-lg sm:text-xl font-bold text-text-primary truncate">
+                            {displayName}
+                        </h2>
+                        <p className="text-sm text-text-secondary mt-0.5 truncate">{user.email}</p>
+                        <span className="inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-card-green-light text-card-green">
+                            {subscriptionLabel}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* Info */}
-            <div className="pt-20 sm:pt-28 pb-8 sm:pb-12 px-6 sm:px-12">
-                <div className="flex items-center justify-between gap-6">
-                    <div>
-                        <h2 className="text-2xl sm:text-4xl font-bold text-text-primary">
-                            {displayName}
-                        </h2>
-                        <p className="text-sm sm:text-lg text-text-secondary mt-2">{user.email}</p>
-                    </div>
-                </div>
-
-                <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-                    {fields.map((field, idx) => (
-                        <div
-                            key={idx}
-                            className={`flex items-start gap-4 sm:gap-6 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
-                        >
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white border border-surface-border text-text-primary flex items-center justify-center shrink-0 shadow-sm">
-                                <div className="flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4 text-text-primary">
-                                    {field.icon}
-                                </div>
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-sm text-text-muted">{field.label}</p>
-                                <p className="text-base sm:text-lg font-medium text-text-primary truncate">
-                                    {field.value}
-                                </p>
-                            </div>
+            {/* Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {fields.map((field, idx) => (
+                    <div
+                        key={idx}
+                        className={`bg-surface rounded-xl border border-surface-border p-4 sm:p-5 flex items-center gap-3 sm:gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                    >
+                        <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl shrink-0 flex items-center justify-center ${field.bg} ${field.color}`}>
+                            {field.icon}
                         </div>
-                    ))}
-                </div>
+                        <div className={`min-w-0 flex-1 ${dir === "rtl" ? "text-right" : ""}`}>
+                            <p className="text-xs text-text-muted">{field.label}</p>
+                            <p className="text-sm font-semibold text-text-primary truncate mt-0.5">
+                                {field.value}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-                {/* Read-only notice */}
-                <div className="mt-6 sm:mt-10 px-4 sm:px-8 py-3 sm:py-4 rounded-lg bg-yellow-50 border border-yellow-200 text-sm sm:text-base text-yellow-800 font-medium">
-                    {t("custProfileReadonly")}
-                </div>
+            {/* Read-only notice */}
+            <div className={`flex items-start gap-3 bg-card-orange-light border border-card-orange/20 rounded-xl px-4 py-3 text-sm text-card-orange font-medium ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                <Info size={16} className="shrink-0 mt-0.5" />
+                <span>{t("custProfileReadonly")}</span>
             </div>
         </div>
     );

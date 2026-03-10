@@ -57,7 +57,7 @@ export interface ElecBill {
   baseAmount: number;
   additionalFees: number;
   totalAmount: number;
-  status: "paid" | "unpaid" | "partial";
+  status: "paid" | "unpaid";
   dueDate: string;
   createdAt: string;
 }
