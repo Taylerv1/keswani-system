@@ -87,7 +87,7 @@ export function EmployeeTable({
                 />
               </td>
               <td className="px-4 py-3 text-center">
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => onEdit(employee)}
                     disabled={isLoading}
