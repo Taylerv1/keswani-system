@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { autorun } from "mobx";
+import { autorun, reaction } from "mobx";
 import {
   AlertTriangle,
   Bell,
@@ -25,6 +25,7 @@ import {
   StatusBadge,
 } from "@/components/ui";
 import { notificationsStore } from "./store";
+import { typeTranslationMap, parseNotificationMessage } from "./utils";
 import type { TabFilter, NotificationItem, MaintenanceDetail, IssueDetail } from "./types";
 
 function useMobxRender() {
@@ -70,19 +71,6 @@ const typeColors: Record<string, { bg: string; text: string }> = {
 const sectionBadge: Record<string, { bg: string; text: string; label: string }> = {
   rent: { bg: "bg-card-blue-light", text: "text-card-blue", label: "sectionRent" },
   electricity: { bg: "bg-card-orange-light", text: "text-card-orange", label: "sectionElectricity" },
-};
-
-const typeTranslationMap: Record<string, string> = {
-  unpaid_bill: "unpaidBillAlert",
-  unread_meter: "unreadMeterAlert",
-  late_bill: "lateBillAlert",
-  high_consumption: "highConsumptionAlert",
-  faulty_meter: "faultyMeterAlert",
-  electricity_issue: "electricityIssueAlert",
-  late_payment: "latePaymentNotif",
-  contract_ending: "contractEndingNotif",
-  maintenance: "maintenanceNotif",
-  vacant_property: "vacantPropertyNotif",
 };
 
 const rentTypeOptions = [
@@ -134,7 +122,27 @@ export default function NotificationsPage() {
     if (tabParam === "rent" || tabParam === "electricity") {
       store.setTab(tabParam);
     }
+    // Consume stale flag if user navigated here after notification arrived
+    if (store.hasNewNotifications) {
+      store.consumeNewNotificationsFlag();
+    }
     void store.bootstrap(t("error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh when poller detects new notifications
+  useEffect(() => {
+    const dispose = reaction(
+      () => notificationsStore.hasNewNotifications,
+      (hasNew) => {
+        if (hasNew) {
+          notificationsStore.consumeNewNotificationsFlag();
+          void store.loadNotifications({ errorFallback: t("error"), force: true });
+          void store.loadUnreadCount();
+        }
+      }
+    );
+    return () => dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -290,6 +298,7 @@ export default function NotificationsPage() {
                 key={item.id}
                 item={item}
                 t={t}
+                locale={locale}
                 formatDate={formatDate}
                 onView={handleView}
               />
@@ -329,11 +338,13 @@ export default function NotificationsPage() {
 function NotificationCard({
   item,
   t,
+  locale,
   formatDate,
   onView,
 }: {
   item: NotificationItem;
   t: (key: string) => string;
+  locale: string;
   formatDate: (date: string) => string;
   onView: (item: NotificationItem) => void;
 }) {
@@ -359,11 +370,8 @@ function NotificationCard({
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5">
           <h3 className={`text-xs sm:text-sm font-semibold ${item.read ? "text-text-secondary" : "text-text-primary"}`}>
-            {item.title}
-          </h3>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
             {t(typeTranslationMap[item.type] ?? item.type)}
-          </span>
+          </h3>
           {badge && (
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}>
               {t(badge.label)}
@@ -374,7 +382,7 @@ function NotificationCard({
           )}
         </div>
         <p className={`text-xs sm:text-sm ${item.read ? "text-text-muted" : "text-text-secondary"}`}>
-          {item.message}
+          {parseNotificationMessage(item.message, locale)}
         </p>
         <p className="text-xs text-text-muted mt-1">{formatDate(item.createdAt)}</p>
       </div>
@@ -611,6 +619,7 @@ function NotificationFallbackView({
   t: (key: string) => string;
   formatDate: (date: string) => string;
 }) {
+  const { locale } = useTranslation();
   const colors = typeColors[item.type] ?? { bg: "bg-card-blue-light", text: "text-card-blue" };
   const badge = sectionBadge[item.section];
 
@@ -621,11 +630,10 @@ function NotificationFallbackView({
           {typeIcons[item.type] ?? <Bell size={18} />}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-text-primary">{item.title}</h3>
+          <h3 className="text-base font-semibold text-text-primary">
+            {t(typeTranslationMap[item.type] ?? item.type)}
+          </h3>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
-              {t(typeTranslationMap[item.type] ?? item.type)}
-            </span>
             {badge && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}>
                 {t(badge.label)}
@@ -637,7 +645,7 @@ function NotificationFallbackView({
 
       <div className="bg-background rounded-lg p-3">
         <p className="text-xs text-text-muted mb-1">{t("message")}</p>
-        <p className="text-sm text-text-secondary">{item.message}</p>
+        <p className="text-sm text-text-secondary">{parseNotificationMessage(item.message, locale)}</p>
       </div>
 
       <div className="bg-background rounded-lg p-3">

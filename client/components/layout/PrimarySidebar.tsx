@@ -13,9 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { autorun } from "mobx";
 import { useTranslation } from "@/lib/translation";
 import { logout } from "@/lib/helpers/auth-client";
-import { fetchNotificationStats } from "@/features/rent/api/notifications";
+import { notificationsStore } from "@/features/notifications/store";
 
 interface NavItem {
   key: string;
@@ -52,13 +53,10 @@ export default function PrimarySidebar({
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    fetchNotificationStats()
-      .then((res) => {
-        if (res.success && res.data) {
-          setUnreadCount(res.data.total_unread);
-        }
-      })
-      .catch(() => setUnreadCount(0));
+    const dispose = autorun(() => {
+      setUnreadCount(notificationsStore.unreadCount);
+    });
+    return () => dispose();
   }, []);
 
   const handleLogout = () => {
