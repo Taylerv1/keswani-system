@@ -16,6 +16,7 @@ import readingRoutes from "./reading.routes";
 import billRoutes from "./bill.routes";
 import billPaymentRoutes from "./bill-payment.routes";
 import electricityRoutes from "./electricity.routes";
+import employeeRoutes from "./employee.routes";
 
 const router = Router();
 
@@ -46,9 +47,9 @@ router.use("/readings", readingRoutes);
 router.use("/bills", billRoutes);
 router.use("/bill-payments", billPaymentRoutes);
 router.use("/electricity", electricityRoutes);
+router.use("/employees", employeeRoutes);
 
 // Future route modules:
-// router.use("/employees", employeeRoutes);
 // router.use("/electricity", electricityRoutes);
 // router.use("/expenses", expenseRoutes);
 

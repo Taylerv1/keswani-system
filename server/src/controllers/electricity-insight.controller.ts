@@ -72,6 +72,12 @@ function incrementMonth(value: Date): Date {
     return next;
 }
 
+function shiftMonth(value: Date, offset: number): Date {
+    const shifted = new Date(value);
+    shifted.setUTCMonth(shifted.getUTCMonth() + offset);
+    return shifted;
+}
+
 function listMonths(fromMonth: string, toMonth: string): string[] {
     const result: string[] = [];
     let cursor = parseMonthStart(fromMonth);
@@ -236,6 +242,268 @@ export const getElectricityDebts = async (
                     subscribers_in_debt: items.length,
                 },
                 items,
+            },
+        } as ApiResponse);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * GET /api/electricity/overview
+ * KPI + trend summary for electricity dashboard overview page.
+ */
+export const getElectricityOverview = async (
+    _req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const latestBill = await prisma.bills.findFirst({
+            where: {
+                deleted_at: null,
+                subscriber: { deleted_at: null },
+                meter: { deleted_at: null },
+            },
+            orderBy: { billing_period_end: "desc" },
+            select: { billing_period_end: true },
+        });
+
+        const fallbackMonth = new Date().toISOString().slice(0, 7);
+        const currentMonth = latestBill
+            ? toMonth(latestBill.billing_period_end) || fallbackMonth
+            : fallbackMonth;
+
+        const currentMonthStart = parseMonthStart(currentMonth);
+        const currentMonthEndExclusive = incrementMonth(currentMonthStart);
+        const windowStartMonth = shiftMonth(currentMonthStart, -5)
+            .toISOString()
+            .slice(0, 7);
+        const windowStartDate = parseMonthStart(windowStartMonth);
+        const windowEndExclusive = currentMonthEndExclusive;
+        const months = listMonths(windowStartMonth, currentMonth);
+
+        const [
+            activeSubscribers,
+            inactiveSubscribers,
+            currentMonthBillsAggregate,
+            totalConsumptionAggregate,
+            totalCollectedAggregate,
+            openBillsAggregate,
+            openBillsPaidAggregate,
+            currentPricing,
+            trendBills,
+            recentBills,
+        ] = await Promise.all([
+            prisma.subscribers.count({
+                where: {
+                    deleted_at: null,
+                    is_active: true,
+                },
+            }),
+            prisma.subscribers.count({
+                where: {
+                    deleted_at: null,
+                    is_active: false,
+                },
+            }),
+            prisma.bills.aggregate({
+                where: {
+                    deleted_at: null,
+                    billing_period_end: {
+                        gte: currentMonthStart,
+                        lt: currentMonthEndExclusive,
+                    },
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
+                },
+                _count: { _all: true },
+                _sum: {
+                    consumption_kwh: true,
+                    total_amount: true,
+                },
+            }),
+            prisma.bills.aggregate({
+                where: {
+                    deleted_at: null,
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
+                },
+                _sum: {
+                    consumption_kwh: true,
+                },
+            }),
+            prisma.bill_payments.aggregate({
+                where: {
+                    deleted_at: null,
+                    status: { in: SETTLED_PAYMENT_STATUSES },
+                    bill: {
+                        deleted_at: null,
+                        subscriber: { deleted_at: null },
+                        meter: { deleted_at: null },
+                    },
+                },
+                _sum: {
+                    amount: true,
+                },
+            }),
+            prisma.bills.aggregate({
+                where: {
+                    deleted_at: null,
+                    status: { in: OPEN_BILL_STATUSES },
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
+                },
+                _sum: {
+                    total_amount: true,
+                },
+            }),
+            prisma.bill_payments.aggregate({
+                where: {
+                    deleted_at: null,
+                    status: { in: SETTLED_PAYMENT_STATUSES },
+                    bill: {
+                        deleted_at: null,
+                        status: { in: OPEN_BILL_STATUSES },
+                        subscriber: { deleted_at: null },
+                        meter: { deleted_at: null },
+                    },
+                },
+                _sum: {
+                    amount: true,
+                },
+            }),
+            prisma.pricing_history.findFirst({
+                where: {
+                    effective_from: { lte: new Date() },
+                    OR: [{ effective_to: null }, { effective_to: { gte: new Date() } }],
+                },
+                orderBy: [{ effective_from: "desc" }, { created_at: "desc" }],
+                select: {
+                    price_per_kwh: true,
+                    currency: true,
+                },
+            }),
+            prisma.bills.findMany({
+                where: {
+                    deleted_at: null,
+                    billing_period_end: {
+                        gte: windowStartDate,
+                        lt: windowEndExclusive,
+                    },
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
+                },
+                select: {
+                    billing_period_end: true,
+                    consumption_kwh: true,
+                    total_amount: true,
+                },
+            }),
+            prisma.bills.findMany({
+                where: {
+                    deleted_at: null,
+                    subscriber: { deleted_at: null },
+                    meter: { deleted_at: null },
+                },
+                orderBy: [{ created_at: "desc" }],
+                take: 5,
+                select: {
+                    id: true,
+                    subscriber_id: true,
+                    billing_period_end: true,
+                    consumption_kwh: true,
+                    total_amount: true,
+                    status: true,
+                    created_at: true,
+                    subscriber: {
+                        select: {
+                            client: {
+                                select: {
+                                    full_name: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        const consumptionByMonth = new Map<string, number>();
+        const revenueByMonth = new Map<string, number>();
+        for (const month of months) {
+            consumptionByMonth.set(month, 0);
+            revenueByMonth.set(month, 0);
+        }
+
+        for (const bill of trendBills) {
+            const month = toMonth(bill.billing_period_end);
+            if (!consumptionByMonth.has(month)) continue;
+
+            consumptionByMonth.set(
+                month,
+                (consumptionByMonth.get(month) ?? 0) + toNumber(bill.consumption_kwh)
+            );
+            revenueByMonth.set(
+                month,
+                (revenueByMonth.get(month) ?? 0) + toNumber(bill.total_amount)
+            );
+        }
+
+        const totalDebt = Math.max(
+            0,
+            toNumber(openBillsAggregate._sum.total_amount) -
+                toNumber(openBillsPaidAggregate._sum.amount)
+        );
+
+        res.json({
+            success: true,
+            data: {
+                range: {
+                    from_month: windowStartMonth,
+                    to_month: currentMonth,
+                },
+                summary: {
+                    active_subscribers: activeSubscribers,
+                    inactive_subscribers: inactiveSubscribers,
+                    suspended_subscribers: 0,
+                    monthly_consumption: Number(
+                        toNumber(currentMonthBillsAggregate._sum.consumption_kwh).toFixed(2)
+                    ),
+                    monthly_billed_amount: Number(
+                        toNumber(currentMonthBillsAggregate._sum.total_amount).toFixed(2)
+                    ),
+                    monthly_bills_count: currentMonthBillsAggregate._count._all,
+                    collected_amount: Number(
+                        toNumber(totalCollectedAggregate._sum.amount).toFixed(2)
+                    ),
+                    total_debt: Number(totalDebt.toFixed(2)),
+                    current_price_per_kwh: currentPricing
+                        ? Number(toNumber(currentPricing.price_per_kwh).toFixed(4))
+                        : null,
+                    current_price_currency: currentPricing?.currency ?? "USD",
+                    total_consumption: Number(
+                        toNumber(totalConsumptionAggregate._sum.consumption_kwh).toFixed(2)
+                    ),
+                },
+                consumption_by_month: months.map((month) => ({
+                    month,
+                    consumption_kwh: Number((consumptionByMonth.get(month) ?? 0).toFixed(2)),
+                })),
+                revenue_by_month: months.map((month) => ({
+                    month,
+                    total_amount: Number((revenueByMonth.get(month) ?? 0).toFixed(2)),
+                })),
+                recent_bills: recentBills.map((bill) => ({
+                    id: bill.id,
+                    subscriber_id: bill.subscriber_id,
+                    subscriber_name: bill.subscriber.client.full_name,
+                    month: toMonth(bill.billing_period_end),
+                    consumption_kwh: Number(toNumber(bill.consumption_kwh).toFixed(2)),
+                    total_amount: Number(toNumber(bill.total_amount).toFixed(2)),
+                    status: bill.status,
+                    created_at: bill.created_at,
+                })),
             },
         } as ApiResponse);
     } catch (error) {
