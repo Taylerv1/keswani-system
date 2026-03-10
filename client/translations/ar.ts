@@ -246,7 +246,7 @@ const ar: Record<string, string> = {
   notificationManagement: "الإشعارات",
   latePaymentNotif: "دفع متأخر",
   contractEndingNotif: "انتهاء العقد",
-  maintenanceNotif: "الصيانة",
+  maintenanceNotif: "طلب صيانة",
   vacantPropertyNotif: "عقار شاغر",
   markAsRead: "تحديد كمقروء",
   markAllRead: "تحديد الكل كمقروء",

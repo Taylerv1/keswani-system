@@ -246,7 +246,7 @@ const en = {
   notificationManagement: "Notifications",
   latePaymentNotif: "Late Payment",
   contractEndingNotif: "Contract Ending",
-  maintenanceNotif: "Maintenance",
+  maintenanceNotif: "Maintenance Request",
   vacantPropertyNotif: "Vacant Property",
   markAsRead: "Mark as Read",
   markAllRead: "Mark All as Read",
