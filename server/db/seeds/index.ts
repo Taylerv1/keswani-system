@@ -94,6 +94,7 @@ async function main() {
                 address: emp.address,
                 role: emp.role,
                 access: emp.access,
+                salary_amount: (emp as any).salary_amount ?? 0,
                 is_active: emp.is_active,
             },
             create: {
@@ -104,6 +105,7 @@ async function main() {
                 address: emp.address,
                 role: emp.role,
                 access: emp.access,
+                salary_amount: (emp as any).salary_amount ?? 0,
                 is_active: emp.is_active,
             },
         });
