@@ -411,7 +411,6 @@ enum contract_status {
 enum payment_status {
   pending
   paid
-  partial
   overdue
   cancelled
 }

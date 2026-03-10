@@ -409,7 +409,6 @@ const ar: Record<string, string> = {
   billStatus: "حالة الفاتورة",
   dueDate: "تاريخ الاستحقاق",
   unpaid: "غير مدفوع",
-  partial: "جزئي",
   billArchive: "أرشيف الفواتير",
   viewBill: "عرض الفاتورة",
 

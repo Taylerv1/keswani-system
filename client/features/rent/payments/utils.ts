@@ -29,5 +29,5 @@ export function getPaymentPeriodLabel(payment: RentPaymentItem): string {
 }
 
 export function canRecordCashPayment(status: PaymentStatus): boolean {
-  return status === "pending" || status === "overdue" || status === "partial";
+  return status === "pending" || status === "overdue";
 }

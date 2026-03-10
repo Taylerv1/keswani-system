@@ -26,7 +26,7 @@ export default function ElectricityHistoryPage() {
     const meterType = electricity?.meterType ?? "";
 
     const totalOutstanding = bills
-        .filter((b) => b.status === "unpaid" || b.status === "partial")
+        .filter((b) => b.status === "unpaid")
         .reduce((s, b) => s + b.totalAmount, 0);
 
     const totalPaid = payments.reduce((s, p) => s + p.amount, 0);

@@ -409,7 +409,6 @@ const en = {
   billStatus: "Bill Status",
   dueDate: "Due Date",
   unpaid: "Unpaid",
-  partial: "Partial",
   billArchive: "Bill Archive",
   viewBill: "View Bill",
 

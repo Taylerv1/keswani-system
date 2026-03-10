@@ -6,7 +6,7 @@ const UUID_LIKE_REGEX =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 const idSchema = z.string().regex(UUID_LIKE_REGEX, "Invalid UUID");
-const billPaymentStatusEnum = z.enum(["pending", "paid", "partial", "overdue", "cancelled"]);
+const billPaymentStatusEnum = z.enum(["pending", "paid", "overdue", "cancelled"]);
 
 export const electricityPaymentQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),

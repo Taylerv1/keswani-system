@@ -26,7 +26,7 @@ export interface ElectricityPaymentItem {
   amount: number;
   currency: string;
   payment_date: string | null;
-  status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
+  status: "pending" | "paid" | "overdue" | "cancelled";
   payment_method: string;
   collector_id: string | null;
   collector_name: string | null;
@@ -36,7 +36,7 @@ export interface ElectricityPaymentItem {
   updated_at: string;
   bill: {
     id: string;
-    status: "pending" | "paid" | "partial" | "overdue" | "cancelled";
+    status: "pending" | "paid" | "overdue" | "cancelled";
     total_amount: number;
     currency: string;
     billing_period_start: string | null;
@@ -55,7 +55,7 @@ export interface ElectricityPaymentQueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
+  status?: "pending" | "paid" | "overdue" | "cancelled";
   month?: string;
   subscriber_id?: string;
   bill_id?: string;
@@ -66,7 +66,7 @@ export interface CreateElectricityPaymentInput {
   amount: number;
   currency?: string;
   payment_date?: string;
-  status?: "pending" | "paid" | "partial" | "overdue" | "cancelled";
+  status?: "pending" | "paid" | "overdue" | "cancelled";
   received_by?: string | null;
   receipt_number?: string | null;
   notes?: string | null;
@@ -98,5 +98,5 @@ export interface OpenBillLookupItem {
   paid_amount: number;
   outstanding_amount: number;
   currency: string;
-  status: "pending" | "partial" | "overdue" | "paid" | "cancelled";
+  status: "pending" | "overdue" | "paid" | "cancelled";
 }

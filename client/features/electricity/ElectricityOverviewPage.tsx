@@ -32,10 +32,10 @@ export default function ElecDashboardPage() {
   const totalBillsAmount = currentMonthBills.reduce((s, b) => s + b.totalAmount, 0);
 
   const collectedAmount = data.payments.reduce((s, p) => s + p.amount, 0);
-  const totalDebt = data.bills.filter((b) => b.status === "unpaid" || b.status === "partial").reduce((s, b) => s + b.totalAmount, 0) -
+  const totalDebt = data.bills.filter((b) => b.status === "unpaid").reduce((s, b) => s + b.totalAmount, 0) -
     data.payments.filter((p) => {
       const bill = data.bills.find((b) => b.id === p.billId);
-      return bill && (bill.status === "unpaid" || bill.status === "partial");
+      return bill && bill.status === "unpaid";
     }).reduce((s, p) => s + p.amount, 0);
 
   const currentPrice = data.pricing.find((p) => !p.effectiveTo || new Date(p.effectiveTo) >= new Date());

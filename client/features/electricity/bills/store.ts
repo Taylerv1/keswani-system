@@ -6,7 +6,6 @@ export type BillStatusFilter =
   | "all"
   | "open"
   | "pending"
-  | "partial"
   | "overdue"
   | "paid"
   | "cancelled";
