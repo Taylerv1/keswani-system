@@ -296,36 +296,65 @@ export const createIssue = async (
         const isClient = req.user?.user_type === "client";
         const clientProfileId = isClient ? req.user?.profile_id : undefined;
 
-        // Validate subscriber exists and belongs to the client (if client)
-        const subscriberWhere: Prisma.subscribersWhereInput = {
-            id: data.subscriber_id,
-            deleted_at: null,
-        };
-        if (isClient) {
-            subscriberWhere.client_id = clientProfileId;
-        }
-
-        const subscriber = await prisma.subscribers.findFirst({
-            where: subscriberWhere,
-            select: { id: true, client_id: true },
-        });
-
-        if (!subscriber) {
-            res.status(404).json({
+        // Employees must always provide subscriber_id
+        if (!isClient && !data.subscriber_id) {
+            res.status(400).json({
                 success: false,
-                error: isClient
-                    ? "Subscriber not found or does not belong to you"
-                    : "Subscriber not found",
+                error: "Validation failed",
+                details: { subscriber_id: ["Required"] },
             });
             return;
         }
 
-        const clientId = isClient ? clientProfileId! : subscriber.client_id;
+        let resolvedSubscriberId: string;
+        let resolvedClientId: string;
+
+        if (isClient && !data.subscriber_id) {
+            // Auto-resolve: find the client's active subscriber
+            const autoSub = await prisma.subscribers.findFirst({
+                where: { client_id: clientProfileId, is_active: true, deleted_at: null },
+                select: { id: true, client_id: true },
+                orderBy: { created_at: "asc" },
+            });
+            if (!autoSub) {
+                res.status(404).json({
+                    success: false,
+                    error: "No active electricity subscription found for your account",
+                });
+                return;
+            }
+            resolvedSubscriberId = autoSub.id;
+            resolvedClientId = autoSub.client_id;
+        } else {
+            // Validate provided subscriber_id (and scope to client if applicable)
+            const subscriberWhere: Prisma.subscribersWhereInput = {
+                id: data.subscriber_id,
+                deleted_at: null,
+            };
+            if (isClient) subscriberWhere.client_id = clientProfileId;
+
+            const subscriber = await prisma.subscribers.findFirst({
+                where: subscriberWhere,
+                select: { id: true, client_id: true },
+            });
+
+            if (!subscriber) {
+                res.status(404).json({
+                    success: false,
+                    error: isClient
+                        ? "Subscriber not found or does not belong to you"
+                        : "Subscriber not found",
+                });
+                return;
+            }
+            resolvedSubscriberId = subscriber.id;
+            resolvedClientId = isClient ? clientProfileId! : subscriber.client_id;
+        }
 
         const issue = await prisma.electricity_issues.create({
             data: {
-                subscriber: { connect: { id: data.subscriber_id } },
-                client: { connect: { id: clientId } },
+                subscriber: { connect: { id: resolvedSubscriberId } },
+                client: { connect: { id: resolvedClientId } },
                 title: data.title,
                 description: data.description || undefined,
                 category: data.category,

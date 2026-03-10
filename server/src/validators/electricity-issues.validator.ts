@@ -8,7 +8,7 @@ const issueCategoryEnum = z.enum(["billing", "meter", "connection", "other"]);
 // Create Issue
 // -------------------------------------------
 export const createIssueSchema = z.object({
-    subscriber_id: z.string().uuid(),
+    subscriber_id: z.string().uuid().optional(),
     title:         z.string().trim().min(1).max(500),
     description:   z.string().trim().max(5000).optional(),
     category:      issueCategoryEnum.default("other"),
