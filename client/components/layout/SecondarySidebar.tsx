@@ -37,9 +37,9 @@ const rentSubNav: SubNavItem[] = [
 
 const electricitySubNav: SubNavItem[] = [
   { key: "elecDashboard", href: "/admin-dashboard/electricity", icon: <LayoutDashboard size={16} /> },
-  { key: "elecIssues", href: "/admin-dashboard/electricity/issues", icon: <Wrench size={16} /> },
   { key: "elecBuildings", href: "/admin-dashboard/electricity/buildings", icon: <Building2 size={16} /> },
   { key: "elecSubscribers", href: "/admin-dashboard/electricity/subscribers", icon: <Users size={16} /> },
+  { key: "elecIssues", href: "/admin-dashboard/electricity/issues", icon: <Wrench size={16} /> },
   { key: "elecMeters", href: "/admin-dashboard/electricity/meters", icon: <Gauge size={16} /> },
   { key: "elecReadings", href: "/admin-dashboard/electricity/readings", icon: <BookOpen size={16} /> },
   { key: "elecBills", href: "/admin-dashboard/electricity/bills", icon: <Receipt size={16} /> },
