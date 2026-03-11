@@ -210,6 +210,53 @@ body::-webkit-scrollbar-thumb:hover,
 .animate-spin-slow   { animation: spin-slow 20s linear infinite; }
 .animate-pulse-ring  { animation: pulse-ring 2.5s ease-out infinite; }
 
+/* Landing page shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Subtle glow pulse for CTA */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(245, 166, 35, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(245, 166, 35, 0.5); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* Landing animated mesh gradient background (light sections) */
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  25%      { transform: translate(8%, -12%) scale(1.08); }
+  50%      { transform: translate(-5%, 8%) scale(0.95); }
+  75%      { transform: translate(12%, 5%) scale(1.04); }
+}
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  25%      { transform: translate(-10%, 8%) scale(0.96); }
+  50%      { transform: translate(6%, -10%) scale(1.07); }
+  75%      { transform: translate(-8%, -5%) scale(1.02); }
+}
+@keyframes mesh-drift-3 {
+  0%, 100% { transform: translate(0%, 0%) scale(1.02); }
+  33%      { transform: translate(10%, 10%) scale(0.94); }
+  66%      { transform: translate(-12%, 5%) scale(1.06); }
+}
+.animate-mesh-1 {
+  animation: mesh-drift-1 18s ease-in-out infinite;
+}
+.animate-mesh-2 {
+  animation: mesh-drift-2 22s ease-in-out infinite;
+}
+.animate-mesh-3 {
+  animation: mesh-drift-3 26s ease-in-out infinite;
+}
+
 /* staggered fade-in delays */
 .delay-100 { animation-delay: 0.10s; }
 .delay-200 { animation-delay: 0.20s; }
