@@ -16,18 +16,33 @@ import {
 
 function ConsumptionLineChart({
     data,
+    locale,
 }: {
     data: Array<{ month: string; value: number }>;
+    locale: string;
 }) {
     if (!data.length) {
         return <div className="text-sm text-text-muted">No data</div>;
     }
 
-    const width = Math.max(640, data.length * 88);
-    const height = 300;
+    // 3-char abbreviations — same visual width in both languages
+    const monthAbbr = {
+        ar: ["ينا","فبر","مار","أبر","ماي","يون","يول","أغس","سبت","أكت","نوف","ديس"],
+        en: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    };
+
+    function formatMonth(monthStr: string): string {
+        const num = parseInt(monthStr, 10);
+        if (isNaN(num) || num < 1 || num > 12) return monthStr;
+        return locale === "ar" ? monthAbbr.ar[num - 1] : monthAbbr.en[num - 1];
+    }
+
+    const minPointSpacing = 80;
+    const width = Math.max(500, data.length * minPointSpacing);
+    const height = 230;
     const paddingLeft = 56;
     const paddingRight = 24;
-    const paddingTop = 24;
+    const paddingTop = 36;
     const paddingBottom = 54;
     const plotWidth = width - paddingLeft - paddingRight;
     const plotHeight = height - paddingTop - paddingBottom;
@@ -88,17 +103,21 @@ function ConsumptionLineChart({
                 <path d={areaPath} fill="url(#historyConsumptionArea)" />
                 <path d={linePath} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
 
-                {points.map((point) => (
-                    <g key={point.label}>
-                        <circle cx={point.x} cy={point.y} r="4.5" fill="#f97316" />
-                        <text x={point.x} y={point.y - 10} textAnchor="middle" fontSize="10" fill="#374151">
-                            {point.value.toFixed(0)}
-                        </text>
-                        <text x={point.x} y={height - 18} textAnchor="middle" fontSize="10" fill="#6b7280">
-                            {point.label}
-                        </text>
-                    </g>
-                ))}
+                {points.map((point) => {
+                    // If point is near the top, place value label below to avoid overlap with Y-axis label
+                    const labelY = point.y < paddingTop + 20 ? point.y + 20 : point.y - 12;
+                    return (
+                        <g key={point.label}>
+                            <circle cx={point.x} cy={point.y} r="4.5" fill="#f97316" />
+                            <text x={point.x} y={labelY} textAnchor="middle" fontSize="10" fill="#374151">
+                                {point.value.toFixed(0)}
+                            </text>
+                            <text x={point.x} y={height - 18} textAnchor="middle" fontSize="10" fill="#6b7280">
+                                {formatMonth(point.label)}
+                            </text>
+                        </g>
+                    );
+                })}
             </svg>
         </div>
     );
@@ -184,7 +203,7 @@ function BillingComparisonChart({
 }
 
 export default function ElectricityHistoryPage() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { data, loading, error } = useCustomer();
     const electricity = data.electricity;
     const readings = useMemo(() => electricity?.readings ?? [], [electricity]);
@@ -327,12 +346,6 @@ export default function ElectricityHistoryPage() {
                                         {readings[0].previousReading}
                                     </span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-text-muted">{t("currentReading")}</span>
-                                    <span className="text-xs sm:text-sm font-medium text-text-primary">
-                                        {readings[0].currentReading}
-                                    </span>
-                                </div>
                             </>
                         )}
                     </div>
@@ -346,24 +359,7 @@ export default function ElectricityHistoryPage() {
                             {t("consumptionTrend")}
                         </h2>
                     </div>
-                    <ConsumptionLineChart data={consumptionData} />
-                </div>
-            </div>
-
-            {/* Financial Trend Chart */}
-            <div className="bg-surface rounded-xl border border-surface-border p-4 sm:p-5 mb-6 sm:mb-8">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                    <CreditCard size={18} className="text-primary" />
-                    <h2 className="text-sm font-semibold text-text-primary">{t("revenueTrend")}</h2>
-                </div>
-                <BillingComparisonChart data={revenueData} />
-                <div className="flex items-center gap-4 mt-3 justify-center">
-                    <span className="flex items-center gap-1 text-xs text-text-muted">
-                        <span className="w-3 h-3 rounded-sm bg-card-blue inline-block" /> {t("totalBilled")}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-text-muted">
-                        <span className="w-3 h-3 rounded-sm bg-card-green inline-block" /> {t("totalPaid")}
-                    </span>
+                    <ConsumptionLineChart data={consumptionData} locale={locale} />
                 </div>
             </div>
 
@@ -487,9 +483,6 @@ export default function ElectricityHistoryPage() {
                                         {t("previousReading")}
                                     </th>
                                     <th className="text-start px-4 py-3 font-semibold text-text-secondary">
-                                        {t("currentReading")}
-                                    </th>
-                                    <th className="text-start px-4 py-3 font-semibold text-text-secondary">
                                         {t("consumption")}
                                     </th>
                                     <th className="text-start px-4 py-3 font-semibold text-text-secondary">
@@ -508,9 +501,6 @@ export default function ElectricityHistoryPage() {
                                         </td>
                                         <td className="px-4 py-3 text-text-secondary">
                                             {r.previousReading}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary font-medium">
-                                            {r.currentReading}
                                         </td>
                                         <td className="px-4 py-3 text-text-primary font-medium">
                                             {r.consumption} {t("kwh")}
@@ -537,14 +527,10 @@ export default function ElectricityHistoryPage() {
                                         <span className="font-medium text-text-primary text-sm">{r.month}</span>
                                         <span className="font-semibold text-card-orange text-sm">{r.consumption} {t("kwh")}</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div className="grid grid-cols-1 gap-2 text-xs">
                                         <div className="bg-background rounded-lg px-2 py-1.5">
                                             <span className="text-text-muted block text-[10px]">{t("previousReading")}</span>
                                             <span className="text-text-secondary font-medium">{r.previousReading}</span>
-                                        </div>
-                                        <div className="bg-background rounded-lg px-2 py-1.5">
-                                            <span className="text-text-muted block text-[10px]">{t("currentReading")}</span>
-                                            <span className="text-text-primary font-medium">{r.currentReading}</span>
                                         </div>
                                     </div>
                                     <div className="text-xs text-text-muted">{r.readingDate}</div>

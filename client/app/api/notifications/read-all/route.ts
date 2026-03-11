@@ -1,52 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-
-const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000/api";
+import { NextRequest } from "next/server";
+import { proxyPatch } from "@/lib/proxy";
 
 export async function PATCH(req: NextRequest) {
-    try {
-        const token = req.cookies.get("auth_token")?.value;
-
-        if (!token) {
-            return NextResponse.json(
-                { success: false, error: "Not authenticated" },
-                { status: 401 }
-            );
-        }
-
-        const query = req.nextUrl.searchParams.toString();
-        const endpoint = `${API_BASE}/notifications/read-all${query ? `?${query}` : ""}`;
-
-        const backendRes = await fetch(endpoint, {
-            method: "PATCH",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const raw = await backendRes.text();
-        const trimmed = raw.trim();
-
-        if (trimmed) {
-            try {
-                const parsed = JSON.parse(trimmed);
-                return NextResponse.json(parsed, { status: backendRes.status });
-            } catch {
-                // fall through
-            }
-        }
-
-        return NextResponse.json(
-            { success: false, error: "Invalid response from backend" },
-            { status: backendRes.status }
-        );
-    } catch (error) {
-        return NextResponse.json(
-            {
-                success: false,
-                error: error instanceof Error ? error.message : "Failed to mark all notifications",
-            },
-            { status: 500 }
-        );
-    }
+    return proxyPatch(req, "/notifications/read-all");
 }

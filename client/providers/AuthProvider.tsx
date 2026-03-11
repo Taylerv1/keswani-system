@@ -41,8 +41,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const doRefresh = async () => {
       try {
-        await refreshApi();
-      } catch (e) {
+        const ok = await refreshApi();
+        if (!ok && mounted) {
+          // Refresh failed on a protected page — redirect to login
+          const path = window.location.pathname;
+          const isProtected = path.startsWith("/admin-dashboard") || path.startsWith("/dashboard");
+          if (isProtected) {
+            window.location.href = `/login?redirect=${encodeURIComponent(path)}`;
+            return;
+          }
+        }
+      } catch {
         // ignore - refresh may fail if no refresh token
       } finally {
         if (mounted) setUser(getUserData());
@@ -52,8 +61,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Try silent refresh on mount
     doRefresh();
 
-    // Periodic background refresh (every 15 minutes)
-    const id = setInterval(doRefresh, 1000 * 60 * 15);
+    // Periodic background refresh (every 10 minutes — Supabase JWT expires in ~1 hour)
+    const id = setInterval(doRefresh, 1000 * 60 * 10);
     return () => {
       mounted = false;
       clearInterval(id);
