@@ -48,7 +48,7 @@ export default function CTASection() {
               className="inline-flex items-center justify-center h-14 px-10 rounded-xl
                 bg-gradient-to-r from-primary to-primary-hover text-white text-base font-semibold no-underline
                 hover:scale-105 transition-all duration-200
-                shadow-lg shadow-primary/25 animate-glow-pulse"
+               "
             >
               {t("landingCTAButton")}
             </Link>

@@ -257,6 +257,64 @@ body::-webkit-scrollbar-thumb:hover,
   animation: mesh-drift-3 26s ease-in-out infinite;
 }
 
+/* Landing: sweeping light beam */
+@keyframes light-sweep {
+  0%   { transform: translateX(-100%) rotate(-45deg); }
+  100% { transform: translateX(200%) rotate(-45deg); }
+}
+.animate-light-sweep {
+  animation: light-sweep 8s ease-in-out infinite;
+}
+.animate-light-sweep-reverse {
+  animation: light-sweep 10s ease-in-out infinite reverse;
+}
+
+/* Landing: hexagon spin float */
+@keyframes hex-float-1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-25px) rotate(180deg); }
+}
+@keyframes hex-float-2 {
+  0%, 100% { transform: translateY(0) rotate(30deg); }
+  50%      { transform: translateY(-18px) rotate(210deg); }
+}
+@keyframes hex-float-3 {
+  0%, 100% { transform: translateY(0) rotate(60deg) scale(1); }
+  50%      { transform: translateY(-22px) rotate(240deg) scale(1.1); }
+}
+.animate-hex-1 { animation: hex-float-1 12s ease-in-out infinite; }
+.animate-hex-2 { animation: hex-float-2 15s ease-in-out infinite 2s; }
+.animate-hex-3 { animation: hex-float-3 18s ease-in-out infinite 4s; }
+
+/* Landing: moving gradient background */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-bg {
+  background-size: 400% 400%;
+  animation: gradient-shift 16s ease infinite;
+}
+
+/* Landing: pulse dot */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.5); }
+}
+
+/* Landing: orbit path */
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+.animate-orbit {
+  animation: orbit 25s linear infinite;
+}
+.animate-orbit-reverse {
+  animation: orbit 30s linear infinite reverse;
+}
+
 /* staggered fade-in delays */
 .delay-100 { animation-delay: 0.10s; }
 .delay-200 { animation-delay: 0.20s; }

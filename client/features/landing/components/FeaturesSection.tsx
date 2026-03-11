@@ -59,39 +59,119 @@ const features = [
   },
 ] as const;
 
+/* Inline SVG hexagon for decorative floating shapes */
+function Hexagon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className={className}
+      style={style}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <polygon
+        points="50,2 93,25 93,75 50,98 7,75 7,25"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 export default function FeaturesSection() {
   const { t, dir } = useTranslation();
 
   return (
-    <section id="features" dir={dir} className="relative py-20 sm:py-28 bg-background overflow-hidden">
-      {/* Animated background orbs */}
+    <section id="features" dir={dir} className="relative py-20 sm:py-28 overflow-hidden">
+      {/* ===== Animated Background Layer ===== */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {/* Moving gradient base */}
         <div
-          className="absolute w-[500px] h-[500px] rounded-full animate-mesh-1 will-change-transform"
+          className="absolute inset-0 animate-gradient-bg"
           style={{
-            top: "-10%",
-            right: "-8%",
-            background: "radial-gradient(circle, rgba(245,166,35,0.07) 0%, transparent 70%)",
+            background:
+              "linear-gradient(135deg, #f4f6f9 0%, #fef9f0 25%, #f4f6f9 50%, #f0f4fe 75%, #f4f6f9 100%)",
           }}
         />
+
+        {/* Dot grid pattern */}
         <div
-          className="absolute w-[400px] h-[400px] rounded-full animate-mesh-2 will-change-transform"
+          className="absolute inset-0 opacity-[0.35]"
           style={{
-            bottom: "-5%",
-            left: "-6%",
-            background: "radial-gradient(circle, rgba(30,136,229,0.05) 0%, transparent 70%)",
+            backgroundImage:
+              "radial-gradient(circle, rgba(245,166,35,0.35) 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        {/* Sweeping light beam */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="absolute top-0 -left-1/2 w-[200%] h-[120px] animate-light-sweep opacity-40"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(245,166,35,0.08) 40%, rgba(245,166,35,0.15) 50%, rgba(245,166,35,0.08) 60%, transparent 100%)",
+            }}
+          />
+        </div>
+
+        {/* Floating hexagons (matching logo motif) */}
+        <Hexagon
+          className="absolute w-16 h-16 text-primary/[0.09] animate-hex-1"
+          style={{ top: "12%", right: "8%" }}
+        />
+        <Hexagon
+          className="absolute w-10 h-10 text-card-blue/[0.08] animate-hex-2"
+          style={{ bottom: "18%", left: "5%" }}
+        />
+        <Hexagon
+          className="absolute w-12 h-12 text-primary/[0.06] animate-hex-3"
+          style={{ top: "55%", right: "15%" }}
+        />
+        <Hexagon
+          className="absolute w-8 h-8 text-card-green/[0.07] animate-hex-1"
+          style={{ top: "8%", left: "18%" }}
+        />
+
+        {/* Orbiting small dots */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{ width: 0, height: 0 }}
+        >
+          <div className="animate-orbit">
+            <div className="w-2 h-2 rounded-full bg-primary/15" />
+          </div>
+        </div>
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{ width: 0, height: 0 }}
+        >
+          <div className="animate-orbit-reverse">
+            <div className="w-1.5 h-1.5 rounded-full bg-card-blue/10" />
+          </div>
+        </div>
+
+        {/* Soft glow spots (different from orbs — these are stationary but pulse) */}
+        <div
+          className="absolute w-[350px] h-[350px] rounded-full animate-mesh-1 will-change-transform"
+          style={{
+            top: "-5%",
+            right: "-5%",
+            background: "radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 65%)",
           }}
         />
         <div
           className="absolute w-[300px] h-[300px] rounded-full animate-mesh-3 will-change-transform"
           style={{
-            top: "40%",
-            left: "50%",
-            background: "radial-gradient(circle, rgba(245,166,35,0.04) 0%, transparent 70%)",
+            bottom: "0%",
+            left: "-3%",
+            background: "radial-gradient(circle, rgba(30,136,229,0.06) 0%, transparent 65%)",
           }}
         />
       </div>
 
+      {/* ===== Content ===== */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -134,8 +214,8 @@ export default function FeaturesSection() {
                 key={feature.titleKey}
                 variants={fadeInUp}
                 whileHover={{ y: -4 }}
-                className="bg-surface rounded-2xl border border-surface-border p-8
-                  hover:shadow-lg transition-shadow duration-300 cursor-default"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl border border-surface-border p-8
+                  hover:shadow-lg hover:bg-white transition-all duration-300 cursor-default"
               >
                 <div
                   className={`w-14 h-14 rounded-xl ${feature.bgColor} ${feature.iconColor}
