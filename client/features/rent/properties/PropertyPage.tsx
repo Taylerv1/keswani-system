@@ -180,19 +180,20 @@ export function PropertyPage() {
       />
 
       {/* Create / Edit modals */}
-      {form.editItem ? (
-        <PropertyEditModal
-          open={form.modalOpen}
-          onClose={closeModal}
-          form={form.form}
-          setForm={form.setForm}
-          units={form.units}
-          setUnits={form.setUnits}
-          onSave={form.handleSave}
-          actionLoading={state.actionLoading}
-          t={t}
-        />
-      ) : (
+	      {form.editItem ? (
+	        <PropertyEditModal
+	          open={form.modalOpen}
+	          onClose={closeModal}
+	          isDirty={form.isEditDirty}
+	          form={form.form}
+	          setForm={form.setForm}
+	          units={form.units}
+	          setUnits={form.setUnits}
+	          onSave={form.handleSave}
+	          actionLoading={state.actionLoading}
+	          t={t}
+	        />
+	      ) : (
         <PropertyCreateModal
           open={form.modalOpen}
           onClose={closeModal}

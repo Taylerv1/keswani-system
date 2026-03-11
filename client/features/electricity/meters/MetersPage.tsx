@@ -367,24 +367,24 @@ export default function MetersPage() {
             >
               {t("cancel")}
             </button>
-            <button
-              onClick={() =>
-                void store.save({
-                  meterNumberRequiredMessage: `${t("meterNumber")} ${t("isRequired")}`,
-                  subscriberRequiredMessage: `${t("subscriber")} ${t("isRequired")}`,
-                  createdSuccessMessage: t("meterCreatedSuccess"),
-                  updatedSuccessMessage: t("meterUpdatedSuccess"),
-                  errorFallback: t("error"),
-                })
-              }
-              disabled={store.actionLoading}
-              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {store.actionLoading ? t("saving") : t("save")}
-            </button>
-          </div>
-        </div>
-      </Modal>
+	            <button
+	              onClick={() =>
+	                void store.save({
+	                  meterNumberRequiredMessage: `${t("meterNumber")} ${t("isRequired")}`,
+	                  subscriberRequiredMessage: `${t("subscriber")} ${t("isRequired")}`,
+	                  createdSuccessMessage: t("meterCreatedSuccess"),
+	                  updatedSuccessMessage: t("meterUpdatedSuccess"),
+	                  errorFallback: t("error"),
+	                })
+	              }
+	              disabled={store.actionLoading || (Boolean(store.editItem) && !store.isEditDirty)}
+	              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+	            >
+	              {store.actionLoading ? t("saving") : t("save")}
+	            </button>
+	          </div>
+	        </div>
+	      </Modal>
 
       <ConfirmDialog
         open={Boolean(store.deleteId)}

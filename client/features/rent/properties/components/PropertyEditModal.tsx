@@ -12,6 +12,7 @@ type PropertyType = PropertyDto["type"];
 interface PropertyEditModalProps {
   open: boolean;
   onClose: () => void;
+  isDirty?: boolean;
   form: {
     name: string;
     type: PropertyType;
@@ -42,6 +43,7 @@ interface PropertyEditModalProps {
 export function PropertyEditModal({
   open,
   onClose,
+  isDirty = true,
   form,
   setForm,
   units,
@@ -389,8 +391,8 @@ export function PropertyEditModal({
           </button>
           <button
             onClick={onSave}
-            disabled={actionLoading}
-            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all flex items-center justify-center"
+            disabled={actionLoading || !isDirty}
+            className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium border-0 hover:shadow-lg hover:shadow-primary/25 transition-all flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {actionLoading ? <LoadingLottie size={28} /> : t("save")}
           </button>

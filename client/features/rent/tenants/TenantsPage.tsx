@@ -143,18 +143,19 @@ export function TenantsPage() {
         onPageChange={state.setPage}
       />
 
-      <TenantFormModal
-        open={form.modalOpen}
-        isEdit={Boolean(form.editItem)}
-        form={form.form}
-        setForm={form.setForm}
-        onClose={form.closeFormModal}
-        onSave={() => {
-          void form.handleSave();
-        }}
-        actionLoading={state.actionLoading}
-        t={t}
-      />
+	      <TenantFormModal
+	        open={form.modalOpen}
+	        isEdit={Boolean(form.editItem)}
+	        isDirty={form.isDirty}
+	        form={form.form}
+	        setForm={form.setForm}
+	        onClose={form.closeFormModal}
+	        onSave={() => {
+	          void form.handleSave();
+	        }}
+	        actionLoading={state.actionLoading}
+	        t={t}
+	      />
 
       <TenantViewModal
         open={form.detailOpen}

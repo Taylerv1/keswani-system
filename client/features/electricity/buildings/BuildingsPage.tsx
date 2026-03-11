@@ -184,24 +184,25 @@ export default function BuildingsPage() {
             </div>
           </Modal>
         ) : (
-          <PropertyEditModal
-            open={store.modalOpen}
-            onClose={store.closeModal}
-            form={store.form}
-            setForm={store.setForm}
-            units={store.units}
-            setUnits={store.setUnits}
-            onSave={() =>
-              void store.save({
-                propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
-                usageRequiredMessage: t("propertyUsageRequired"),
-                successMessage: t("buildingUpdatedSuccess"),
-                errorFallback: t("error"),
-              })
-            }
-            actionLoading={store.actionLoading}
-            t={t}
-          />
+	          <PropertyEditModal
+	            open={store.modalOpen}
+	            onClose={store.closeModal}
+	            isDirty={store.isEditDirty}
+	            form={store.form}
+	            setForm={store.setForm}
+	            units={store.units}
+	            setUnits={store.setUnits}
+	            onSave={() =>
+	              void store.save({
+	                propertyNameRequiredMessage: `${t("propertyName")} ${t("isRequired")}`,
+	                usageRequiredMessage: t("propertyUsageRequired"),
+	                successMessage: t("buildingUpdatedSuccess"),
+	                errorFallback: t("error"),
+	              })
+	            }
+	            actionLoading={store.actionLoading}
+	            t={t}
+	          />
         )
       ) : (
         <PropertyCreateModal

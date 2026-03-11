@@ -14,6 +14,7 @@ import type {
   SubscriberListItem,
   UpdateSubscriberInput,
 } from "./types";
+import { isShallowDirty } from "@/lib/formDirty";
 
 export type SubscriberStatusFilter = "all" | "active" | "inactive";
 
@@ -77,6 +78,7 @@ class SubscribersStore {
   modalOpen = false;
   editItem: SubscriberListItem | null = null;
   form: SubscriberFormState = { ...EMPTY_SUBSCRIBER_FORM };
+  private initialForm: SubscriberFormState = { ...EMPTY_SUBSCRIBER_FORM };
 
   detailOpen = false;
   detailData: SubscriberDetail | null = null;
@@ -200,9 +202,24 @@ class SubscribersStore {
     this.form = { ...this.form, [key]: value };
   }
 
+  get isEditDirty() {
+    if (!this.editItem) return true;
+    return isShallowDirty(this.initialForm, this.form, [
+      "full_name",
+      "email",
+      "phone",
+      "subscription_number",
+      "property_id",
+      "unit_id",
+      "status",
+      "notes",
+    ]);
+  }
+
   openAdd() {
     this.editItem = null;
     this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.initialForm = { ...EMPTY_SUBSCRIBER_FORM };
     this.error = "";
     this.modalOpen = true;
   }
@@ -219,6 +236,7 @@ class SubscribersStore {
       status: item.is_active ? "active" : "inactive",
       notes: item.notes ?? "",
     };
+    this.initialForm = { ...this.form };
     this.error = "";
     this.modalOpen = true;
   }
@@ -227,6 +245,7 @@ class SubscribersStore {
     this.modalOpen = false;
     this.editItem = null;
     this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.initialForm = { ...EMPTY_SUBSCRIBER_FORM };
     this.error = "";
   }
 

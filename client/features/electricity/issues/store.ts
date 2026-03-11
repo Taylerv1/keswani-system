@@ -13,6 +13,7 @@ import type {
   EmployeeLookup,
 } from "./types";
 import { createEmptyForm } from "./utils";
+import { isShallowDirty } from "@/lib/formDirty";
 
 export type IssueStatusFilter = "all" | "open" | "in_progress" | "resolved" | "closed";
 export type IssuePriorityFilter = "all" | "low" | "medium" | "high";
@@ -62,6 +63,7 @@ class IssuesStore {
   viewItem: ElectricityIssue | null = null;
   deleteId: string | null = null;
   form: IssueFormData = createEmptyForm();
+  private initialForm: IssueFormData = createEmptyForm();
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -175,9 +177,23 @@ class IssuesStore {
     this.showError(message);
   }
 
+  get isEditDirty() {
+    if (!this.editItem) return true;
+    return isShallowDirty(this.initialForm, this.form, [
+      "subscriberId",
+      "title",
+      "description",
+      "category",
+      "priority",
+      "status",
+      "assignedTo",
+    ]);
+  }
+
   openAdd() {
     this.editItem = null;
     this.form = createEmptyForm();
+    this.initialForm = createEmptyForm();
     this.error = "";
     this.modalOpen = true;
   }
@@ -193,6 +209,7 @@ class IssuesStore {
       status: item.status,
       assignedTo: item.assigneeId ?? "",
     };
+    this.initialForm = { ...this.form };
     this.error = "";
     this.modalOpen = true;
   }
@@ -209,6 +226,7 @@ class IssuesStore {
     this.modalOpen = false;
     this.editItem = null;
     this.form = createEmptyForm();
+    this.initialForm = createEmptyForm();
     this.error = "";
   }
 

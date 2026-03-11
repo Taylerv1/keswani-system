@@ -17,6 +17,7 @@ import {
 import type { Property, PropertyDto } from "./types";
 import { type CreateUnitInput, EMPTY_UNIT, sanitizeUnit } from "./utils";
 import { rentStore } from "../store";
+import { isJsonDirty } from "@/lib/formDirty";
 
 // ============================================================
 // usePropertyState — Page-level State Hook
@@ -235,6 +236,15 @@ export function usePropertyState(t: TranslateFn) {
 // ============================================================
 
 type PropertyType = PropertyDto["type"];
+type PropertyFormState = {
+  name: string;
+  type: PropertyType;
+  isForRent: boolean;
+  isForElectricity: boolean;
+  address: string;
+  city: string;
+  ownerNotes: string;
+};
 
 interface UsePropertyFormDeps {
   t: TranslateFn;
@@ -282,7 +292,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
   /* Form fields                                                         */
   /* ------------------------------------------------------------------ */
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<PropertyFormState>({
     name: "",
     type: "building" as PropertyType,
     isForRent: true,
@@ -294,6 +304,10 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
 
   const [units, setUnits] = useState<CreateUnitInput[]>([]);
   const [unitDraft, setUnitDraft] = useState<CreateUnitInput>(EMPTY_UNIT);
+  const [initialEditSnapshot, setInitialEditSnapshot] = useState<{
+    form: PropertyFormState;
+    units: CreateUnitInput[];
+  } | null>(null);
 
   /* ------------------------------------------------------------------ */
   /* Reset                                                               */
@@ -313,6 +327,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     setUnitDraft(EMPTY_UNIT);
     setUnitModalOpen(false);
     setEditItem(null);
+    setInitialEditSnapshot(null);
   };
 
   /* ------------------------------------------------------------------ */
@@ -344,7 +359,7 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     }
 
     setEditItem(p);
-    setForm({
+    const nextForm: PropertyFormState = {
       name: item.name,
       type: item.type,
       isForRent: item.is_for_rent ?? true,
@@ -352,12 +367,24 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
       address: item.address ?? "",
       city: item.city ?? "",
       ownerNotes: item.owner_notes ?? "",
+    };
+    const nextUnits =
+      item.type === "building" || item.type === "house" ? mappedUnits : [];
+
+    setInitialEditSnapshot({
+      form: nextForm,
+      units: nextUnits,
     });
-    setUnits(
-      item.type === "building" || item.type === "house" ? mappedUnits : []
-    );
+    setForm(nextForm);
+    setUnits(nextUnits);
     setModalOpen(true);
   };
+
+  const isEditDirty = editItem
+    ? !initialEditSnapshot ||
+      isJsonDirty(initialEditSnapshot.form, form) ||
+      isJsonDirty(initialEditSnapshot.units, units)
+    : true;
 
   /* ------------------------------------------------------------------ */
   /* Unit mutations                                                      */
@@ -508,12 +535,13 @@ export function usePropertyForm(deps: UsePropertyFormDeps) {
     setUnitModalOpen,
 
     // form fields
-    form,
-    setForm,
-    units,
-    setUnits,
-    unitDraft,
-    setUnitDraft,
+	    form,
+	    setForm,
+	    units,
+	    setUnits,
+	    isEditDirty,
+	    unitDraft,
+	    setUnitDraft,
 
     // actions
     resetForm,

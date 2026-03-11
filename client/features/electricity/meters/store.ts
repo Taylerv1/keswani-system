@@ -13,6 +13,7 @@ import type {
   SubscriberLookupItem,
   UpdateMeterInput,
 } from "./types";
+import { isShallowDirty } from "@/lib/formDirty";
 
 export type MeterStatusFilter = "all" | "active" | "inactive";
 export type MeterTypeFilter = "all" | "residential" | "commercial";
@@ -74,6 +75,7 @@ class MetersStore {
   editItem: MeterListItem | null = null;
   deleteId: string | null = null;
   form: MeterFormState = { ...EMPTY_FORM };
+  private initialForm: MeterFormState = { ...EMPTY_FORM };
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -178,9 +180,21 @@ class MetersStore {
     this.showError(message);
   }
 
+  get isEditDirty() {
+    if (!this.editItem) return true;
+    return isShallowDirty(this.initialForm, this.form, [
+      "subscriber_id",
+      "meter_number",
+      "meter_type",
+      "status",
+      "installation_date",
+    ]);
+  }
+
   openAdd() {
     this.editItem = null;
     this.form = { ...EMPTY_FORM };
+    this.initialForm = { ...EMPTY_FORM };
     this.error = "";
     this.modalOpen = true;
   }
@@ -194,6 +208,7 @@ class MetersStore {
       status: item.status,
       installation_date: item.installation_date ?? "",
     };
+    this.initialForm = { ...this.form };
     this.error = "";
     this.modalOpen = true;
   }
@@ -202,6 +217,7 @@ class MetersStore {
     this.modalOpen = false;
     this.editItem = null;
     this.form = { ...EMPTY_FORM };
+    this.initialForm = { ...EMPTY_FORM };
     this.error = "";
   }
 

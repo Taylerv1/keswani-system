@@ -23,6 +23,7 @@ import {
   PAGE_SIZE,
 } from "./utils";
 import { rentStore } from "../store";
+import { isShallowDirty } from "@/lib/formDirty";
 
 export type TranslateFn = (key: string) => string;
 const FLASH_DURATION_MS = 3000;
@@ -299,9 +300,11 @@ export function useTenantForm({
   const [detailData, setDetailData] = useState<TenantDetail | null>(null);
 
   const [form, setForm] = useState<TenantFormValues>(EMPTY_TENANT_FORM);
+  const [initialForm, setInitialForm] = useState<TenantFormValues>(EMPTY_TENANT_FORM);
 
   const resetForm = useCallback(() => {
     setForm(EMPTY_TENANT_FORM);
+    setInitialForm(EMPTY_TENANT_FORM);
     setEditItem(null);
   }, []);
 
@@ -311,8 +314,10 @@ export function useTenantForm({
   }, [resetForm]);
 
   const openEdit = useCallback((item: TenantListItem) => {
+    const nextForm = hydrateTenantForm(item);
     setEditItem(item);
-    setForm(hydrateTenantForm(item));
+    setInitialForm(nextForm);
+    setForm(nextForm);
     setModalOpen(true);
   }, []);
 
@@ -320,6 +325,15 @@ export function useTenantForm({
     setModalOpen(false);
     resetForm();
   }, [resetForm]);
+
+  const isDirty = Boolean(editItem)
+    ? isShallowDirty(initialForm, form, [
+        "full_name",
+        "email",
+        "phone",
+        "notes",
+      ])
+    : true;
 
   const handleSave = useCallback(async () => {
     if (!form.full_name.trim()) {
@@ -389,6 +403,7 @@ export function useTenantForm({
     detailData,
     form,
     setForm,
+    isDirty,
     resetForm,
     openAdd,
     openEdit,

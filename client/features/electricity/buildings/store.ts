@@ -13,6 +13,7 @@ import {
   sanitizeUnit,
   type CreateUnitInput,
 } from "@/features/rent/properties/utils";
+import { isJsonDirty } from "@/lib/formDirty";
 
 type PropertyType = "building" | "house" | "land" | "commercial";
 
@@ -76,6 +77,7 @@ class BuildingsStore {
   units: CreateUnitInput[] = [];
   unitDraft: CreateUnitInput = { ...EMPTY_UNIT };
   unitModalOpen = false;
+  private initialEditSnapshot: { form: BuildingFormState; units: CreateUnitInput[] } | null = null;
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
   private flashVersion = 0;
 
@@ -156,6 +158,16 @@ class BuildingsStore {
       unitDraft: this.unitDraft,
       unitModalOpen: this.unitModalOpen,
     };
+  }
+
+  get isEditDirty() {
+    if (!this.editItem) return true;
+    if (!this.initialEditSnapshot) return true;
+
+    return (
+      isJsonDirty(this.initialEditSnapshot.form, this.form) ||
+      isJsonDirty(this.initialEditSnapshot.units, this.units)
+    );
   }
 
   setSearch(value: string) {
@@ -246,6 +258,7 @@ class BuildingsStore {
   openAdd() {
     this.editItem = null;
     this.modalLoading = false;
+    this.initialEditSnapshot = null;
     this.resetFormState();
     this.modalOpen = true;
   }
@@ -282,21 +295,25 @@ class BuildingsStore {
         mappedUnits.push({ ...EMPTY_UNIT, unit_number: "HOUSE" });
       }
 
-      runInAction(() => {
-        this.form = {
-          name: detail.name,
-          type: detail.type,
-          isForRent: detail.is_for_rent ?? true,
-          isForElectricity: detail.is_for_electricity ?? true,
-          address: detail.address ?? "",
-          city: detail.city ?? "",
-          ownerNotes: detail.owner_notes ?? "",
-        };
-        this.units =
-          detail.type === "building" || detail.type === "house"
-            ? mappedUnits
-            : [];
-      });
+	      runInAction(() => {
+	        const nextForm: BuildingFormState = {
+	          name: detail.name,
+	          type: detail.type,
+	          isForRent: detail.is_for_rent ?? true,
+	          isForElectricity: detail.is_for_electricity ?? true,
+	          address: detail.address ?? "",
+	          city: detail.city ?? "",
+	          ownerNotes: detail.owner_notes ?? "",
+	        };
+	        const nextUnits =
+	          detail.type === "building" || detail.type === "house"
+	            ? mappedUnits
+	            : [];
+
+	        this.initialEditSnapshot = { form: nextForm, units: nextUnits };
+	        this.form = nextForm;
+	        this.units = nextUnits;
+	      });
     } catch (error) {
       runInAction(() => {
         this.showError(getErrorMessage(error, options.errorFallback));
@@ -312,6 +329,7 @@ class BuildingsStore {
     this.modalOpen = false;
     this.modalLoading = false;
     this.editItem = null;
+    this.initialEditSnapshot = null;
     this.resetFormState();
   }
 

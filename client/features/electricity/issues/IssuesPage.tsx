@@ -481,24 +481,24 @@ export default function IssuesPage() {
             >
               {t("cancel")}
             </button>
-            <button
-              onClick={() =>
-                void store.save({
-                  titleRequiredMessage: `${t("title")} ${t("isRequired")}`,
-                  subscriberRequiredMessage: `${t("subscriber")} ${t("isRequired")}`,
-                  createdSuccessMessage: t("issueCreatedSuccess"),
-                  updatedSuccessMessage: t("issueUpdatedSuccess"),
-                  errorFallback: t("error"),
-                })
-              }
-              disabled={store.actionLoading}
-              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center"
-            >
-              {store.actionLoading ? <LoadingLottie size={28} /> : t("save")}
-            </button>
-          </div>
-        </div>
-      </Modal>
+	            <button
+	              onClick={() =>
+	                void store.save({
+	                  titleRequiredMessage: `${t("title")} ${t("isRequired")}`,
+	                  subscriberRequiredMessage: `${t("subscriber")} ${t("isRequired")}`,
+	                  createdSuccessMessage: t("issueCreatedSuccess"),
+	                  updatedSuccessMessage: t("issueUpdatedSuccess"),
+	                  errorFallback: t("error"),
+	                })
+	              }
+	              disabled={store.actionLoading || (Boolean(store.editItem) && !store.isEditDirty)}
+	              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center"
+	            >
+	              {store.actionLoading ? <LoadingLottie size={28} /> : t("save")}
+	            </button>
+	          </div>
+	        </div>
+	      </Modal>
 
       {/* View Modal */}
       <Modal

@@ -311,25 +311,25 @@ export default function SubscribersPage() {
             >
               {t("cancel")}
             </button>
-            <button
-              onClick={() =>
-                void store.save({
-                  fullNameRequiredMessage: t("fullNameRequired"),
-                  subscriptionRequiredMessage: `${t("subscriptionNumber")} ${t("isRequired")}`,
-                  successMessage: store.editItem
-                    ? t("subscriberUpdatedSuccess")
-                    : t("subscriberCreatedSuccess"),
-                  errorFallback: t("error"),
-                })
-              }
-              disabled={store.actionLoading}
-              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {store.actionLoading ? t("saving") : t("save")}
-            </button>
-          </div>
-        </div>
-      </Modal>
+	            <button
+	              onClick={() =>
+	                void store.save({
+	                  fullNameRequiredMessage: t("fullNameRequired"),
+	                  subscriptionRequiredMessage: `${t("subscriptionNumber")} ${t("isRequired")}`,
+	                  successMessage: store.editItem
+	                    ? t("subscriberUpdatedSuccess")
+	                    : t("subscriberCreatedSuccess"),
+	                  errorFallback: t("error"),
+	                })
+	              }
+	              disabled={store.actionLoading || (Boolean(store.editItem) && !store.isEditDirty)}
+	              className="h-10 px-5 rounded-lg bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-medium cursor-pointer border-0 hover:shadow-lg hover:shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+	            >
+	              {store.actionLoading ? t("saving") : t("save")}
+	            </button>
+	          </div>
+	        </div>
+	      </Modal>
 
       <Modal
         open={store.detailOpen}

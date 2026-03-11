@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { Modal, LoadingLottie } from "@/components/ui";
 import { useTranslation } from "@/lib/translation";
 import type { EmployeeDto, UpdateEmployeeInput, EmployeeRole } from "../types";
+import { isShallowDirty } from "@/lib/formDirty";
 
 interface EmployeeEditModalProps {
   open: boolean;
@@ -35,10 +36,11 @@ export function EmployeeEditModal({
     salary_amount: 0,
     is_active: true,
   });
+  const [initialState, setInitialState] = useState<typeof formState | null>(null);
 
   useEffect(() => {
     if (employee && open) {
-      setFormState({
+      const nextState = {
         full_name: employee.full_name,
         email: employee.email,
         phone: employee.phone,
@@ -46,9 +48,14 @@ export function EmployeeEditModal({
         role: employee.role,
         salary_amount: employee.salary_amount ?? 0,
         is_active: employee.is_active,
-      });
+      };
+
+      setInitialState(nextState);
+      setFormState(nextState);
     }
   }, [employee, open]);
+
+  const isDirty = initialState ? isShallowDirty(initialState, formState) : false;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -230,16 +237,16 @@ export function EmployeeEditModal({
           >
             {t("cancel")}
           </button>
-          <button
-            type="submit"
-            disabled={actionLoading}
-            className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
-          >
-            {actionLoading && <LoadingLottie size={20} />}
-            {t("save")}
-          </button>
-        </div>
-      </form>
+	          <button
+	            type="submit"
+	            disabled={actionLoading || !isDirty}
+	            className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2"
+	          >
+	            {actionLoading && <LoadingLottie size={20} />}
+	            {t("save")}
+	          </button>
+	        </div>
+	      </form>
     </Modal>
   );
 }
