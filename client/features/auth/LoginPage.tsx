@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Mail, Lock, Eye, EyeOff, Globe } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "@/lib/translation";
 import { LoadingLottie, Modal } from "@/components/ui";
 import { forgotPassword } from "@/features/auth/api/auth";
 
 export default function LoginPage() {
-  const { t, dir, toggleLocale } = useTranslation();
+  const { t, dir } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -108,18 +108,6 @@ export default function LoginPage() {
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px]" />
-
-      {/* Language toggle – floating */}
-      <button
-        onClick={toggleLocale}
-        className="fixed top-5 z-50 flex items-center gap-1.5 h-9 px-3.5 rounded-full
-          bg-white/10 backdrop-blur-md text-white/90 hover:bg-white/20
-          border border-white/20 transition-all duration-200 text-sm cursor-pointer"
-        style={{ [dir === "rtl" ? "left" : "right"]: "20px" }}
-      >
-        <Globe size={15} />
-        <span>{t("switchLanguage")}</span>
-      </button>
 
       {/* Login card */}
       <div className="relative z-10 w-full max-w-[440px] mx-4">
