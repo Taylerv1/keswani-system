@@ -1,1 +1,10 @@
-export { NotificationsPage as default } from "@/features/notifications";
+import { Suspense } from "react";
+import { NotificationsPage } from "@/features/notifications";
+
+export default function Page() {
+    return (
+        <Suspense>
+            <NotificationsPage />
+        </Suspense>
+    );
+}
