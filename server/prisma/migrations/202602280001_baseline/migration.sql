@@ -1,0 +1,2 @@
+-- Baseline migration placeholder restored to satisfy Prisma migration history.
+-- This migration is intentionally empty because the baseline was resolved against an existing database.

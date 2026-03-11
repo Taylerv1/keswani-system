@@ -1,26 +1,533 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary palette – inspired by the dashboard design */
+  --primary: #f5a623;
+  --primary-hover: #e6951a;
+  --primary-light: #fef3e0;
+
+  /* Sidebar */
+  --sidebar-bg: #4c4c4c;
+  --sidebar-bg-dark: #000000;
+  --sidebar-active: #f5a623;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-active: #ffffff;
+
+  /* Surface / Background */
+  --background: #f4f6f9;
+  --foreground: #1e293b;
+  --surface: #ffffff;
+  --surface-border: #e2e8f0;
+
+  /* Accent cards */
+  --card-green: #43a047;
+  --card-green-light: #e8f5e9;
+  --card-blue: #1e88e5;
+  --card-blue-light: #e3f2fd;
+  --card-orange: #f5a623;
+  --card-orange-light: #fff8e1;
+  --card-red: #e53935;
+  --card-red-light: #ffebee;
+
+  /* Text */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Login gradient */
+  --login-gradient-start: #7b2ff7;
+  --login-gradient-mid: #e91e8c;
+  --login-gradient-end: #ff6f61;
+
+  /* Misc */
+  --radius: 0.5rem;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-bg-dark: var(--sidebar-bg-dark);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-text-active: var(--sidebar-text-active);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-border: var(--surface-border);
+  --color-card-green: var(--card-green);
+  --color-card-green-light: var(--card-green-light);
+  --color-card-blue: var(--card-blue);
+  --color-card-blue-light: var(--card-blue-light);
+  --color-card-orange: var(--card-orange);
+  --color-card-orange-light: var(--card-orange-light);
+  --color-card-red: var(--card-red);
+  --color-card-red-light: var(--card-red-light);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-login-gradient-start: var(--login-gradient-start);
+  --color-login-gradient-mid: var(--login-gradient-mid);
+  --color-login-gradient-end: var(--login-gradient-end);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* RTL support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Use native RTL behavior for scrollbar placement */
+.scrollbar-left {
+  /* Removed direction: rtl as the container already has dir="rtl" */
+}
+.scrollbar-left * {
+  /* Removed direction: ltr override */
+}
+
+/* Scrollbar mixin (global + reusable helpers) */
+html,
+body,
+.scrollbar-primary,
+.scrollbar-left,
+.scrollbar-right {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.scrollbar-primary::-webkit-scrollbar,
+.scrollbar-left::-webkit-scrollbar,
+.scrollbar-right::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+.scrollbar-primary::-webkit-scrollbar-track,
+.scrollbar-left::-webkit-scrollbar-track,
+.scrollbar-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+.scrollbar-primary::-webkit-scrollbar-thumb,
+.scrollbar-left::-webkit-scrollbar-thumb,
+.scrollbar-right::-webkit-scrollbar-thumb {
+  background-color: var(--primary) !important;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+.scrollbar-primary::-webkit-scrollbar-thumb:hover,
+.scrollbar-left::-webkit-scrollbar-thumb:hover,
+.scrollbar-right::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* ============================================================
+   404 / Not-Found Page Animations
+   ============================================================ */
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
+
+@keyframes float-med {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-12px) rotate(6deg); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(24px, -20px) scale(1.06); }
+  66%       { transform: translate(-16px, 14px) scale(0.96); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.92); opacity: 0.7; }
+  70%  { transform: scale(1.06); opacity: 0; }
+  100% { transform: scale(0.92); opacity: 0; }
+}
+
+/* Utility classes */
+.animate-float-slow  { animation: float-slow 6s ease-in-out infinite; }
+.animate-float-med   { animation: float-med  4.5s ease-in-out infinite; }
+.animate-fade-in-up  { animation: fade-in-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-fade-in     { animation: fade-in    0.5s ease both; }
+.animate-blob        { animation: blob-drift 9s ease-in-out infinite; }
+.animate-blob-delay  { animation: blob-drift 11s ease-in-out infinite 2s; }
+.animate-spin-slow   { animation: spin-slow 20s linear infinite; }
+.animate-pulse-ring  { animation: pulse-ring 2.5s ease-out infinite; }
+
+/* Landing page shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Subtle glow pulse for CTA */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(245, 166, 35, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(245, 166, 35, 0.5); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* Landing animated mesh gradient background (light sections) */
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  25%      { transform: translate(8%, -12%) scale(1.08); }
+  50%      { transform: translate(-5%, 8%) scale(0.95); }
+  75%      { transform: translate(12%, 5%) scale(1.04); }
+}
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  25%      { transform: translate(-10%, 8%) scale(0.96); }
+  50%      { transform: translate(6%, -10%) scale(1.07); }
+  75%      { transform: translate(-8%, -5%) scale(1.02); }
+}
+@keyframes mesh-drift-3 {
+  0%, 100% { transform: translate(0%, 0%) scale(1.02); }
+  33%      { transform: translate(10%, 10%) scale(0.94); }
+  66%      { transform: translate(-12%, 5%) scale(1.06); }
+}
+.animate-mesh-1 {
+  animation: mesh-drift-1 18s ease-in-out infinite;
+}
+.animate-mesh-2 {
+  animation: mesh-drift-2 22s ease-in-out infinite;
+}
+.animate-mesh-3 {
+  animation: mesh-drift-3 26s ease-in-out infinite;
+}
+
+/* Landing: sweeping light beam */
+@keyframes light-sweep {
+  0%   { transform: translateX(-100%) rotate(-45deg); }
+  100% { transform: translateX(200%) rotate(-45deg); }
+}
+.animate-light-sweep {
+  animation: light-sweep 8s ease-in-out infinite;
+}
+.animate-light-sweep-reverse {
+  animation: light-sweep 10s ease-in-out infinite reverse;
+}
+
+/* Landing: hexagon spin float */
+@keyframes hex-float-1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-25px) rotate(180deg); }
+}
+@keyframes hex-float-2 {
+  0%, 100% { transform: translateY(0) rotate(30deg); }
+  50%      { transform: translateY(-18px) rotate(210deg); }
+}
+@keyframes hex-float-3 {
+  0%, 100% { transform: translateY(0) rotate(60deg) scale(1); }
+  50%      { transform: translateY(-22px) rotate(240deg) scale(1.1); }
+}
+.animate-hex-1 { animation: hex-float-1 12s ease-in-out infinite; }
+.animate-hex-2 { animation: hex-float-2 15s ease-in-out infinite 2s; }
+.animate-hex-3 { animation: hex-float-3 18s ease-in-out infinite 4s; }
+
+/* Landing: moving gradient background */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-bg {
+  background-size: 400% 400%;
+  animation: gradient-shift 16s ease infinite;
+}
+
+/* Landing: pulse dot */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.5); }
+}
+
+/* Landing: orbit path */
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+.animate-orbit {
+  animation: orbit 25s linear infinite;
+}
+.animate-orbit-reverse {
+  animation: orbit 30s linear infinite reverse;
+}
+
+/* staggered fade-in delays */
+.delay-100 { animation-delay: 0.10s; }
+.delay-200 { animation-delay: 0.20s; }
+.delay-300 { animation-delay: 0.30s; }
+.delay-400 { animation-delay: 0.40s; }
+.delay-500 { animation-delay: 0.50s; }
+
+/* Custom breakpoint for 1000px to match design at that width */
+@media (max-width: 1000px) {
+  .rent-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.9rem !important;
+  }
+
+  /* Compact KPI cards for the 1000px layout */
+  .rent-kpis > * {
+    padding: 0.5rem !important;
+    min-height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Icon sizing inside KPI card */
+  .rent-kpis > * > div:first-child {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .rent-kpis > * > div:first-child svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Layout: label (left, truncating) and value (right, no-shrink) */
+  .rent-kpis > * > .min-w-0 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .rent-kpis > * .min-w-0 > p:first-child {
+    flex: 1 1 auto !important;
+    font-size: 0.72rem !important;
+    color: var(--color-text-secondary) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important;
+  }
+
+  .rent-kpis > * .min-w-0 > p:nth-child(2) {
+    flex: 0 0 auto !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--color-text-primary) !important;
+    margin: 0 !important;
+    text-align: right !important;
+    min-width: 2.5rem !important;
+  }
+
+  /* Hide trend text in compact view */
+  .rent-kpis > * .min-w-0 > p:nth-child(3) {
+    display: none !important;
+  }
+
+  /* Slight heading tweak */
+  .page-heading-lg {
+    font-size: 1.55rem !important;
+  }
+}
+
+/* Additional rules targeting the new KpiCard classes for exact alignment */
+@media (max-width: 1000px) {
+  .rent-kpis .kpi-card {
+    padding: 0.5rem !important;
+  }
+
+  .rent-kpis .kpi-icon {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .rent-kpis .kpi-text {
+    gap: 0.25rem !important;
+    flex-direction: column !important; /* stack label above value to avoid truncation */
+    align-items: flex-start !important;
+  }
+
+  .rent-kpis .kpi-label {
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    color: var(--color-text-secondary) !important;
+    max-width: 7.25rem !important;
+  }
+
+  .rent-kpis .kpi-value {
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    min-width: 2.5rem !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    margin-top: 0.125rem !important;
+  }
+
+  .rent-kpis .kpi-trend {
+    display: none !important;
+  }
+}
+
+/* Extra enforcement to ensure values are always visible and label truncates */
+@media (max-width: 1000px) {
+  .rent-kpis .kpi-card {
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+
+  .rent-kpis .kpi-content { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 0.5rem !important;
+  }
+
+  .rent-kpis .kpi-text { 
+    width: 100% !important; 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 0.5rem !important; 
+  }
+
+  .rent-kpis .kpi-label {
+    flex: 1 1 55% !important; /* take available space, but allow shrink */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+  }
+
+  .rent-kpis .kpi-value {
+    flex: 0 0 auto !important; /* never shrink */
+    margin-left: 0.35rem !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  /* If icon pushes too much, reduce its width slightly */
+  .rent-kpis .kpi-icon { width: 40px !important; height: 40px !important; }
+}
+
+/* Enforce label/value layout for KPI cards at all widths */
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.kpi-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpi-content { flex: 1 1 auto; min-width: 0; }
+.kpi-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
+}
+.kpi-label {
+  flex: 1 1 auto;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+.kpi-value {
+  flex: 0 0 auto;
+  margin-left: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .kpi-value { font-size: 1rem; }
+}
+
+/* Very wide screens: switch back to inline label/value and larger icon */
+@media (min-width: 1536px) {
+  .kpi-text {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .kpi-value { margin-left: 0.5rem; }
+  .kpi-card { gap: 1rem; }
+  .kpi-icon { width: 56px; height: 56px; }
+  .kpi-value { font-size: 1.05rem; }
 }

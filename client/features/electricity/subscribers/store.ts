@@ -1,0 +1,554 @@
+import { makeAutoObservable, runInAction } from "mobx";
+import {
+  createSubscriber,
+  getSubscriberById,
+  getSubscriberProperties,
+  getSubscribers,
+  inviteSubscriberAccess,
+  updateSubscriber,
+} from "./api";
+import type {
+  CreateSubscriberInput,
+  PropertyLookup,
+  SubscriberDetail,
+  SubscriberListItem,
+  UpdateSubscriberInput,
+} from "./types";
+import { isShallowDirty } from "@/lib/formDirty";
+
+export type SubscriberStatusFilter = "all" | "active" | "inactive";
+
+export interface SubscriberFormState {
+  full_name: string;
+  email: string;
+  phone: string;
+  subscription_number: string;
+  property_id: string;
+  unit_id: string;
+  status: "active" | "inactive";
+  notes: string;
+}
+
+export const EMPTY_SUBSCRIBER_FORM: SubscriberFormState = {
+  full_name: "",
+  email: "",
+  phone: "",
+  subscription_number: "",
+  property_id: "",
+  unit_id: "",
+  status: "active",
+  notes: "",
+};
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+class SubscribersStore {
+  PAGE_SIZE = 8;
+  private subscriberPageCache = new Map<
+    string,
+    {
+      items: SubscriberListItem[];
+      totalItems: number;
+      totalPages: number;
+    }
+  >();
+  private propertiesLoaded = false;
+  private inFlightSubscribers = new Map<string, Promise<void>>();
+  private inFlightProperties: Promise<void> | null = null;
+
+  subscribers: SubscriberListItem[] = [];
+  properties: PropertyLookup[] = [];
+  search = "";
+  filterStatus: SubscriberStatusFilter = "all";
+  page = 1;
+  totalItems = 0;
+  totalPages = 1;
+  loading = false;
+  actionLoading = false;
+  detailLoading = false;
+  error = "";
+  success = "";
+
+  modalOpen = false;
+  editItem: SubscriberListItem | null = null;
+  form: SubscriberFormState = { ...EMPTY_SUBSCRIBER_FORM };
+  private initialForm: SubscriberFormState = { ...EMPTY_SUBSCRIBER_FORM };
+
+  detailOpen = false;
+  detailData: SubscriberDetail | null = null;
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
+  private flashVersion = 0;
+
+  constructor() {
+    makeAutoObservable(this, {}, { autoBind: true });
+  }
+
+  private clearFlashTimer() {
+    if (this.flashTimer) {
+      clearTimeout(this.flashTimer);
+      this.flashTimer = null;
+    }
+  }
+
+  private scheduleFlashClear(durationMs = 3000) {
+    const currentVersion = ++this.flashVersion;
+    this.clearFlashTimer();
+
+    this.flashTimer = setTimeout(() => {
+      runInAction(() => {
+        if (this.flashVersion !== currentVersion) return;
+        this.error = "";
+        this.success = "";
+        this.flashTimer = null;
+      });
+    }, durationMs);
+  }
+
+  private showError(message: string) {
+    this.error = message;
+    this.success = "";
+    this.scheduleFlashClear();
+  }
+
+  private showSuccess(message: string) {
+    this.success = message;
+    this.error = "";
+    this.scheduleFlashClear();
+  }
+
+  private buildSubscriberCacheKey(page: number) {
+    return JSON.stringify({
+      page,
+      limit: this.PAGE_SIZE,
+      search: this.search || "",
+      status: this.filterStatus === "all" ? "" : this.filterStatus,
+    });
+  }
+
+  private invalidateSubscriberCache() {
+    this.subscriberPageCache.clear();
+  }
+
+  private invalidatePropertiesCache() {
+    this.propertiesLoaded = false;
+  }
+
+  // Used by component-level autorun hook to subscribe to store changes.
+  get observerSnapshot() {
+    return {
+      subscribers: this.subscribers,
+      properties: this.properties,
+      search: this.search,
+      filterStatus: this.filterStatus,
+      page: this.page,
+      totalItems: this.totalItems,
+      totalPages: this.totalPages,
+      loading: this.loading,
+      actionLoading: this.actionLoading,
+      detailLoading: this.detailLoading,
+      error: this.error,
+      success: this.success,
+      modalOpen: this.modalOpen,
+      editItem: this.editItem,
+      form: this.form,
+      detailOpen: this.detailOpen,
+      detailData: this.detailData,
+    };
+  }
+
+  get unitOptions() {
+    const selectedProperty = this.properties.find(
+      (property) => property.id === this.form.property_id
+    );
+    return selectedProperty?.units ?? [];
+  }
+
+  setError(message: string) {
+    this.showError(message);
+  }
+
+  setSearch(value: string) {
+    this.search = value;
+    this.page = 1;
+  }
+
+  setFilterStatus(value: SubscriberStatusFilter) {
+    this.filterStatus = value;
+    this.page = 1;
+  }
+
+  setPage(value: number) {
+    this.page = value;
+  }
+
+  setDetailOpen(value: boolean) {
+    this.detailOpen = value;
+    if (!value) {
+      this.detailData = null;
+      this.detailLoading = false;
+    }
+  }
+
+  setFormField<K extends keyof SubscriberFormState>(
+    key: K,
+    value: SubscriberFormState[K]
+  ) {
+    this.form = { ...this.form, [key]: value };
+  }
+
+  get isEditDirty() {
+    if (!this.editItem) return true;
+    return isShallowDirty(this.initialForm, this.form, [
+      "full_name",
+      "email",
+      "phone",
+      "subscription_number",
+      "property_id",
+      "unit_id",
+      "status",
+      "notes",
+    ]);
+  }
+
+  openAdd() {
+    this.editItem = null;
+    this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.initialForm = { ...EMPTY_SUBSCRIBER_FORM };
+    this.error = "";
+    this.modalOpen = true;
+  }
+
+  openEdit(item: SubscriberListItem) {
+    this.editItem = item;
+    this.form = {
+      full_name: item.client.full_name,
+      email: item.client.email ?? "",
+      phone: item.client.phone ?? "",
+      subscription_number: item.subscription_number,
+      property_id: item.property?.id ?? "",
+      unit_id: item.unit?.id ?? "",
+      status: item.is_active ? "active" : "inactive",
+      notes: item.notes ?? "",
+    };
+    this.initialForm = { ...this.form };
+    this.error = "";
+    this.modalOpen = true;
+  }
+
+  closeModal() {
+    this.modalOpen = false;
+    this.editItem = null;
+    this.form = { ...EMPTY_SUBSCRIBER_FORM };
+    this.initialForm = { ...EMPTY_SUBSCRIBER_FORM };
+    this.error = "";
+  }
+
+  async bootstrap(errorFallback: string): Promise<void> {
+    await Promise.all([
+      this.loadSubscribers({ errorFallback }),
+      this.loadProperties({ errorFallback }),
+    ]);
+  }
+
+  async loadSubscribers(options: {
+    errorFallback: string;
+    targetPage?: number;
+    force?: boolean;
+  }): Promise<void> {
+    const currentPage = options.targetPage ?? this.page;
+    const cacheKey = this.buildSubscriberCacheKey(currentPage);
+    const cached = this.subscriberPageCache.get(cacheKey);
+
+    if (!options.force && cached) {
+      runInAction(() => {
+        this.page = currentPage;
+        this.error = "";
+        this.subscribers = cached.items;
+        this.totalItems = cached.totalItems;
+        this.totalPages = cached.totalPages;
+        this.loading = false;
+      });
+      return;
+    }
+
+    if (!options.force) {
+      const inFlight = this.inFlightSubscribers.get(cacheKey);
+      if (inFlight) {
+        await inFlight;
+        const afterWait = this.subscriberPageCache.get(cacheKey);
+        if (afterWait) {
+          runInAction(() => {
+            this.page = currentPage;
+            this.error = "";
+            this.subscribers = afterWait.items;
+            this.totalItems = afterWait.totalItems;
+            this.totalPages = afterWait.totalPages;
+            this.loading = false;
+          });
+          return;
+        }
+      }
+    }
+
+    const requestPromise = (async () => {
+      try {
+        this.loading = true;
+        this.error = "";
+
+        const response = await getSubscribers({
+          page: currentPage,
+          limit: this.PAGE_SIZE,
+          search: this.search || undefined,
+          status: this.filterStatus === "all" ? undefined : this.filterStatus,
+        });
+
+        runInAction(() => {
+          const items = response.data?.items ?? [];
+          const totalItems = response.data?.pagination.total ?? 0;
+          const totalPages = response.data?.pagination.total_pages ?? 1;
+
+          this.page = currentPage;
+          this.subscribers = items;
+          this.totalItems = totalItems;
+          this.totalPages = totalPages;
+          this.subscriberPageCache.set(cacheKey, {
+            items,
+            totalItems,
+            totalPages,
+          });
+        });
+      } catch (error) {
+        runInAction(() => {
+          this.showError(getErrorMessage(error, options.errorFallback));
+          this.subscribers = [];
+          this.totalItems = 0;
+          this.totalPages = 1;
+        });
+      } finally {
+        runInAction(() => {
+          this.loading = false;
+        });
+      }
+    })();
+
+    this.inFlightSubscribers.set(cacheKey, requestPromise);
+
+    try {
+      await requestPromise;
+    } finally {
+      this.inFlightSubscribers.delete(cacheKey);
+    }
+  }
+
+  async loadProperties(options: {
+    errorFallback: string;
+    force?: boolean;
+  }): Promise<void> {
+    if (!options.force && this.propertiesLoaded) {
+      return;
+    }
+
+    if (!options.force && this.inFlightProperties) {
+      await this.inFlightProperties;
+      return;
+    }
+
+    const requestPromise = (async () => {
+      try {
+        const properties = await getSubscriberProperties();
+        runInAction(() => {
+          this.properties = properties;
+          this.propertiesLoaded = true;
+        });
+      } catch (error) {
+        runInAction(() => {
+          this.properties = [];
+          this.propertiesLoaded = false;
+          this.showError(getErrorMessage(error, options.errorFallback));
+        });
+      }
+    })();
+
+    this.inFlightProperties = requestPromise;
+
+    try {
+      await requestPromise;
+    } finally {
+      this.inFlightProperties = null;
+    }
+  }
+
+  async save(options: {
+    fullNameRequiredMessage: string;
+    subscriptionRequiredMessage: string;
+    successMessage: string;
+    errorFallback: string;
+  }): Promise<boolean> {
+    const fullName = this.form.full_name.trim();
+    const subscriptionNumber = this.form.subscription_number.trim();
+
+    if (!fullName) {
+      this.showError(options.fullNameRequiredMessage);
+      return false;
+    }
+
+    if (!subscriptionNumber) {
+      this.showError(options.subscriptionRequiredMessage);
+      return false;
+    }
+
+    try {
+      this.actionLoading = true;
+      this.error = "";
+
+      if (this.editItem) {
+        const payload: UpdateSubscriberInput = {
+          full_name: fullName,
+          email: this.form.email.trim() || null,
+          phone: this.form.phone.trim() || null,
+          subscription_number: subscriptionNumber,
+          property_id: this.form.property_id || null,
+          unit_id: this.form.unit_id || null,
+          is_active: this.form.status === "active",
+          notes: this.form.notes.trim() || null,
+        };
+
+        await updateSubscriber(this.editItem.id, payload);
+      } else {
+        const payload: CreateSubscriberInput = {
+          full_name: fullName,
+          email: this.form.email.trim() || undefined,
+          phone: this.form.phone.trim() || undefined,
+          subscription_number: subscriptionNumber,
+          property_id: this.form.property_id || undefined,
+          unit_id: this.form.unit_id || undefined,
+          is_active: this.form.status === "active",
+          notes: this.form.notes.trim() || undefined,
+        };
+
+        await createSubscriber(payload);
+      }
+
+      runInAction(() => {
+        const targetPage = this.editItem ? this.page : 1;
+        this.closeModal();
+        this.page = targetPage;
+        this.invalidateSubscriberCache();
+        this.showSuccess(options.successMessage);
+      });
+
+      await this.loadSubscribers({
+        errorFallback: options.errorFallback,
+        targetPage: this.page,
+        force: true,
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.showError(getErrorMessage(error, options.errorFallback));
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
+    }
+  }
+
+  async inviteSubscriberPortalAccess(
+    subscriber: {
+      id: string;
+      client: {
+        id: string;
+        email: string | null;
+        auth_user_id: string | null;
+      };
+    },
+    options: { errorFallback: string; emailRequiredMessage: string; successMessage: string }
+  ): Promise<boolean> {
+    const email = subscriber.client.email?.trim();
+    if (!email) {
+      this.showError(options.emailRequiredMessage);
+      return false;
+    }
+
+    try {
+      this.actionLoading = true;
+      this.error = "";
+
+      const response = await inviteSubscriberAccess(subscriber.client.id);
+      const authUserId = response.data?.auth_user_id ?? subscriber.client.auth_user_id;
+
+      runInAction(() => {
+        this.subscribers = this.subscribers.map((item) =>
+          item.id === subscriber.id
+            ? {
+                ...item,
+                client: {
+                  ...item.client,
+                  auth_user_id: authUserId,
+                },
+              }
+            : item
+        );
+
+        if (this.detailData?.id === subscriber.id) {
+          this.detailData = {
+            ...this.detailData,
+            client: {
+              ...this.detailData.client,
+              auth_user_id: authUserId,
+            },
+          };
+        }
+
+        this.showSuccess(response.message || options.successMessage);
+      });
+
+      return true;
+    } catch (error) {
+      runInAction(() => {
+        this.showError(getErrorMessage(error, options.errorFallback));
+      });
+      return false;
+    } finally {
+      runInAction(() => {
+        this.actionLoading = false;
+      });
+    }
+  }
+
+  async openDetails(
+    item: SubscriberListItem,
+    options: { errorFallback: string }
+  ): Promise<void> {
+    try {
+      this.detailLoading = true;
+      this.error = "";
+      this.detailOpen = true;
+
+      const response = await getSubscriberById(item.id);
+
+      runInAction(() => {
+        this.detailData = response.data ?? null;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.showError(getErrorMessage(error, options.errorFallback));
+      });
+    } finally {
+      runInAction(() => {
+        this.detailLoading = false;
+      });
+    }
+  }
+}
+
+export const subscribersStore = new SubscribersStore();

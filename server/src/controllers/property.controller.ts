@@ -1,0 +1,808 @@
+import { Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
+import prisma from "../config/prisma";
+import {
+    createPropertySchema,
+    electricityBuildingsQuerySchema,
+    propertyLookupQuerySchema,
+    updatePropertySchema,
+    propertyQuerySchema,
+} from "../validators/property.validator";
+import { AuthenticatedRequest, ApiResponse } from "../types";
+
+// Helper: compute rented count for a property
+async function computeRentedCount(propertyId: string): Promise<number> {
+    return prisma.contracts.count({
+        where: {
+            unit: { property_id: propertyId, deleted_at: null },
+            status: "active",
+            deleted_at: null,
+        },
+    });
+}
+
+function toNumber(value: unknown): number {
+    if (value === null || value === undefined) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// Shared include for property queries
+const propertyInclude = {
+    units: {
+        where: { deleted_at: null } as Prisma.unitsWhereInput,
+        select: {
+            id: true,
+            unit_number: true,
+            floor: true,
+            bedrooms: true,
+            bathrooms: true,
+            area_sqm: true,
+            description: true,
+        },
+    },
+    manager: {
+        select: { id: true, full_name: true },
+    },
+} as const;
+
+/**
+ * GET /api/properties
+ * List properties with filtering (type) + pagination + search.
+ */
+export const getProperties = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const parsed = propertyQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Invalid query params", details: parsed.error.flatten().fieldErrors });
+            return;
+        }
+
+        const { page, limit, search, type, status, usage } = parsed.data;
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.propertiesWhereInput = { deleted_at: null };
+        if (type) where.type = type;
+        if (usage === "rent") {
+            (where as any).is_for_rent = true;
+        } else if (usage === "electricity") {
+            (where as any).is_for_electricity = true;
+        }
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { address: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { city: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+            ];
+        }
+
+        const properties = await prisma.properties.findMany({
+            where,
+            orderBy: { created_at: "desc" },
+            include: propertyInclude,
+        });
+
+        const enriched = await Promise.all(
+            properties.map(async (prop) => {
+                const totalUnits = prop.units.length;
+                const rentedCount = await computeRentedCount(prop.id);
+                return {
+                    id: prop.id,
+                    name: prop.name,
+                    address: prop.address,
+                    city: prop.city,
+                    type: prop.type,
+                    is_for_rent: (prop as any).is_for_rent ?? true,
+                    is_for_electricity: (prop as any).is_for_electricity ?? true,
+                    managed_by: prop.managed_by,
+                    manager_name: prop.manager?.full_name || null,
+                    owner_notes: prop.owner_notes,
+                    total_units: totalUnits,
+                    rented_units: rentedCount,
+                    available_units: totalUnits - rentedCount,
+                    units: prop.units,
+                    created_at: prop.created_at,
+                    updated_at: prop.updated_at,
+                };
+            })
+        );
+
+        const statusFiltered = status
+            ? enriched.filter((prop) => {
+                const occupancyStatus =
+                    prop.total_units > 0 && prop.rented_units === prop.total_units
+                        ? "full"
+                        : "vacant";
+                return occupancyStatus === status;
+            })
+            : enriched;
+
+        const pagedItems = statusFiltered.slice(skip, skip + limit);
+        const total = statusFiltered.length;
+
+        res.json({
+            success: true,
+            data: {
+                items: pagedItems,
+                pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
+            },
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /api/properties/:id
+ * Single property with all units.
+ */
+export const getPropertyById = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const id = req.params.id as string;
+
+        const property = await prisma.properties.findFirst({
+            where: { id, deleted_at: null },
+            include: propertyInclude,
+        });
+
+        if (!property) {
+            res.status(404).json({ success: false, error: "Property not found" });
+            return;
+        }
+
+        const rentedCount = await computeRentedCount(property.id);
+
+        res.json({
+            success: true,
+            data: {
+                id: property.id,
+                name: property.name,
+                address: property.address,
+                city: property.city,
+                type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? true,
+                is_for_electricity: (property as any).is_for_electricity ?? true,
+                managed_by: property.managed_by,
+                manager_name: property.manager?.full_name || null,
+                owner_notes: property.owner_notes,
+                total_units: property.units.length,
+                rented_units: rentedCount,
+                available_units: property.units.length - rentedCount,
+                units: property.units,
+                created_at: property.created_at,
+                updated_at: property.updated_at,
+            },
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /api/properties/lookup
+ * Lightweight list for dropdowns.
+ */
+export const getPropertiesLookup = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const parsed = propertyLookupQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Invalid query params", details: parsed.error.flatten().fieldErrors });
+            return;
+        }
+
+        const where: Prisma.propertiesWhereInput = { deleted_at: null };
+        if (parsed.data.usage === "rent") {
+            (where as any).is_for_rent = true;
+        } else if (parsed.data.usage === "electricity") {
+            (where as any).is_for_electricity = true;
+        }
+
+        const properties = await prisma.properties.findMany({
+            where,
+            orderBy: { name: "asc" },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                units: {
+                    where: { deleted_at: null },
+                    orderBy: { unit_number: "asc" },
+                    select: { id: true, unit_number: true, floor: true },
+                },
+            },
+        });
+
+        res.json({ success: true, data: properties } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /api/properties/electricity/buildings
+ * Electricity buildings with subscriber and consumption aggregates.
+ */
+export const getElectricityBuildings = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const parsed = electricityBuildingsQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({
+                success: false,
+                error: "Invalid query params",
+                details: parsed.error.flatten().fieldErrors,
+            });
+            return;
+        }
+
+        const { page, limit, search } = parsed.data;
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.propertiesWhereInput = {
+            deleted_at: null,
+            type: { not: "land" },
+            ...( { is_for_electricity: true } as any ),
+        };
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { address: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+                { city: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+            ];
+        }
+
+        const [total, properties] = await Promise.all([
+            prisma.properties.count({ where }),
+            prisma.properties.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: "desc" },
+                include: {
+                    units: {
+                        where: { deleted_at: null },
+                        select: { id: true },
+                    },
+                },
+            }),
+        ]);
+
+        const propertyIds = properties.map((property) => property.id);
+
+        const subscribers = propertyIds.length > 0
+            ? await prisma.subscribers.findMany({
+                where: {
+                    deleted_at: null,
+                    is_active: true,
+                    property_id: { in: propertyIds },
+                },
+                select: {
+                    id: true,
+                    property_id: true,
+                },
+            })
+            : [];
+
+        const subscriberIds = subscribers.map((subscriber) => subscriber.id);
+
+        const consumptionBySubscriber = new Map<string, number>();
+        if (subscriberIds.length > 0) {
+            const billSums = await prisma.bills.groupBy({
+                by: ["subscriber_id"],
+                where: {
+                    deleted_at: null,
+                    subscriber_id: { in: subscriberIds },
+                },
+                _sum: {
+                    consumption_kwh: true,
+                },
+            });
+
+            for (const row of billSums) {
+                consumptionBySubscriber.set(
+                    row.subscriber_id,
+                    toNumber(row._sum.consumption_kwh)
+                );
+            }
+        }
+
+        const subscriberCountByProperty = new Map<string, number>();
+        const consumptionByProperty = new Map<string, number>();
+
+        for (const subscriber of subscribers) {
+            const propertyId = subscriber.property_id;
+            if (!propertyId) continue;
+
+            subscriberCountByProperty.set(
+                propertyId,
+                (subscriberCountByProperty.get(propertyId) ?? 0) + 1
+            );
+
+            const subscriberConsumption =
+                consumptionBySubscriber.get(subscriber.id) ?? 0;
+            consumptionByProperty.set(
+                propertyId,
+                (consumptionByProperty.get(propertyId) ?? 0) + subscriberConsumption
+            );
+        }
+
+        const items = properties.map((property) => ({
+            id: property.id,
+            name: property.name,
+            address: property.address,
+            city: property.city,
+            type: property.type,
+            total_units: property.units.length,
+            subscriber_count: subscriberCountByProperty.get(property.id) ?? 0,
+            total_consumption_kwh: consumptionByProperty.get(property.id) ?? 0,
+            is_for_rent: (property as any).is_for_rent ?? true,
+            is_for_electricity: (property as any).is_for_electricity ?? true,
+            created_at: property.created_at,
+            updated_at: property.updated_at,
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    total_pages: Math.max(1, Math.ceil(total / limit)),
+                },
+            },
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * POST /api/properties
+ * Create a new property with optional units (for buildings).
+ */
+export const createProperty = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const parsed = createPropertySchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors });
+            return;
+        }
+
+        const { units, managed_by, is_for_rent, is_for_electricity, ...rest } = parsed.data;
+        const isForRent = is_for_rent ?? true;
+        const isForElectricity = is_for_electricity ?? true;
+
+        if (!isForRent && !isForElectricity) {
+            res.status(400).json({
+                success: false,
+                error: "Property must be enabled for rent, electricity, or both",
+            });
+            return;
+        }
+
+        const createData: Prisma.propertiesCreateInput = {
+            name: rest.name,
+            address: rest.address,
+            city: rest.city,
+            type: rest.type,
+            ...( { is_for_rent: isForRent, is_for_electricity: isForElectricity } as any),
+            owner_notes: rest.owner_notes,
+        };
+
+        // If caller provided managed_by use it; otherwise set manager from authenticated user (if employee)
+        if (managed_by) {
+            createData.manager = { connect: { id: managed_by } };
+        } else if (req.user && req.user.user_type === "employee") {
+            // req.user.profile_id is the employee id
+            createData.manager = { connect: { id: req.user.profile_id } };
+        }
+
+        if (units && units.length > 0) {
+            createData.units = {
+                create: units.map((u) => ({
+                    unit_number: u.unit_number,
+                    floor: u.floor,
+                    bedrooms: u.bedrooms,
+                    bathrooms: u.bathrooms,
+                    area_sqm: u.area_sqm,
+                    description: u.description,
+                })),
+            };
+        }
+
+        const property = await prisma.properties.create({
+            data: createData,
+            include: propertyInclude,
+        });
+
+        res.status(201).json({
+            success: true,
+            data: {
+                id: property.id,
+                name: property.name,
+                address: property.address,
+                city: property.city,
+                type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? isForRent,
+                is_for_electricity: (property as any).is_for_electricity ?? isForElectricity,
+                managed_by: property.managed_by,
+                manager_name: property.manager?.full_name || null,
+                owner_notes: property.owner_notes,
+                total_units: property.units.length,
+                rented_units: 0,
+                available_units: property.units.length,
+                units: property.units,
+                created_at: property.created_at,
+                updated_at: property.updated_at,
+            },
+            message: "Property created successfully",
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * POST /api/properties/electricity/buildings
+ * Create property from electricity module (always electricity-enabled).
+ */
+export const createElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    req.body = {
+        ...(req.body ?? {}),
+        is_for_electricity: true,
+    };
+
+    await createProperty(req, res, next);
+};
+
+/**
+ * PATCH /api/properties/:id
+ * Update property fields.
+ */
+export const updateProperty = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const id = req.params.id as string;
+
+        const existing = await prisma.properties.findFirst({
+            where: { id, deleted_at: null },
+        });
+        if (!existing) {
+            res.status(404).json({ success: false, error: "Property not found" });
+            return;
+        }
+
+
+        const parsed = updatePropertySchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({ success: false, error: "Validation failed", details: parsed.error.flatten().fieldErrors });
+            return;
+        }
+
+        const {
+            managed_by,
+            units,
+            is_for_rent,
+            is_for_electricity,
+            ...rest
+        } = parsed.data as any;
+
+        const currentIsForRent = (existing as any).is_for_rent ?? true;
+        const currentIsForElectricity = (existing as any).is_for_electricity ?? true;
+        const nextIsForRent = is_for_rent ?? currentIsForRent;
+        const nextIsForElectricity = is_for_electricity ?? currentIsForElectricity;
+
+        if (!nextIsForRent && !nextIsForElectricity) {
+            res.status(400).json({
+                success: false,
+                error: "Property must be enabled for rent, electricity, or both",
+            });
+            return;
+        }
+
+        const updateData: Prisma.propertiesUpdateInput = {
+            ...rest,
+            ...(is_for_rent !== undefined ? ({ is_for_rent: nextIsForRent } as any) : {}),
+            ...(is_for_electricity !== undefined ? ({ is_for_electricity: nextIsForElectricity } as any) : {}),
+        };
+        if (managed_by !== undefined) {
+            if (managed_by === null) {
+                updateData.manager = { disconnect: true };
+            } else {
+                updateData.manager = { connect: { id: managed_by } };
+            }
+        }
+
+        // First update the property fields
+        let property = await prisma.properties.update({
+            where: { id },
+            data: updateData,
+            include: propertyInclude,
+        });
+
+        // If units were provided, process edits, creations, and deletions.
+        if (Array.isArray(units)) {
+            const normalizedUnits = units.map((u: any) => ({
+                ...u,
+                unit_number: String(u.unit_number ?? "").trim(),
+            }));
+
+            const unitNumbers = normalizedUnits.map((u: any) => u.unit_number);
+            const duplicateUnitNumbers = Array.from(
+                new Set(unitNumbers.filter((number, idx) => unitNumbers.indexOf(number) !== idx))
+            );
+            if (duplicateUnitNumbers.length > 0) {
+                res.status(400).json({
+                    success: false,
+                    error: `Duplicate unit number(s) in request: ${duplicateUnitNumbers.join(", ")}`,
+                });
+                return;
+            }
+
+            const updates = normalizedUnits.filter((u: any) => u.id);
+            const creates = normalizedUnits.filter((u: any) => !u.id);
+            const submittedUpdateIds = updates.map((u: any) => u.id as string);
+
+            const currentUnits = await prisma.units.findMany({
+                where: { property_id: id, deleted_at: null },
+                select: { id: true },
+            });
+            const currentUnitIds = currentUnits.map((u) => u.id);
+            const unitsToDelete = currentUnitIds.filter((unitId) => !submittedUpdateIds.includes(unitId));
+
+            // Validate that any update ids belong to this property
+            if (updates.length > 0) {
+                const existingUnits = await prisma.units.findMany({
+                    where: { id: { in: submittedUpdateIds }, property_id: id, deleted_at: null },
+                    select: { id: true },
+                });
+                if (existingUnits.length !== submittedUpdateIds.length) {
+                    res.status(400).json({ success: false, error: "One or more units not found or do not belong to this property." });
+                    return;
+                }
+
+                const updatePromises = updates.map((u: any) =>
+                    prisma.units.update({
+                        where: { id: u.id },
+                        data: {
+                            unit_number: u.unit_number,
+                            floor: u.floor,
+                            bedrooms: u.bedrooms,
+                            bathrooms: u.bathrooms,
+                            area_sqm: u.area_sqm,
+                            description: u.description,
+                        },
+                    })
+                );
+
+                await prisma.$transaction(updatePromises);
+            }
+
+            if (unitsToDelete.length > 0) {
+                const activeContracts = await prisma.contracts.count({
+                    where: {
+                        unit_id: { in: unitsToDelete },
+                        status: "active",
+                        deleted_at: null,
+                    },
+                });
+
+                if (activeContracts > 0) {
+                    res.status(409).json({
+                        success: false,
+                        error: "Cannot delete unit(s) with active contract(s).",
+                    });
+                    return;
+                }
+
+                await prisma.units.updateMany({
+                    where: { id: { in: unitsToDelete } },
+                    data: { deleted_at: new Date() },
+                });
+            }
+
+            if (creates.length > 0) {
+                const createNumbers = creates.map((u: any) => u.unit_number);
+                const existingSameNumbers = await prisma.units.findMany({
+                    where: {
+                        property_id: id,
+                        unit_number: { in: createNumbers },
+                    },
+                    select: { id: true, unit_number: true, deleted_at: true },
+                });
+
+                const activeConflicts = existingSameNumbers.filter((u) => u.deleted_at === null);
+                if (activeConflicts.length > 0) {
+                    const conflicted = activeConflicts.map((u) => u.unit_number).join(", ");
+                    res.status(409).json({
+                        success: false,
+                        error: `Unit number(s) already exist in this property: ${conflicted}`,
+                    });
+                    return;
+                }
+
+                const deletedByNumber = new Map(
+                    existingSameNumbers
+                        .filter((u) => u.deleted_at !== null)
+                        .map((u) => [u.unit_number, u])
+                );
+
+                const restorePromises: Prisma.PrismaPromise<any>[] = [];
+                const createPromises: Prisma.PrismaPromise<any>[] = [];
+
+                for (const u of creates) {
+                    const deletedMatch = deletedByNumber.get(u.unit_number);
+                    if (deletedMatch) {
+                        restorePromises.push(
+                            prisma.units.update({
+                                where: { id: deletedMatch.id },
+                                data: {
+                                    deleted_at: null,
+                                    floor: u.floor,
+                                    bedrooms: u.bedrooms,
+                                    bathrooms: u.bathrooms,
+                                    area_sqm: u.area_sqm,
+                                    description: u.description,
+                                },
+                            })
+                        );
+                        deletedByNumber.delete(u.unit_number);
+                    } else {
+                        createPromises.push(
+                            prisma.units.create({
+                                data: {
+                                    unit_number: u.unit_number,
+                                    floor: u.floor,
+                                    bedrooms: u.bedrooms,
+                                    bathrooms: u.bathrooms,
+                                    area_sqm: u.area_sqm,
+                                    description: u.description,
+                                    property: { connect: { id } },
+                                },
+                            })
+                        );
+                    }
+                }
+
+                await prisma.$transaction([...restorePromises, ...createPromises]);
+            }
+
+            // Re-fetch property to include updated/created units
+            const refreshed = await prisma.properties.findFirst({ where: { id }, include: propertyInclude });
+            if (!refreshed) {
+                res.status(500).json({ success: false, error: "Failed to reload property after unit updates." });
+                return;
+            }
+            property = refreshed;
+        }
+
+        const rentedCount = await computeRentedCount(id);
+
+        res.json({
+            success: true,
+            data: {
+                id: property.id,
+                name: property.name,
+                address: property.address,
+                city: property.city,
+                type: property.type,
+                is_for_rent: (property as any).is_for_rent ?? nextIsForRent,
+                is_for_electricity: (property as any).is_for_electricity ?? nextIsForElectricity,
+                managed_by: property.managed_by,
+                manager_name: property.manager?.full_name || null,
+                owner_notes: property.owner_notes,
+                total_units: property.units.length,
+                rented_units: rentedCount,
+                available_units: property.units.length - rentedCount,
+                units: property.units,
+                created_at: property.created_at,
+                updated_at: property.updated_at,
+            },
+            message: "Property updated successfully",
+        } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * PATCH /api/properties/electricity/buildings/:id
+ * Update property from electricity module (always electricity-enabled).
+ */
+export const updateElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    req.body = {
+        ...(req.body ?? {}),
+        is_for_electricity: true,
+    };
+
+    await updateProperty(req, res, next);
+};
+
+export const deleteElectricityBuilding = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    await deleteProperty(req, res, next);
+};
+
+/**
+ * DELETE /api/properties/:id
+ * Soft delete — only if no active contracts on any of its units.
+ */
+export const deleteProperty = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const id = req.params.id as string;
+
+        const existing = await prisma.properties.findFirst({
+            where: { id, deleted_at: null },
+        });
+        if (!existing) {
+            res.status(404).json({ success: false, error: "Property not found" });
+            return;
+        }
+
+        const activeContracts = await computeRentedCount(id);
+
+        if (activeContracts > 0) {
+            res.status(409).json({
+                success: false,
+                error: `Cannot delete: property has ${activeContracts} active contract(s). Terminate or expire them first.`,
+            });
+            return;
+        }
+
+        const now = new Date();
+        await prisma.$transaction([
+            prisma.units.updateMany({
+                where: { property_id: id, deleted_at: null },
+                data: { deleted_at: now },
+            }),
+            prisma.properties.update({
+                where: { id },
+                data: { deleted_at: now },
+            }),
+        ]);
+
+        res.json({ success: true, message: "Property and its units have been soft-deleted" } as ApiResponse);
+    } catch (err) {
+        next(err);
+    }
+};

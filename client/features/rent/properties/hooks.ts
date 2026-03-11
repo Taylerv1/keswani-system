@@ -1,0 +1,557 @@
+"use client";
+
+// ============================================================
+// Property Module — Hooks
+// Combines: usePropertyState + usePropertyForm
+// ============================================================
+
+import { useCallback, useEffect, useState } from "react";
+import {
+  getPropertyById,
+  createProperty,
+  updateProperty,
+  deleteProperty,
+  type CreatePropertyInput,
+  type UpdatePropertyInput,
+} from "./api";
+import type { Property, PropertyDto } from "./types";
+import { type CreateUnitInput, EMPTY_UNIT, sanitizeUnit } from "./utils";
+import { rentStore } from "../store";
+import { isJsonDirty } from "@/lib/formDirty";
+
+// ============================================================
+// usePropertyState — Page-level State Hook
+// Manages: property list, pagination, filters, search, CRUD calls
+// ============================================================
+
+export const PAGE_SIZE = 6;
+
+export type TranslateFn = (key: string) => string;
+
+export function usePropertyState(t: TranslateFn) {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [page, setPage] = useState(1);
+
+  /* ------------------------------------------------------------------ */
+  /* Fetch                                                               */
+  /* ------------------------------------------------------------------ */
+
+  const fetchProperties = useCallback(async (options?: { force?: boolean }) => {
+    const query = {
+      page,
+      limit: PAGE_SIZE,
+      search: search || undefined,
+      type: filterType === "all" ? undefined : filterType,
+      status:
+        filterStatus === "all"
+          ? undefined
+          : (filterStatus as "full" | "vacant"),
+      usage: "rent" as const,
+    };
+
+    if (!options?.force) {
+      const cached = rentStore.getPropertiesSnapshot(query);
+      if (cached) {
+        setError("");
+        setProperties(cached.items);
+        setTotalItems(cached.totalItems);
+        setTotalPages(cached.totalPages);
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const { data } = await rentStore.loadProperties(query, {
+        force: options?.force,
+      });
+
+      setProperties(data.items);
+      setTotalItems(data.totalItems);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error"));
+      setProperties([]);
+      setTotalItems(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterStatus, filterType, page, search, t]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
+
+  /* ------------------------------------------------------------------ */
+  /* CRUD helpers                                                        */
+  /* ------------------------------------------------------------------ */
+
+  const getPropertyDetails = useCallback(
+    async (id: string) => {
+      try {
+        setActionLoading(true);
+        setError("");
+
+        const response = await getPropertyById(id);
+        if (!response.data) return null;
+
+        return {
+          dto: response.data,
+          ui: response.data as Property,
+        };
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("error"));
+        return null;
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [t]
+  );
+
+  const createPropertyItem = useCallback(
+    async (payload: CreatePropertyInput) => {
+      try {
+        setActionLoading(true);
+        setError("");
+        await createProperty(payload);
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
+        await fetchProperties({ force: true });
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("error"));
+        return false;
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [fetchProperties, t]
+  );
+
+  const updatePropertyItem = useCallback(
+    async (id: string, payload: UpdatePropertyInput) => {
+      try {
+        setActionLoading(true);
+        setError("");
+        const response = await updateProperty(id, payload);
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
+        if (response.data) {
+          setProperties((prev) =>
+            prev.map((property) =>
+              property.id === id ? (response.data as Property) : property
+            )
+          );
+        }
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("error"));
+        return false;
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [t]
+  );
+
+  const deletePropertyItem = useCallback(
+    async (id: string) => {
+      try {
+        setActionLoading(true);
+        setError("");
+        await deleteProperty(id);
+        rentStore.invalidateProperties();
+        rentStore.invalidateContractLookups();
+        rentStore.invalidateOverview();
+        setProperties((prev) => prev.filter((property) => property.id !== id));
+        setTotalItems((prev) => {
+          const nextTotal = Math.max(0, prev - 1);
+          const nextPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+          setTotalPages(nextPages);
+          setPage((current) => Math.min(current, nextPages));
+          return nextTotal;
+        });
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("error"));
+        return false;
+      } finally {
+        setActionLoading(false);
+      }
+    },
+    [t]
+  );
+
+  const filtered = properties;
+
+  /* ------------------------------------------------------------------ */
+  /* Public API                                                          */
+  /* ------------------------------------------------------------------ */
+
+  return {
+    PAGE_SIZE,
+    properties,
+    filtered,
+    totalItems,
+    totalPages,
+    loading,
+    actionLoading,
+    error,
+    setError,
+    search,
+    setSearch,
+    filterType,
+    setFilterType,
+    filterStatus,
+    setFilterStatus,
+    page,
+    setPage,
+    fetchProperties,
+    getPropertyDetails,
+    createPropertyItem,
+    updatePropertyItem,
+    deletePropertyItem,
+  };
+}
+
+// ============================================================
+// usePropertyForm — Form + Unit Handling Hook
+// Manages: form fields, modal states, unit mutations, save/edit/delete
+// ============================================================
+
+type PropertyType = PropertyDto["type"];
+type PropertyFormState = {
+  name: string;
+  type: PropertyType;
+  isForRent: boolean;
+  isForElectricity: boolean;
+  address: string;
+  city: string;
+  ownerNotes: string;
+};
+
+interface UsePropertyFormDeps {
+  t: TranslateFn;
+  createPropertyItem: (payload: {
+    name: string;
+    address?: string;
+    city?: string;
+    type: PropertyType;
+    is_for_rent?: boolean;
+    is_for_electricity?: boolean;
+    owner_notes?: string;
+    units?: CreateUnitInput[];
+  }) => Promise<boolean>;
+  updatePropertyItem: (
+    id: string,
+    payload: {
+      name?: string;
+      address?: string;
+      city?: string;
+      type?: PropertyType;
+      is_for_rent?: boolean;
+      is_for_electricity?: boolean;
+      owner_notes?: string | null;
+      units?: CreateUnitInput[];
+    }
+  ) => Promise<boolean>;
+  deletePropertyItem: (id: string) => Promise<boolean>;
+  setError: (error: string) => void;
+}
+
+export function usePropertyForm(deps: UsePropertyFormDeps) {
+  const { t, createPropertyItem, updatePropertyItem, deletePropertyItem, setError } = deps;
+
+  /* ------------------------------------------------------------------ */
+  /* Modal state                                                         */
+  /* ------------------------------------------------------------------ */
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [detailModal, setDetailModal] = useState<Property | null>(null);
+  const [editItem, setEditItem] = useState<Property | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [unitModalOpen, setUnitModalOpen] = useState(false);
+
+  /* ------------------------------------------------------------------ */
+  /* Form fields                                                         */
+  /* ------------------------------------------------------------------ */
+
+  const [form, setForm] = useState<PropertyFormState>({
+    name: "",
+    type: "building" as PropertyType,
+    isForRent: true,
+    isForElectricity: true,
+    address: "",
+    city: "",
+    ownerNotes: "",
+  });
+
+  const [units, setUnits] = useState<CreateUnitInput[]>([]);
+  const [unitDraft, setUnitDraft] = useState<CreateUnitInput>(EMPTY_UNIT);
+  const [initialEditSnapshot, setInitialEditSnapshot] = useState<{
+    form: PropertyFormState;
+    units: CreateUnitInput[];
+  } | null>(null);
+
+  /* ------------------------------------------------------------------ */
+  /* Reset                                                               */
+  /* ------------------------------------------------------------------ */
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      type: "building",
+      isForRent: true,
+      isForElectricity: true,
+      address: "",
+      city: "",
+      ownerNotes: "",
+    });
+    setUnits([]);
+    setUnitDraft(EMPTY_UNIT);
+    setUnitModalOpen(false);
+    setEditItem(null);
+    setInitialEditSnapshot(null);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Open helpers                                                        */
+  /* ------------------------------------------------------------------ */
+
+  const openAdd = () => {
+    resetForm();
+    setModalOpen(true);
+  };
+
+  const openEdit = async (p: Property) => {
+    const item = p;
+    const mappedUnits: CreateUnitInput[] = (item.units ?? []).map((unit) => ({
+      id: unit.id,
+      unit_number: unit.unit_number,
+      floor: unit.floor ?? undefined,
+      bedrooms: unit.bedrooms ?? undefined,
+      bathrooms: unit.bathrooms ?? undefined,
+      area_sqm:
+        unit.area_sqm !== null && unit.area_sqm !== undefined
+          ? Number(unit.area_sqm)
+          : undefined,
+      description: unit.description ?? undefined,
+    }));
+
+    if (item.type === "house" && mappedUnits.length === 0) {
+      mappedUnits.push({ ...EMPTY_UNIT });
+    }
+
+    setEditItem(p);
+    const nextForm: PropertyFormState = {
+      name: item.name,
+      type: item.type,
+      isForRent: item.is_for_rent ?? true,
+      isForElectricity: item.is_for_electricity ?? true,
+      address: item.address ?? "",
+      city: item.city ?? "",
+      ownerNotes: item.owner_notes ?? "",
+    };
+    const nextUnits =
+      item.type === "building" || item.type === "house" ? mappedUnits : [];
+
+    setInitialEditSnapshot({
+      form: nextForm,
+      units: nextUnits,
+    });
+    setForm(nextForm);
+    setUnits(nextUnits);
+    setModalOpen(true);
+  };
+
+  const isEditDirty = editItem
+    ? !initialEditSnapshot ||
+      isJsonDirty(initialEditSnapshot.form, form) ||
+      isJsonDirty(initialEditSnapshot.units, units)
+    : true;
+
+  /* ------------------------------------------------------------------ */
+  /* Unit mutations                                                      */
+  /* ------------------------------------------------------------------ */
+
+  const ensureHouseUnit = () => {
+    setUnits((prev) => {
+      if (prev.length > 0) {
+        const base = prev[0];
+        return [{ ...base, unit_number: base.unit_number || "HOUSE" }];
+      }
+      return [{ ...EMPTY_UNIT, unit_number: "HOUSE" }];
+    });
+  };
+
+  const handleUnitTypeChange = (value: PropertyType) => {
+    setForm({ ...form, type: value });
+    if (value === "house") {
+      ensureHouseUnit();
+    } else if (value === "building") {
+      setUnits((prev) => (prev.length > 1 ? prev : []));
+    } else {
+      setUnits([]);
+    }
+  };
+
+  const updateHouseUnit = <K extends keyof CreateUnitInput>(
+    key: K,
+    value: CreateUnitInput[K]
+  ) => {
+    setUnits((prev) => {
+      const base = prev[0] ?? { ...EMPTY_UNIT };
+      return [{ ...base, [key]: value }];
+    });
+  };
+
+  const addBuildingUnit = () => {
+    const sanitized = sanitizeUnit(unitDraft);
+    if (!sanitized) {
+      setError(t("unitNumber") + " " + t("isRequired"));
+      return;
+    }
+    setUnits((prev) => [...prev, sanitized]);
+    setUnitDraft(EMPTY_UNIT);
+    setUnitModalOpen(false);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Save (create / update)                                              */
+  /* ------------------------------------------------------------------ */
+
+  const handleSave = async () => {
+    setError("");
+
+    const nameValue = form.name.trim();
+    const addressValue = form.address.trim();
+    const cityValue = form.city.trim();
+
+    if (!nameValue) {
+      setError(t("propertyName") + " " + t("isRequired"));
+      return;
+    }
+
+    const payloadType: PropertyType = form.type;
+    let success = false;
+    const sanitizedUnits = units
+      .map((unit) => sanitizeUnit(unit))
+      .filter((unit): unit is CreateUnitInput => unit !== null);
+
+    const houseBase = units[0] ?? { ...EMPTY_UNIT };
+    const houseUnit: CreateUnitInput = {
+      unit_number: (houseBase.unit_number || "HOUSE").trim() || "HOUSE",
+    };
+    if (typeof houseBase.id === "string") houseUnit.id = houseBase.id;
+    if (typeof houseBase.floor === "number") houseUnit.floor = houseBase.floor;
+    if (typeof houseBase.bedrooms === "number") houseUnit.bedrooms = houseBase.bedrooms;
+    if (typeof houseBase.bathrooms === "number") houseUnit.bathrooms = houseBase.bathrooms;
+    if (typeof houseBase.area_sqm === "number") houseUnit.area_sqm = houseBase.area_sqm;
+    const houseDescription = houseBase.description?.trim();
+    if (houseDescription) houseUnit.description = houseDescription;
+
+    const unitsPayload =
+      payloadType === "house"
+        ? [houseUnit]
+        : payloadType === "building"
+          ? sanitizedUnits
+          : undefined;
+
+    if (editItem) {
+      success = await updatePropertyItem(editItem.id, {
+        name: nameValue,
+        address: addressValue || undefined,
+        city: cityValue || undefined,
+        type: payloadType,
+        is_for_rent: form.isForRent,
+        is_for_electricity: form.isForElectricity,
+        owner_notes: form.ownerNotes.trim() || null,
+        units: unitsPayload,
+      });
+    } else {
+      success = await createPropertyItem({
+        name: nameValue,
+        address: addressValue || undefined,
+        city: cityValue || undefined,
+        type: payloadType,
+        is_for_rent: form.isForRent,
+        is_for_electricity: form.isForElectricity,
+        owner_notes: form.ownerNotes.trim() || undefined,
+        units: unitsPayload,
+      });
+    }
+
+    if (!success) return;
+
+    setModalOpen(false);
+    resetForm();
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* View / Delete                                                       */
+  /* ------------------------------------------------------------------ */
+
+  const handleView = (property: Property) => {
+    setDetailModal(property);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const success = await deletePropertyItem(deleteId);
+    if (!success) return;
+    setDeleteId(null);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Public API                                                          */
+  /* ------------------------------------------------------------------ */
+
+  return {
+    // modal state
+    modalOpen,
+    setModalOpen,
+    detailModal,
+    setDetailModal,
+    editItem,
+    deleteId,
+    setDeleteId,
+    unitModalOpen,
+    setUnitModalOpen,
+
+    // form fields
+	    form,
+	    setForm,
+	    units,
+	    setUnits,
+	    isEditDirty,
+	    unitDraft,
+	    setUnitDraft,
+
+    // actions
+    resetForm,
+    openAdd,
+    openEdit,
+    handleUnitTypeChange,
+    updateHouseUnit,
+    addBuildingUnit,
+    handleSave,
+    handleView,
+    handleDelete,
+  };
+}
